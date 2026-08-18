@@ -126,6 +126,69 @@
 .inline-edit-toast.success
   background #17845c
 
+.inline-review-dialog
+  width calc(100vw - 32px)
+  max-width 1100px
+  padding 0
+  border 0
+  border-radius 16px
+  color #172033
+  box-shadow 0 24px 70px rgba(20, 28, 48, .35)
+
+.inline-review-dialog::backdrop
+  background rgba(12, 18, 31, .58)
+  backdrop-filter blur(3px)
+
+.inline-review-dialog form
+  padding 24px
+
+.inline-review-dialog h3
+  margin 0 0 6px
+
+.inline-review-summary
+  margin 0 0 16px
+  color #6c778d
+
+.inline-review-columns
+  display grid
+  grid-template-columns 1fr 1fr
+  gap 14px
+
+.inline-review-columns label
+  font-size 13px
+  font-weight 700
+
+.inline-review-columns textarea
+  display block
+  width 100%
+  height min(58vh, 620px)
+  margin-top 7px
+  padding 14px
+  resize none
+  border 1px solid #dfe3ec
+  border-radius 10px
+  color #263146
+  background #f8f9fc
+  font 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace
+
+.inline-review-actions
+  display flex
+  justify-content flex-end
+  gap 10px
+  margin-top 18px
+
+.inline-review-actions button
+  padding 10px 15px
+  border 1px solid #dfe3ec
+  border-radius 9px
+  background #fff
+  cursor pointer
+
+.inline-review-actions .confirm
+  border-color transparent
+  color #fff
+  background linear-gradient(135deg, #4e6ef2, #7557e8)
+
 @media (max-width: 576px)
   .inline-edit-toolbar
     min-width 0
@@ -139,3 +202,9 @@
 
   .inline-edit-meta
     grid-template-columns 1fr
+
+  .inline-review-columns
+    grid-template-columns 1fr
+
+  .inline-review-columns textarea
+    height 30vh
