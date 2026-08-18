@@ -3,17 +3,17 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Serendipity's Blog
-subtitle: Serendipity's Blog
-description: ""
-keywords: Serendipity,Blog
-author: Serendipity
+title: yrk's Blog
+subtitle: 记录学习、思考与生活
+description: "yrk 的个人博客"
+keywords: yrk,Blog,个人博客
+author: yrk
 language: zh-CN
 timezone: Asia/Shanghai
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: https://serendipity565.github.io/
+url: https://yrkzbb.github.io/
 permalink: posts/:hash/
 permalink_defaults:
 pretty_urls:
@@ -102,7 +102,7 @@ theme: fluid
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: git
-  repo: https://github.com/Serendipity565/Serendipity565.github.io
+  repo: https://github.com/yrkzbb/yrkzbb.github.io.git
   branch: main
 
 markdown:
