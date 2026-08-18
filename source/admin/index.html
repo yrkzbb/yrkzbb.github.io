@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>博客写作台</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <section id="loginView" class="login-shell">
+    <form id="loginForm" class="login-card">
+      <div class="brand">yrk's Blog</div>
+      <h1>博客写作台</h1>
+      <p>使用 GitHub Fine-grained Token 连接文章仓库。令牌只保存在本页的会话存储中，关闭标签页后自动清除。</p>
+      <label for="token">GitHub Token</label>
+      <input id="token" name="token" type="password" autocomplete="off" required placeholder="github_pat_…">
+      <button type="submit" class="primary">进入写作台</button>
+      <a class="help" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">创建仅限 yrkzbb.github.io 仓库、Contents 读写权限的 Token ↗</a>
+      <div id="loginError" class="error" role="alert"></div>
+    </form>
+  </section>
+
+  <div id="appView" class="app" hidden>
+    <header class="topbar">
+      <a class="brand" href="/">yrk's Blog</a>
+      <div class="top-actions">
+        <span id="saveState" class="save-state">尚未修改</span>
+        <button id="previewButton" class="ghost" type="button">预览</button>
+        <button id="saveButton" class="primary" type="button">保存并发布</button>
+        <button id="logoutButton" class="icon-button" type="button" title="退出">退出</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h2>文章</h2>
+          <button id="newButton" class="round-button" type="button" title="新建文章">＋</button>
+        </div>
+        <input id="searchInput" class="search" type="search" placeholder="搜索文章">
+        <div id="postList" class="post-list"></div>
+      </aside>
+
+      <section id="emptyView" class="empty-view">
+        <div><span>✦</span><h2>选择一篇文章，或者开始写新文章</h2></div>
+      </section>
+
+      <section id="editorView" class="editor" hidden>
+        <div class="fields">
+          <input id="titleInput" class="title-input" type="text" placeholder="文章标题">
+          <div class="meta-grid">
+            <label>文件名<input id="slugInput" type="text" placeholder="article-name"></label>
+            <label>日期<input id="dateInput" type="datetime-local"></label>
+            <label>分类<input id="categoriesInput" type="text" placeholder="数据库, 开发"></label>
+            <label>标签<input id="tagsInput" type="text" placeholder="MySQL, SQL"></label>
+          </div>
+        </div>
+        <div class="editor-tabs">
+          <button class="tab active" data-pane="write" type="button">Markdown</button>
+          <button class="tab" data-pane="preview" type="button">实时预览</button>
+          <span class="spacer"></span>
+          <label class="upload-button">上传图片<input id="imageInput" type="file" accept="image/*" hidden></label>
+          <button id="deleteButton" class="danger-text" type="button">删除</button>
+        </div>
+        <div class="panes">
+          <textarea id="bodyInput" class="markdown-input" spellcheck="false" placeholder="从这里开始写作…"></textarea>
+          <article id="previewPane" class="preview-pane" hidden></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="confirmDialog">
+    <form method="dialog">
+      <h3>删除这篇文章？</h3>
+      <p>删除会提交到 GitHub，仍可从 Git 历史中恢复。</p>
+      <div><button value="cancel" class="ghost">取消</button><button value="confirm" class="danger">确认删除</button></div>
+    </form>
+  </dialog>
+
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

@@ -238,6 +238,7 @@ custom_js:
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/runtime.js # 运行时间
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.js # 静态彩带
   - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/DynamicLine.js # 动态黑色线条
+  - /js/post-editor-link.js
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/snowflake.js # 小雪花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Cherry.js #樱花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/star.js # 鼠标跟随小星星
@@ -251,6 +252,7 @@ custom_css:
   - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/scroll.css # 滚动条颜色
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/gradient.css # 头部打字机颜色效果渐变
   - /css/test
+  - /css/admin-entry
 
 # 网页访问统计
 # Analysis of website visitors
