@@ -133,7 +133,7 @@
 
   async function login(token) {
     state.token = token.trim(); els.loginError.textContent = '';
-    try { await api(`/contents/${config.postsPath}?ref=${encodeURIComponent(config.branch)}`); sessionStorage.setItem('yrk_blog_token', state.token); els.loginView.hidden = true; els.appView.hidden = false; await loadPosts(); }
+    try { await api(`/contents/${config.postsPath}?ref=${encodeURIComponent(config.branch)}`); sessionStorage.setItem('yrk_blog_token', state.token); const returnUrl = new URLSearchParams(location.search).get('return'); if (returnUrl) { const target = new URL(returnUrl, location.origin); if (target.origin === location.origin) { location.href = target.href; return; } } els.loginView.hidden = true; els.appView.hidden = false; await loadPosts(); }
     catch (error) { state.token = ''; els.loginError.textContent = `连接失败：${error.message}`; }
   }
 

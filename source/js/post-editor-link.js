@@ -1,14 +1,22 @@
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  'use strict';
   var article = document.querySelector('article.markdown-body');
-  if (!article) return;
-  var title = document.querySelector('.post-title');
-  var source = document.querySelector('meta[name="hexo-source"]');
-  var path = source && source.content;
-  if (!path) return;
-  var link = document.createElement('a');
-  link.href = '/admin/?path=' + encodeURIComponent(path);
-  link.className = 'blog-edit-link';
-  link.textContent = '✎ 编辑文章';
-  link.title = '在博客写作台中编辑';
-  (title || article).appendChild(link);
-});
+  var sourceMeta = document.querySelector('meta[name="hexo-source"]');
+  if (!article || !sourceMeta || !sourceMeta.content) return;
+  var config = { owner: 'yrkzbb', repo: 'yrkzbb.github.io', branch: 'source' };
+  var sourcePath = 'source/' + sourceMeta.content.replace(/^\/+/, '');
+  var tokenKey = 'yrk_blog_token'; var editing = false; var originalHtml = ''; var sourceFile = null; var frontMatter = '';
+  function api(path, options) { options = options || {}; return fetch('https://api.github.com/repos/' + config.owner + '/' + config.repo + path, { method: options.method || 'GET', body: options.body, headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + (sessionStorage.getItem(tokenKey) || ''), 'X-GitHub-Api-Version': '2022-11-28' } }).then(async function (response) { if (!response.ok) { var detail = await response.json().catch(function () { return {}; }); throw new Error(detail.message || 'GitHub 请求失败 (' + response.status + ')'); } return response.json(); }); }
+  function decodeBase64(value) { var binary = atob(value.replace(/\n/g, '')); return new TextDecoder().decode(Uint8Array.from(binary, function (c) { return c.charCodeAt(0); })); }
+  function encodeBase64(value) { var bytes = new TextEncoder().encode(value); var binary = ''; bytes.forEach(function (byte) { binary += String.fromCharCode(byte); }); return btoa(binary); }
+  function notify(message, type) { var old = document.querySelector('.inline-edit-toast'); if (old) old.remove(); var toast = document.createElement('div'); toast.className = 'inline-edit-toast ' + (type || ''); toast.textContent = message; document.body.appendChild(toast); requestAnimationFrame(function () { toast.classList.add('show'); }); setTimeout(function () { toast.classList.remove('show'); setTimeout(function () { toast.remove(); }, 250); }, 2600); }
+  function loadScript(src, globalName) { if (window[globalName]) return Promise.resolve(); return new Promise(function (resolve, reject) { var script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); }); }
+  async function ensureConverter() { await loadScript('https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js', 'TurndownService'); await loadScript('https://cdn.jsdelivr.net/npm/turndown-plugin-gfm@1.0.2/dist/turndown-plugin-gfm.js', 'turndownPluginGfm'); }
+  function htmlToMarkdown() { var clone = article.cloneNode(true); clone.querySelectorAll('.headerlink, .copy-btn, .code-widget').forEach(function (node) { node.remove(); }); var service = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' }); if (window.turndownPluginGfm) service.use(turndownPluginGfm.gfm); service.addRule('hexoHighlight', { filter: function (node) { return node.nodeName === 'FIGURE' && node.classList.contains('highlight'); }, replacement: function (_, node) { var language = Array.from(node.classList).filter(function (name) { return name !== 'highlight'; })[0] || ''; var code = node.querySelector('.code') || node.querySelector('pre') || node; return '\n\n```' + language + '\n' + code.innerText.replace(/\n$/, '') + '\n```\n\n'; } }); return service.turndown(clone.innerHTML).replace(/\n{3,}/g, '\n\n').trim() + '\n'; }
+  function makeToolbar() { var toolbar = document.createElement('div'); toolbar.className = 'inline-edit-toolbar'; toolbar.innerHTML = '<div class="inline-edit-status"><span class="inline-edit-dot"></span>正在原位编辑</div><div><button type="button" data-action="cancel">取消</button><button type="button" class="save" data-action="save">保存并发布</button></div>'; toolbar.querySelector('[data-action="cancel"]').onclick = cancelEditing; toolbar.querySelector('[data-action="save"]').onclick = saveEditing; document.body.appendChild(toolbar); }
+  async function startEditing() { if (editing) return; if (!sessionStorage.getItem(tokenKey)) { location.href = '/admin/?return=' + encodeURIComponent(location.href); return; } editLink.classList.add('loading'); editLink.textContent = '正在载入…'; try { sourceFile = await api('/contents/' + encodeURI(sourcePath) + '?ref=' + encodeURIComponent(config.branch)); var documentText = decodeBase64(sourceFile.content); var match = documentText.match(/^(---\s*\n[\s\S]*?\n---\s*\n?)([\s\S]*)$/); frontMatter = match ? match[1] : ''; originalHtml = article.innerHTML; editing = true; article.querySelectorAll('.headerlink').forEach(function (node) { node.setAttribute('contenteditable', 'false'); }); article.contentEditable = 'true'; article.classList.add('inline-editing'); article.focus(); editLink.hidden = true; makeToolbar(); notify('现在可以直接点击正文进行修改'); } catch (error) { if (/Bad credentials|401/.test(error.message)) sessionStorage.removeItem(tokenKey); notify('无法进入编辑：' + error.message, 'error'); editLink.classList.remove('loading'); editLink.textContent = '✎ 直接编辑'; } }
+  function cancelEditing() { if (!editing || confirm('放弃当前未保存的修改吗？')) { article.innerHTML = originalHtml; article.contentEditable = 'false'; article.classList.remove('inline-editing'); var toolbar = document.querySelector('.inline-edit-toolbar'); if (toolbar) toolbar.remove(); editLink.hidden = false; editing = false; } }
+  async function saveEditing() { var button = document.querySelector('.inline-edit-toolbar .save'); button.disabled = true; button.textContent = '正在保存…'; try { await ensureConverter(); var markdown = htmlToMarkdown(); await api('/contents/' + encodeURI(sourcePath), { method: 'PUT', body: JSON.stringify({ message: 'docs: update article inline', content: encodeBase64(frontMatter + markdown), sha: sourceFile.sha, branch: config.branch }) }); article.contentEditable = 'false'; article.classList.remove('inline-editing'); var toolbar = document.querySelector('.inline-edit-toolbar'); if (toolbar) toolbar.remove(); editLink.hidden = false; editing = false; originalHtml = article.innerHTML; notify('已保存，网站正在自动发布'); } catch (error) { notify('保存失败：' + error.message, 'error'); button.disabled = false; button.textContent = '保存并发布'; } }
+  var editLink = document.createElement('button'); editLink.type = 'button'; editLink.className = 'blog-edit-link'; editLink.textContent = '✎ 直接编辑'; editLink.title = '在当前页面直接编辑正文'; editLink.onclick = startEditing; var heading = document.querySelector('.post-content > h1, #seo-header'); (heading || article).appendChild(editLink);
+  window.addEventListener('beforeunload', function (event) { if (editing) { event.preventDefault(); event.returnValue = ''; } });
+})();

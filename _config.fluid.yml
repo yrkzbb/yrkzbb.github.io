@@ -253,6 +253,7 @@ custom_css:
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/gradient.css # 头部打字机颜色效果渐变
   - /css/test
   - /css/admin-entry
+  - /css/inline-editor
 
 # 网页访问统计
 # Analysis of website visitors
