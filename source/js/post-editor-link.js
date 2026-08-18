@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var article = document.querySelector('article.markdown-body');
+  var article = document.querySelector('.post-content .markdown-body');
   var sourceMeta = document.querySelector('meta[name="hexo-source"]');
   if (!article || !sourceMeta || !sourceMeta.content) return;
   var config = { owner: 'yrkzbb', repo: 'yrkzbb.github.io', branch: 'source' };
