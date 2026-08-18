@@ -1,12 +1,15 @@
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-hexo.extend.filter.register('after_generate', function () {
+hexo.extend.filter.register("after_generate", function () {
   const assets = [
-    ['node_modules/turndown/dist/turndown.js', 'public/js/vendor/turndown.js'],
-    ['node_modules/turndown-plugin-gfm/dist/turndown-plugin-gfm.js', 'public/js/vendor/turndown-plugin-gfm.js']
+    ["node_modules/turndown/dist/turndown.js", "public/js/vendor/turndown.js"],
+    [
+      "node_modules/turndown-plugin-gfm/dist/turndown-plugin-gfm.js",
+      "public/js/vendor/turndown-plugin-gfm.js",
+    ],
   ];
 
   for (const [source, destination] of assets) {

@@ -238,7 +238,6 @@ custom_js:
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/runtime.js # 运行时间
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.js # 静态彩带
   - /js/dynamic-line.js # 本地化的动态黑色线条
-  - /js/post-editor-link.js
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/snowflake.js # 小雪花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Cherry.js #樱花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/star.js # 鼠标跟随小星星
@@ -252,8 +251,6 @@ custom_css:
   - /css/scroll # 本地化的滚动条颜色
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/gradient.css # 头部打字机颜色效果渐变
   - /css/test
-  - /css/admin-entry
-  - /css/inline-editor
 
 # 网页访问统计
 # Analysis of website visitors
@@ -507,7 +504,7 @@ footer:
 index:
   # 首页 Banner 头图，可以是相对路径或绝对路径，以下相同
   # Path of Banner image, can be a relative path or an absolute path, the same on other pages
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
 
   # 头图高度，屏幕百分比
   # Height ratio of banner image
@@ -578,7 +575,7 @@ index:
 # Post Page
 #---------------------------
 post:
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 70
   banner_mask_alpha: 0.3
 
@@ -941,7 +938,7 @@ discuss:
 # Archive Page
 #---------------------------
 archive:
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
 
@@ -951,7 +948,7 @@ archive:
 #---------------------------
 category:
   enable: true
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
 
@@ -979,7 +976,7 @@ category:
 #---------------------------
 tag:
   enable: true
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 80
   banner_mask_alpha: 0.3
   tagcloud:
@@ -995,7 +992,7 @@ tag:
 #---------------------------
 about:
   enable: true
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
   avatar: /img/avatar.png
@@ -1023,7 +1020,7 @@ about:
 # Custom Page through `hexo new page`
 #---------------------------
 page:
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
 
@@ -1033,7 +1030,7 @@ page:
 #---------------------------
 page404:
   enable: true
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 85
   banner_mask_alpha: 0.3
   # 重定向到首页的延迟(毫秒)
@@ -1046,7 +1043,7 @@ page404:
 #---------------------------
 links:
   enable: true
-  banner_img: /img/defbj.png
+  banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
   # 友链的成员项
