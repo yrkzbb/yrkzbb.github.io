@@ -52,3 +52,19 @@
 #scroll-top-button {
   border-radius: 0.5rem;
 }
+
+// 文章目录长标题自动换行，避免省略号截断
+#toc .toc-list-item {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#toc .tocbot-link {
+  display: block;
+  padding-top: 0.12rem;
+  padding-bottom: 0.12rem;
+  line-height: 1.45;
+}
