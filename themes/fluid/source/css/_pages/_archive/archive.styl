@@ -11,9 +11,26 @@
     flex 0 0 5rem
 
   .list-group-item-title
+    flex 1 1 auto
+    min-width 0
     white-space nowrap
     overflow hidden
     text-overflow ellipsis
+
+  .archive-item-categories
+    flex 0 0 auto
+    display flex
+    align-items center
+    gap .35rem
+    margin-left 1rem
+
+  .archive-category
+    padding .12rem .55rem
+    border 1px solid var(--link-hover-color)
+    border-radius 999px
+    color var(--link-hover-color)
+    font-size .75rem
+    line-height 1.4
 
 @media (max-width: 575px)
   .list-group-item
@@ -22,6 +39,13 @@
 
     time
       flex 0 0 4rem
+
+    .archive-item-categories
+      margin-left .5rem
+
+    .archive-category
+      padding .08rem .4rem
+      font-size .7rem
 
 .list-group-item-action
   color var(--text-color)

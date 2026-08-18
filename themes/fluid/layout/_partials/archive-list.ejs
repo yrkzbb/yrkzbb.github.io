@@ -10,6 +10,13 @@
     <a href="<%= url_for(post.path) %>" class="list-group-item list-group-item-action">
       <time><%= date(post.date, "MM-DD") %></time>
       <div class="list-group-item-title"><%= post.title %></div>
+      <% if (params.key === 'archive' && post.categories && post.categories.length) { %>
+        <div class="archive-item-categories" aria-label="文章分类">
+          <% post.categories.each(function (category) { %>
+            <span class="archive-category"><%= category.name %></span>
+          <% }) %>
+        </div>
+      <% } %>
     </a>
   <% }) %>
 </div>
