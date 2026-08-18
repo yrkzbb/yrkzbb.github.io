@@ -189,6 +189,83 @@
   color #fff
   background linear-gradient(135deg, #4e6ef2, #7557e8)
 
+.inline-history-dialog
+  width calc(100vw - 32px)
+  max-width 680px
+  max-height calc(100vh - 48px)
+  padding 0
+  border 0
+  border-radius 16px
+  color #172033
+  box-shadow 0 24px 70px rgba(20, 28, 48, .35)
+
+.inline-history-dialog::backdrop
+  background rgba(12, 18, 31, .58)
+  backdrop-filter blur(3px)
+
+.inline-history-head
+  display flex
+  justify-content space-between
+  padding 22px 24px 15px
+  border-bottom 1px solid #e8ebf1
+
+.inline-history-head h3, .inline-history-head p
+  margin 0
+
+.inline-history-head p
+  margin-top 5px
+  color #748096
+  font-size 13px
+
+.inline-history-head button
+  border 0
+  color #748096
+  background transparent
+  font-size 25px
+  cursor pointer
+
+.inline-history-list
+  max-height 65vh
+  padding 10px 24px 22px
+  overflow auto
+
+.inline-history-loading
+  padding 28px 0
+  color #748096
+  text-align center
+
+.inline-history-item
+  display flex
+  align-items center
+  justify-content space-between
+  gap 18px
+  padding 14px 0
+  border-bottom 1px solid #eef0f4
+
+.inline-history-item div
+  min-width 0
+
+.inline-history-item strong, .inline-history-item span, .inline-history-item small
+  display block
+
+.inline-history-item span
+  margin 3px 0
+  overflow hidden
+  white-space nowrap
+  text-overflow ellipsis
+
+.inline-history-item small
+  color #7b8699
+
+.inline-history-item button
+  flex 0 0 auto
+  padding 8px 11px
+  border 1px solid #cfd6e5
+  border-radius 8px
+  color #4e6ef2
+  background #fff
+  cursor pointer
+
 @media (max-width: 576px)
   .inline-edit-toolbar
     min-width 0
