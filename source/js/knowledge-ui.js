@@ -20,26 +20,38 @@
     if (!toolbar) return;
     var cards = Array.prototype.slice.call(document.querySelectorAll('.index-card[data-categories]'));
     var filters = Array.prototype.slice.call(toolbar.querySelectorAll('button[data-filter]')).map(function (button) { return button.dataset.filter; });
+    var statuses = Array.prototype.slice.call(toolbar.querySelectorAll('button[data-status]')).map(function (button) { return button.dataset.status; });
     var count = toolbar.querySelector('.home-filter-count');
     var pagination = document.querySelector('.home-pagination');
     var pageSize = 8;
     var currentFilter = 'all';
+    var currentStatus = 'all';
     var currentPage = 1;
 
-    function matchingCards(filter) {
+    function masteryFor(card) {
+      try {
+        var mastery = JSON.parse(localStorage.getItem('yrk_article_mastery') || '{}');
+        return mastery[card.dataset.postPath] || 'unread';
+      } catch (_) { return 'unread'; }
+    }
+
+    function matchingCards(filter, status) {
       return cards.filter(function (card) {
         var categories = card.dataset.categories.split(/\s+/).filter(Boolean);
-        return filter === 'all' || categories.includes(filter);
+        var categoryMatches = filter === 'all' || categories.includes(filter);
+        var statusMatches = status === 'all' || masteryFor(card) === status;
+        return categoryMatches && statusMatches;
       });
     }
 
     function updateAddress() {
-      if (currentFilter === 'all' && currentPage === 1) {
+      if (currentFilter === 'all' && currentStatus === 'all' && currentPage === 1) {
         history.replaceState(null, '', location.pathname + location.search);
         return;
       }
       var parameters = new URLSearchParams();
       if (currentFilter !== 'all') parameters.set('category', currentFilter);
+      if (currentStatus !== 'all') parameters.set('status', currentStatus);
       if (currentPage > 1) parameters.set('page', String(currentPage));
       history.replaceState(null, '', '#' + parameters.toString());
     }
@@ -71,16 +83,17 @@
       });
     }
 
-    function apply(filter, requestedPage) {
+    function apply(filter, status, requestedPage) {
       currentFilter = filter;
-      var matched = matchingCards(filter);
+      currentStatus = status;
+      var matched = matchingCards(filter, status);
       var totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
       currentPage = Math.min(Math.max(Number(requestedPage) || 1, 1), totalPages);
       var first = (currentPage - 1) * pageSize;
       var visibleCards = matched.slice(first, first + pageSize);
       cards.forEach(function (card) { card.hidden = !visibleCards.includes(card); });
-      toolbar.querySelectorAll('button').forEach(function (button) {
-        var active = button.dataset.filter === filter;
+      toolbar.querySelectorAll('button[data-filter], button[data-status]').forEach(function (button) {
+        var active = button.dataset.filter === filter || button.dataset.status === status;
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', String(active));
       });
@@ -90,17 +103,20 @@
     }
     toolbar.addEventListener('click', function (event) {
       var button = event.target.closest('button[data-filter]');
-      if (button) apply(button.dataset.filter, 1);
+      var statusButton = event.target.closest('button[data-status]');
+      if (button) apply(button.dataset.filter, currentStatus, 1);
+      if (statusButton) apply(currentFilter, statusButton.dataset.status, 1);
     });
     if (pagination) pagination.addEventListener('click', function (event) {
       var button = event.target.closest('button[data-page]');
       if (!button || button.disabled) return;
-      apply(currentFilter, Number(button.dataset.page));
+      apply(currentFilter, currentStatus, Number(button.dataset.page));
       toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     var initialParameters = new URLSearchParams(location.hash.slice(1));
     var initial = initialParameters.get('category') || 'all';
-    apply(filters.includes(initial) ? initial : 'all', initialParameters.get('page'));
+    var initialStatus = initialParameters.get('status') || 'all';
+    apply(filters.includes(initial) ? initial : 'all', statuses.includes(initialStatus) ? initialStatus : 'all', initialParameters.get('page'));
   }
 
   function registerGlossary() {
@@ -171,7 +187,8 @@
   function registerExcerpts() {
     var article = document.querySelector('.markdown-body');
     var libraryButton = document.querySelector('[data-all-excerpts]');
-    if (!article && !libraryButton) return;
+    var articleButton = document.querySelector('[data-article-excerpts]');
+    if (!article && !libraryButton && !articleButton) return;
     var storageKey = 'yrk_article_excerpts';
 
     function loadExcerpts() {
@@ -191,8 +208,11 @@
     }
 
     function updateLibraryCount() {
+      var map = loadExcerpts();
       var count = document.querySelector('[data-all-excerpt-count]');
-      if (count) count.textContent = excerptTotal(loadExcerpts());
+      var articleCount = document.querySelector('[data-article-excerpt-count]');
+      if (count) count.textContent = excerptTotal(map);
+      if (articleCount) articleCount.textContent = Array.isArray(map[location.pathname]) ? map[location.pathname].length : 0;
     }
 
     function createLibraryDialog() {
@@ -214,10 +234,22 @@
       return dialog;
     }
 
-    function openLibrary() {
+    function sourceTitle(path, entries) {
+      var titled = entries.find(function (entry) { return entry.title; });
+      if (titled) return titled.title;
+      if (path === location.pathname) {
+        var heading = document.querySelector('#seo-header');
+        if (heading) return heading.textContent.trim();
+      }
+      return '原文';
+    }
+
+    function openLibrary(onlyPath) {
       var map = loadExcerpts();
       var dialog = createLibraryDialog();
       var paths = Object.keys(map).filter(function (path) { return Array.isArray(map[path]) && map[path].length; });
+      if (onlyPath) paths = paths.filter(function (path) { return path === onlyPath; });
+      dialog.querySelector('h3').textContent = onlyPath ? '本篇摘录' : '我的摘录';
       if (!paths.length) {
         var empty = document.createElement('div');
         empty.className = 'excerpt-library-empty';
@@ -226,15 +258,19 @@
       }
       paths.forEach(function (path) {
         var entries = map[path];
+        var articleTitle = sourceTitle(path, entries);
         var group = document.createElement('section');
         group.className = 'excerpt-library-group';
         var link = document.createElement('a');
         link.href = path;
-        link.textContent = entries[0].title || '打开原文';
+        link.textContent = articleTitle;
         link.className = 'excerpt-library-title';
         group.appendChild(link);
         entries.forEach(function (entry, index) {
           var item = document.createElement('blockquote');
+          var origin = document.createElement('small');
+          origin.className = 'excerpt-library-source';
+          origin.textContent = '来自《' + articleTitle + '》';
           var text = document.createElement('p');
           text.textContent = entry.text;
           var actions = document.createElement('div');
@@ -250,10 +286,10 @@
             saveExcerpts(map);
             dialog.close();
             updateLibraryCount();
-            openLibrary();
+            openLibrary(onlyPath);
           };
           actions.append(source, remove);
-          item.append(text, actions);
+          item.append(origin, text, actions);
           group.appendChild(item);
         });
         dialog.appendChild(group);
@@ -261,7 +297,8 @@
       dialog.showModal();
     }
 
-    if (libraryButton) libraryButton.addEventListener('click', openLibrary);
+    if (libraryButton) libraryButton.addEventListener('click', function () { openLibrary(); });
+    if (articleButton) articleButton.addEventListener('click', function () { openLibrary(location.pathname); });
     if (article) document.addEventListener('mouseup', function () {
       var selection = window.getSelection();
       var selectedText = selection ? selection.toString().trim().replace(/\s+/g, ' ') : '';
@@ -286,6 +323,7 @@
         }
         map[path] = values.slice(-30);
         saveExcerpts(map);
+        updateLibraryCount();
         capture.textContent = '已收藏';
         setTimeout(function () { capture.remove(); }, 650);
         selection.removeAllRanges();

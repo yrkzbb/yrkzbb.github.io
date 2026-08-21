@@ -417,6 +417,21 @@
   font-size: 0.82rem;
 }
 
+.home-filter-divider {
+  align-self: stretch;
+  width: 1px;
+  min-height: 1.9rem;
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.home-status-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  button { padding-inline: 0.68rem; font-size: 0.78rem; }
+}
+
 .home-filter .home-excerpts-button {
   margin-left: auto;
   color: #6653d7;
@@ -675,15 +690,8 @@
 
     nav .upcoming { opacity: 0.72; }
 
-    .series-rail-hint {
-      margin: 0.75rem 0 0 1.35rem;
-      color: var(--sec-text-color);
-      font-size: 0.64rem;
-      line-height: 1.5;
-    }
-
     .series-rail-extra {
-      margin: 0.9rem 0 0 1.35rem;
+      margin: 0.75rem 0 0 1.35rem;
       padding-top: 0.8rem;
       border-top: 1px solid rgba(127,127,127,.13);
 
@@ -800,11 +808,30 @@
 .excerpt-library-group + .excerpt-library-group { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid rgba(127,127,127,.13); }
 .excerpt-library-title { display: inline-block; margin-bottom: 0.45rem; color: #6653d7; font-size: 0.84rem; font-weight: 600; }
 .excerpt-library-group blockquote { margin: 0.45rem 0; padding: 0.65rem 0.75rem; border-left: 2px solid rgba(124,92,255,.55); border-radius: 0 0.5rem 0.5rem 0; background: var(--button-hover-bg-color); }
+.excerpt-library-source { display: block; margin-bottom: 0.28rem; color: #7466c9; font-size: 0.66rem; }
 .excerpt-library-group blockquote p { margin: 0; font-size: 0.78rem; line-height: 1.65; }
 .excerpt-library-group blockquote div { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 0.35rem; }
 .excerpt-library-group blockquote a,
 .excerpt-library-group blockquote button { padding: 0; border: 0; color: var(--sec-text-color); background: transparent; font-size: 0.66rem; cursor: pointer; }
 .excerpt-library-group blockquote button { color: #c44f65; }
+
+.post-excerpt-entry {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.8rem 0 1.1rem;
+
+  button {
+    padding: 0.38rem 0.72rem;
+    border: 1px solid rgba(124,92,255,.22);
+    border-radius: 999px;
+    color: #6653d7;
+    background: rgba(124,92,255,.06);
+    font-size: 0.76rem;
+    cursor: pointer;
+  }
+
+  span { margin-left: 0.18rem; opacity: 0.7; }
+}
 .knowledge-series ol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

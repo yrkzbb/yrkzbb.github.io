@@ -31,7 +31,6 @@ var overallRouteProgress = postSeries ? Math.round(((postSeries.index + 1) / ove
               </a>
             <% }) %>
           </nav>
-          <p class="series-rail-hint">当前位于第 <%= postSeries.index + 1 %> 篇，后面还有 <%= postSeries.items.length - postSeries.index - 1 %> 篇</p>
           <div class="series-rail-extra">
             <div class="series-rail-section rail-review">
               <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
@@ -43,9 +42,9 @@ var overallRouteProgress = postSeries ? Math.round(((postSeries.index + 1) / ove
             </div>
             <label class="series-mastery">本篇掌握度
               <select data-mastery aria-label="本篇掌握度">
-                <option value="unread">未读</option>
+                <option value="unread">未学</option>
                 <option value="learning">在学</option>
-                <option value="mastered">已掌握</option>
+                <option value="mastered">已学</option>
               </select>
             </label>
             <div class="series-rail-actions">
@@ -95,6 +94,10 @@ var overallRouteProgress = postSeries ? Math.round(((postSeries.index + 1) / ove
                 <%- inject_point('postMarkdownEnd') %>
               </div>
             <% } %>
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
 
             <% var series = postSeries %>
             <% if (series) { %>
