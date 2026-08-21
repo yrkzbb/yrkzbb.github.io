@@ -413,9 +413,16 @@
 }
 
 .home-filter-count {
-  margin-left: auto;
   color: var(--text-color);
   font-size: 0.82rem;
+}
+
+.home-filter .home-excerpts-button {
+  margin-left: auto;
+  color: #6653d7;
+  background: rgba(124, 92, 255, 0.09);
+
+  &:hover { background: rgba(124, 92, 255, 0.16); }
 }
 
 .home-post-grid {
@@ -711,25 +718,6 @@
       button { padding: 0.12rem 0.32rem; border: 1px dashed rgba(124,92,255,.35); border-radius: 999px; color: #6d5ce7; background: transparent; font-size: 0.6rem; cursor: pointer; }
     }
 
-    .series-rail-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-bottom: 0.65rem;
-
-      a {
-        max-width: 100%;
-        overflow: hidden;
-        padding: 0.14rem 0.35rem;
-        border-radius: 999px;
-        color: var(--sec-text-color);
-        background: var(--button-hover-bg-color);
-        font-size: 0.62rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-
     .series-rail-actions {
       display: flex;
       flex-direction: column;
@@ -770,19 +758,6 @@
   }
 }
 
-.excerpt-capture-button {
-  position: fixed;
-  z-index: 1100;
-  padding: 0.36rem 0.55rem;
-  border: 0;
-  border-radius: 0.5rem;
-  color: #fff;
-  background: #6d5ce7;
-  box-shadow: 0 6px 18px rgba(59,48,130,.25);
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-
 .knowledge-local-dialog {
   width: calc(100vw - 2rem);
   max-width: 34rem;
@@ -804,12 +779,32 @@
 .knowledge-dialog-head button { border: 0; color: var(--sec-text-color); background: transparent; font-size: 1.35rem; cursor: pointer; }
 .knowledge-dialog-actions { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
 .knowledge-dialog-actions .primary { padding: 0.45rem 0.75rem; border: 0; border-radius: 0.5rem; color: #fff; background: #6d5ce7; cursor: pointer; }
-.knowledge-excerpt-list { max-height: 28rem; overflow: auto; }
-.knowledge-excerpt-list > p { color: var(--sec-text-color); font-size: 0.82rem; }
-.knowledge-excerpt-list blockquote { margin: 0.6rem 0; padding: 0.7rem 0.8rem; border-left: 3px solid #7c5cff; border-radius: 0 0.55rem 0.55rem 0; background: var(--button-hover-bg-color); }
-.knowledge-excerpt-list blockquote p { margin: 0; font-size: 0.8rem; line-height: 1.65; }
-.knowledge-excerpt-list blockquote button { display: block; margin: 0.35rem 0 0 auto; padding: 0; border: 0; color: #d05067; background: transparent; font-size: 0.68rem; cursor: pointer; }
 
+.excerpt-capture-button {
+  position: fixed;
+  z-index: 1100;
+  padding: 0.36rem 0.55rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #6d5ce7;
+  box-shadow: 0 6px 18px rgba(59,48,130,.25);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.excerpt-library-dialog { overflow-y: auto; }
+.excerpt-library-empty { display: grid; gap: 0.3rem; padding: 2.2rem 1rem; color: var(--sec-text-color); text-align: center; }
+.excerpt-library-empty strong { color: var(--text-color); font-size: 0.95rem; }
+.excerpt-library-empty span { font-size: 0.78rem; }
+.excerpt-library-group + .excerpt-library-group { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid rgba(127,127,127,.13); }
+.excerpt-library-title { display: inline-block; margin-bottom: 0.45rem; color: #6653d7; font-size: 0.84rem; font-weight: 600; }
+.excerpt-library-group blockquote { margin: 0.45rem 0; padding: 0.65rem 0.75rem; border-left: 2px solid rgba(124,92,255,.55); border-radius: 0 0.5rem 0.5rem 0; background: var(--button-hover-bg-color); }
+.excerpt-library-group blockquote p { margin: 0; font-size: 0.78rem; line-height: 1.65; }
+.excerpt-library-group blockquote div { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 0.35rem; }
+.excerpt-library-group blockquote a,
+.excerpt-library-group blockquote button { padding: 0; border: 0; color: var(--sec-text-color); background: transparent; font-size: 0.66rem; cursor: pointer; }
+.excerpt-library-group blockquote button { color: #c44f65; }
 .knowledge-series ol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -13,6 +13,7 @@ page.banner_mask_alpha = theme.index.banner_mask_alpha
   <% homeCategories.each(function(category) { %>
     <button type="button" data-filter="<%= category._id %>" aria-pressed="false"><%= category.name %> <small><%= category.length %></small></button>
   <% }) %>
+  <button type="button" class="home-excerpts-button" data-all-excerpts>我的摘录 <small data-all-excerpt-count>0</small></button>
   <span class="home-filter-count" aria-live="polite"></span>
 </div>
 

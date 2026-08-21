@@ -168,14 +168,137 @@
     });
   }
 
+  function registerExcerpts() {
+    var article = document.querySelector('.markdown-body');
+    var libraryButton = document.querySelector('[data-all-excerpts]');
+    if (!article && !libraryButton) return;
+    var storageKey = 'yrk_article_excerpts';
+
+    function loadExcerpts() {
+      try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); }
+      catch (_) { return {}; }
+    }
+
+    function saveExcerpts(value) {
+      try { localStorage.setItem(storageKey, JSON.stringify(value)); }
+      catch (_) {}
+    }
+
+    function excerptTotal(map) {
+      return Object.keys(map).reduce(function (total, path) {
+        return total + (Array.isArray(map[path]) ? map[path].length : 0);
+      }, 0);
+    }
+
+    function updateLibraryCount() {
+      var count = document.querySelector('[data-all-excerpt-count]');
+      if (count) count.textContent = excerptTotal(loadExcerpts());
+    }
+
+    function createLibraryDialog() {
+      var dialog = document.createElement('dialog');
+      dialog.className = 'knowledge-local-dialog excerpt-library-dialog';
+      var heading = document.createElement('div');
+      heading.className = 'knowledge-dialog-head';
+      var title = document.createElement('h3');
+      title.textContent = '我的摘录';
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.textContent = '×';
+      close.setAttribute('aria-label', '关闭');
+      close.onclick = function () { dialog.close(); };
+      heading.append(title, close);
+      dialog.appendChild(heading);
+      dialog.addEventListener('close', function () { dialog.remove(); });
+      document.body.appendChild(dialog);
+      return dialog;
+    }
+
+    function openLibrary() {
+      var map = loadExcerpts();
+      var dialog = createLibraryDialog();
+      var paths = Object.keys(map).filter(function (path) { return Array.isArray(map[path]) && map[path].length; });
+      if (!paths.length) {
+        var empty = document.createElement('div');
+        empty.className = 'excerpt-library-empty';
+        empty.innerHTML = '<strong>还没有摘录</strong><span>在文章正文中选中文字，就能收藏到这里。</span>';
+        dialog.appendChild(empty);
+      }
+      paths.forEach(function (path) {
+        var entries = map[path];
+        var group = document.createElement('section');
+        group.className = 'excerpt-library-group';
+        var link = document.createElement('a');
+        link.href = path;
+        link.textContent = entries[0].title || '打开原文';
+        link.className = 'excerpt-library-title';
+        group.appendChild(link);
+        entries.forEach(function (entry, index) {
+          var item = document.createElement('blockquote');
+          var text = document.createElement('p');
+          text.textContent = entry.text;
+          var actions = document.createElement('div');
+          var source = document.createElement('a');
+          source.href = path;
+          source.textContent = '回到原文';
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.textContent = '删除';
+          remove.onclick = function () {
+            map[path].splice(index, 1);
+            if (!map[path].length) delete map[path];
+            saveExcerpts(map);
+            dialog.close();
+            updateLibraryCount();
+            openLibrary();
+          };
+          actions.append(source, remove);
+          item.append(text, actions);
+          group.appendChild(item);
+        });
+        dialog.appendChild(group);
+      });
+      dialog.showModal();
+    }
+
+    if (libraryButton) libraryButton.addEventListener('click', openLibrary);
+    if (article) document.addEventListener('mouseup', function () {
+      var selection = window.getSelection();
+      var selectedText = selection ? selection.toString().trim().replace(/\s+/g, ' ') : '';
+      var old = document.querySelector('.excerpt-capture-button');
+      if (old) old.remove();
+      if (!selection || !selection.rangeCount || !selectedText || selectedText.length < 6 || selectedText.length > 500 || !article.contains(selection.anchorNode)) return;
+      var rect = selection.getRangeAt(0).getBoundingClientRect();
+      var capture = document.createElement('button');
+      capture.type = 'button';
+      capture.className = 'excerpt-capture-button';
+      capture.textContent = '收藏摘录';
+      capture.style.left = Math.min(window.innerWidth - 100, Math.max(8, rect.left + rect.width / 2 - 38)) + 'px';
+      capture.style.top = Math.max(8, rect.top - 38) + 'px';
+      capture.onmousedown = function (event) { event.preventDefault(); };
+      capture.onclick = function () {
+        var map = loadExcerpts();
+        var path = location.pathname;
+        var values = Array.isArray(map[path]) ? map[path] : [];
+        if (!values.some(function (entry) { return entry.text === selectedText; })) {
+          var heading = document.querySelector('#seo-header');
+          values.push({ text: selectedText, title: heading ? heading.textContent.trim() : document.title, savedAt: Date.now() });
+        }
+        map[path] = values.slice(-30);
+        saveExcerpts(map);
+        capture.textContent = '已收藏';
+        setTimeout(function () { capture.remove(); }, 650);
+        selection.removeAllRanges();
+      };
+      document.body.appendChild(capture);
+    });
+    updateLibraryCount();
+  }
+
   function registerRailTools() {
     var rail = document.querySelector('.series-rail');
     if (!rail) return;
-    var copyButton = document.querySelector('[data-copy-current]');
     var mastery = document.querySelector('[data-mastery]');
-    var excerptButton = document.querySelector('[data-view-excerpts]');
-    var excerptCount = document.querySelector('[data-excerpt-count]');
-    var resumeButton = document.querySelector('[data-resume-reading]');
     var reviewList = document.querySelector('[data-quick-review]');
     var editReview = document.querySelector('[data-edit-review]');
     var feedback = document.querySelector('.series-rail-feedback');
@@ -295,101 +418,13 @@
       });
     }
 
-    // 本地摘录
-    var excerptMap = loadMap('yrk_article_excerpts');
-    function excerpts() { return Array.isArray(excerptMap[path]) ? excerptMap[path] : []; }
-    function updateExcerptCount() { if (excerptCount) excerptCount.textContent = excerpts().length; }
-    function openExcerpts() {
-      var dialog = makeDialog('我的本地摘录');
-      var list = document.createElement('div');
-      list.className = 'knowledge-excerpt-list';
-      if (!excerpts().length) {
-        var empty = document.createElement('p');
-        empty.textContent = '在正文中选中文字，即可收藏到这里。';
-        list.appendChild(empty);
-      }
-      excerpts().forEach(function (entry, index) {
-        var item = document.createElement('blockquote');
-        var text = document.createElement('p');
-        text.textContent = entry.text;
-        var remove = document.createElement('button');
-        remove.type = 'button';
-        remove.textContent = '删除';
-        remove.onclick = function () {
-          excerptMap[path].splice(index, 1);
-          saveMap('yrk_article_excerpts', excerptMap);
-          updateExcerptCount();
-          dialog.close();
-          openExcerpts();
-        };
-        item.append(text, remove);
-        list.appendChild(item);
-      });
-      dialog.appendChild(list);
-      dialog.showModal();
-    }
-    if (excerptButton) excerptButton.addEventListener('click', openExcerpts);
-    if (article) document.addEventListener('mouseup', function () {
-      var selection = window.getSelection();
-      var text = selection ? selection.toString().trim().replace(/\s+/g, ' ') : '';
-      var old = document.querySelector('.excerpt-capture-button');
-      if (old) old.remove();
-      if (!text || text.length < 6 || text.length > 500 || !article.contains(selection.anchorNode)) return;
-      var rect = selection.getRangeAt(0).getBoundingClientRect();
-      var capture = document.createElement('button');
-      capture.type = 'button';
-      capture.className = 'excerpt-capture-button';
-      capture.textContent = '收藏摘录';
-      capture.style.left = Math.min(window.innerWidth - 100, Math.max(8, rect.left + rect.width / 2 - 38)) + 'px';
-      capture.style.top = Math.max(8, rect.top - 38) + 'px';
-      capture.onmousedown = function (event) { event.preventDefault(); };
-      capture.onclick = function () {
-        var values = excerpts();
-        if (!values.some(function (entry) { return entry.text === text; })) values.push({ text: text, savedAt: Date.now() });
-        excerptMap[path] = values.slice(-30);
-        saveMap('yrk_article_excerpts', excerptMap);
-        updateExcerptCount();
-        capture.remove();
-        selection.removeAllRanges();
-        showFeedback('摘录已收藏');
-      };
-      document.body.appendChild(capture);
-    });
-    updateExcerptCount();
-
-    // 阅读断点
-    var checkpointMap = loadMap('yrk_article_checkpoints');
-    var checkpoint = checkpointMap[path];
-    if (resumeButton && checkpoint && checkpoint.y > 300) {
-      resumeButton.hidden = false;
-      resumeButton.textContent = '继续上次位置 ' + checkpoint.percent + '%';
-      resumeButton.onclick = function () { window.scrollTo({ top: checkpoint.y, behavior: 'smooth' }); };
-    }
-    var checkpointTimer;
-    function saveCheckpoint() {
-      var scrollable = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-      checkpointMap[path] = { y: Math.round(scrollY), percent: Math.min(100, Math.round(scrollY / scrollable * 100)), savedAt: Date.now() };
-      saveMap('yrk_article_checkpoints', checkpointMap);
-    }
-    window.addEventListener('scroll', function () {
-      clearTimeout(checkpointTimer);
-      checkpointTimer = setTimeout(saveCheckpoint, 700);
-    }, { passive: true });
-    window.addEventListener('pagehide', saveCheckpoint);
-
-    if (copyButton) copyButton.addEventListener('click', function () {
-      navigator.clipboard.writeText(location.href).then(function () {
-        showFeedback('链接已复制');
-      }).catch(function () {
-        showFeedback('复制失败，请手动复制');
-      });
-    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     registerHomeFilter();
     registerGlossary();
     registerDiscovery();
+    registerExcerpts();
     registerRailTools();
   });
 })();

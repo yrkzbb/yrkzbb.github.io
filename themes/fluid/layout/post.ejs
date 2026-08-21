@@ -41,14 +41,6 @@ var overallRouteProgress = postSeries ? Math.round(((postSeries.index + 1) / ove
               <p>本文术语</p>
               <div data-article-terms></div>
             </div>
-            <% if (page.tags && page.tags.length) { %>
-              <div class="series-rail-section">
-                <p>本篇关键词</p>
-                <div class="series-rail-tags">
-                  <% page.tags.each(function(tag) { %><a href="<%= url_for(tag.path) %>">#<%= tag.name %></a><% }) %>
-                </div>
-              </div>
-            <% } %>
             <label class="series-mastery">本篇掌握度
               <select data-mastery aria-label="本篇掌握度">
                 <option value="unread">未读</option>
@@ -57,9 +49,6 @@ var overallRouteProgress = postSeries ? Math.round(((postSeries.index + 1) / ove
               </select>
             </label>
             <div class="series-rail-actions">
-              <button type="button" data-view-excerpts>我的摘录 <span data-excerpt-count>0</span></button>
-              <button type="button" data-resume-reading hidden>继续上次位置</button>
-              <button type="button" data-copy-current>复制链接</button>
               <button type="button" data-random-post>随机一篇</button>
             </div>
             <span class="series-rail-feedback" aria-live="polite"></span>
