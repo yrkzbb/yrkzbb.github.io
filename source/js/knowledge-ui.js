@@ -168,9 +168,228 @@
     });
   }
 
+  function registerRailTools() {
+    var rail = document.querySelector('.series-rail');
+    if (!rail) return;
+    var copyButton = document.querySelector('[data-copy-current]');
+    var mastery = document.querySelector('[data-mastery]');
+    var excerptButton = document.querySelector('[data-view-excerpts]');
+    var excerptCount = document.querySelector('[data-excerpt-count]');
+    var resumeButton = document.querySelector('[data-resume-reading]');
+    var reviewList = document.querySelector('[data-quick-review]');
+    var editReview = document.querySelector('[data-edit-review]');
+    var feedback = document.querySelector('.series-rail-feedback');
+    var article = document.querySelector('.markdown-body');
+    var path = location.pathname;
+
+    function loadMap(key) {
+      try { return JSON.parse(localStorage.getItem(key) || '{}'); }
+      catch (_) { return {}; }
+    }
+
+    function saveMap(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+      catch (_) { return false; }
+    }
+
+    function showFeedback(message) {
+      if (!feedback) return;
+      feedback.textContent = message;
+      clearTimeout(showFeedback.timer);
+      showFeedback.timer = setTimeout(function () { feedback.textContent = ''; }, 1800);
+    }
+
+    function makeDialog(title) {
+      var dialog = document.createElement('dialog');
+      dialog.className = 'knowledge-local-dialog';
+      var heading = document.createElement('div');
+      heading.className = 'knowledge-dialog-head';
+      var name = document.createElement('h3');
+      name.textContent = title;
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.textContent = '×';
+      close.setAttribute('aria-label', '关闭');
+      close.onclick = function () { dialog.close(); };
+      heading.append(name, close);
+      dialog.appendChild(heading);
+      dialog.addEventListener('close', function () { dialog.remove(); });
+      document.body.appendChild(dialog);
+      return dialog;
+    }
+
+    // 当前文章术语
+    var termBox = document.querySelector('[data-article-terms]');
+    var termSection = termBox && termBox.closest('.rail-terms');
+    if (termBox && article) {
+      var uniqueTerms = [];
+      Array.prototype.forEach.call(article.querySelectorAll('.term-tip'), function (tip) {
+        if (!uniqueTerms.some(function (entry) { return entry.name === tip.textContent; })) uniqueTerms.push({ name: tip.textContent, node: tip });
+      });
+      uniqueTerms.slice(0, 5).forEach(function (entry) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = entry.name;
+        button.title = entry.node.dataset.definition || '';
+        button.onclick = function () { entry.node.scrollIntoView({ behavior: 'smooth', block: 'center' }); entry.node.focus(); };
+        termBox.appendChild(button);
+      });
+      if (termSection) termSection.hidden = uniqueTerms.length === 0;
+    }
+
+    // 快速回顾：默认取前五个二级标题，可本地编辑
+    var headings = article ? Array.prototype.slice.call(article.querySelectorAll('h2')).slice(0, 5) : [];
+    var defaultReview = headings.map(function (heading) { return heading.textContent.replace(/#$/, '').trim(); });
+    var reviewMap = loadMap('yrk_article_reviews');
+    function currentReview() { return Array.isArray(reviewMap[path]) ? reviewMap[path] : defaultReview; }
+    function renderReview() {
+      if (!reviewList) return;
+      reviewList.innerHTML = '';
+      currentReview().slice(0, 5).forEach(function (text, index) {
+        var item = document.createElement('li');
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = text;
+        button.onclick = function () { if (headings[index]) headings[index].scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+        item.appendChild(button);
+        reviewList.appendChild(item);
+      });
+    }
+    if (editReview) editReview.addEventListener('click', function () {
+      var dialog = makeDialog('编辑快速回顾');
+      var hint = document.createElement('p');
+      hint.textContent = '每行一条，最多保留 5 条；清空后保存可恢复自动生成。';
+      var textarea = document.createElement('textarea');
+      textarea.value = currentReview().join('\n');
+      textarea.rows = 8;
+      var actions = document.createElement('div');
+      actions.className = 'knowledge-dialog-actions';
+      var save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'primary';
+      save.textContent = '保存到本机';
+      save.onclick = function () {
+        var values = textarea.value.split('\n').map(function (value) { return value.trim(); }).filter(Boolean).slice(0, 5);
+        if (values.length) reviewMap[path] = values;
+        else delete reviewMap[path];
+        saveMap('yrk_article_reviews', reviewMap);
+        renderReview();
+        dialog.close();
+        showFeedback(values.length ? '快速回顾已保存' : '已恢复自动生成');
+      };
+      actions.appendChild(save);
+      dialog.append(hint, textarea, actions);
+      dialog.showModal();
+      textarea.focus();
+    });
+    renderReview();
+
+    // 掌握度
+    var masteryMap = loadMap('yrk_article_mastery');
+    if (mastery) {
+      mastery.value = masteryMap[path] || 'unread';
+      mastery.addEventListener('change', function () {
+        masteryMap[path] = mastery.value;
+        saveMap('yrk_article_mastery', masteryMap);
+        showFeedback('掌握度已保存');
+      });
+    }
+
+    // 本地摘录
+    var excerptMap = loadMap('yrk_article_excerpts');
+    function excerpts() { return Array.isArray(excerptMap[path]) ? excerptMap[path] : []; }
+    function updateExcerptCount() { if (excerptCount) excerptCount.textContent = excerpts().length; }
+    function openExcerpts() {
+      var dialog = makeDialog('我的本地摘录');
+      var list = document.createElement('div');
+      list.className = 'knowledge-excerpt-list';
+      if (!excerpts().length) {
+        var empty = document.createElement('p');
+        empty.textContent = '在正文中选中文字，即可收藏到这里。';
+        list.appendChild(empty);
+      }
+      excerpts().forEach(function (entry, index) {
+        var item = document.createElement('blockquote');
+        var text = document.createElement('p');
+        text.textContent = entry.text;
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '删除';
+        remove.onclick = function () {
+          excerptMap[path].splice(index, 1);
+          saveMap('yrk_article_excerpts', excerptMap);
+          updateExcerptCount();
+          dialog.close();
+          openExcerpts();
+        };
+        item.append(text, remove);
+        list.appendChild(item);
+      });
+      dialog.appendChild(list);
+      dialog.showModal();
+    }
+    if (excerptButton) excerptButton.addEventListener('click', openExcerpts);
+    if (article) document.addEventListener('mouseup', function () {
+      var selection = window.getSelection();
+      var text = selection ? selection.toString().trim().replace(/\s+/g, ' ') : '';
+      var old = document.querySelector('.excerpt-capture-button');
+      if (old) old.remove();
+      if (!text || text.length < 6 || text.length > 500 || !article.contains(selection.anchorNode)) return;
+      var rect = selection.getRangeAt(0).getBoundingClientRect();
+      var capture = document.createElement('button');
+      capture.type = 'button';
+      capture.className = 'excerpt-capture-button';
+      capture.textContent = '收藏摘录';
+      capture.style.left = Math.min(window.innerWidth - 100, Math.max(8, rect.left + rect.width / 2 - 38)) + 'px';
+      capture.style.top = Math.max(8, rect.top - 38) + 'px';
+      capture.onmousedown = function (event) { event.preventDefault(); };
+      capture.onclick = function () {
+        var values = excerpts();
+        if (!values.some(function (entry) { return entry.text === text; })) values.push({ text: text, savedAt: Date.now() });
+        excerptMap[path] = values.slice(-30);
+        saveMap('yrk_article_excerpts', excerptMap);
+        updateExcerptCount();
+        capture.remove();
+        selection.removeAllRanges();
+        showFeedback('摘录已收藏');
+      };
+      document.body.appendChild(capture);
+    });
+    updateExcerptCount();
+
+    // 阅读断点
+    var checkpointMap = loadMap('yrk_article_checkpoints');
+    var checkpoint = checkpointMap[path];
+    if (resumeButton && checkpoint && checkpoint.y > 300) {
+      resumeButton.hidden = false;
+      resumeButton.textContent = '继续上次位置 ' + checkpoint.percent + '%';
+      resumeButton.onclick = function () { window.scrollTo({ top: checkpoint.y, behavior: 'smooth' }); };
+    }
+    var checkpointTimer;
+    function saveCheckpoint() {
+      var scrollable = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      checkpointMap[path] = { y: Math.round(scrollY), percent: Math.min(100, Math.round(scrollY / scrollable * 100)), savedAt: Date.now() };
+      saveMap('yrk_article_checkpoints', checkpointMap);
+    }
+    window.addEventListener('scroll', function () {
+      clearTimeout(checkpointTimer);
+      checkpointTimer = setTimeout(saveCheckpoint, 700);
+    }, { passive: true });
+    window.addEventListener('pagehide', saveCheckpoint);
+
+    if (copyButton) copyButton.addEventListener('click', function () {
+      navigator.clipboard.writeText(location.href).then(function () {
+        showFeedback('链接已复制');
+      }).catch(function () {
+        showFeedback('复制失败，请手动复制');
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     registerHomeFilter();
     registerGlossary();
     registerDiscovery();
+    registerRailTools();
   });
 })();

@@ -629,16 +629,18 @@
 
     nav a {
       position: relative;
-      display: block;
+      display: grid;
+      grid-template-columns: 1.45rem minmax(0, 1fr);
+      align-items: start;
       margin: 0;
-      padding: 0.45rem 0.25rem 0.55rem;
+      padding: 0.38rem 0.2rem 0.42rem;
       color: var(--text-color);
       line-height: 1.35;
 
       &::before {
         content: '';
         position: absolute;
-        top: 0.75rem;
+        top: 0.58rem;
         left: -1.22rem;
         width: 0.52rem;
         height: 0.52rem;
@@ -649,8 +651,13 @@
       }
 
       &:hover strong { color: #6d5ce7; }
-      small { display: block; margin-bottom: 0.08rem; color: var(--sec-text-color); font-size: 0.65rem; }
+      small { color: var(--sec-text-color); font-size: 0.62rem; font-variant-numeric: tabular-nums; }
       strong { display: -webkit-box; overflow: hidden; font-size: 0.76rem; font-weight: 500; transition: color .18s ease; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    }
+
+    nav .passed {
+      &::before { background: #20a77a; }
+      small { color: #208765; }
     }
 
     nav .current {
@@ -658,8 +665,150 @@
       small, strong { color: #6d5ce7; }
       strong { font-weight: 700; }
     }
+
+    nav .upcoming { opacity: 0.72; }
+
+    .series-rail-hint {
+      margin: 0.75rem 0 0 1.35rem;
+      color: var(--sec-text-color);
+      font-size: 0.64rem;
+      line-height: 1.5;
+    }
+
+    .series-rail-extra {
+      margin: 0.9rem 0 0 1.35rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(127,127,127,.13);
+
+      p { margin: 0 0 0.4rem; color: var(--sec-text-color); font-size: 0.66rem; }
+    }
+
+    .series-rail-section { margin-bottom: 0.75rem; }
+
+    .series-rail-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      button { padding: 0; border: 0; color: #6d5ce7; background: transparent; font-size: 0.6rem; cursor: pointer; }
+    }
+
+    .rail-review ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      li { margin: 0.22rem 0; }
+      button { display: block; width: 100%; overflow: hidden; padding: 0; border: 0; color: var(--sec-text-color); background: transparent; font-size: 0.63rem; line-height: 1.4; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+      button:hover { color: #6d5ce7; }
+    }
+
+    [data-article-terms] {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.28rem;
+
+      button { padding: 0.12rem 0.32rem; border: 1px dashed rgba(124,92,255,.35); border-radius: 999px; color: #6d5ce7; background: transparent; font-size: 0.6rem; cursor: pointer; }
+    }
+
+    .series-rail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-bottom: 0.65rem;
+
+      a {
+        max-width: 100%;
+        overflow: hidden;
+        padding: 0.14rem 0.35rem;
+        border-radius: 999px;
+        color: var(--sec-text-color);
+        background: var(--button-hover-bg-color);
+        font-size: 0.62rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .series-rail-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.18rem;
+
+      button {
+        padding: 0.18rem 0;
+        border: 0;
+        color: var(--sec-text-color);
+        background: transparent;
+        font-size: 0.66rem;
+        cursor: pointer;
+
+        &:hover, &.active { color: #6d5ce7; }
+      }
+    }
+
+    .series-mastery {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      margin: 0.7rem 0 0.5rem;
+      color: var(--sec-text-color);
+      font-size: 0.65rem;
+
+      select { min-width: 0; padding: 0.15rem 0.2rem; border: 1px solid rgba(127,127,127,.15); border-radius: 0.35rem; color: var(--text-color); background: var(--board-bg-color); font-size: 0.62rem; }
+    }
+
+    .series-rail-feedback {
+      display: block;
+      min-height: 1rem;
+      margin-top: 0.2rem;
+      color: #20a77a;
+      font-size: 0.6rem;
+    }
   }
 }
+
+.excerpt-capture-button {
+  position: fixed;
+  z-index: 1100;
+  padding: 0.36rem 0.55rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #6d5ce7;
+  box-shadow: 0 6px 18px rgba(59,48,130,.25);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.knowledge-local-dialog {
+  width: calc(100vw - 2rem);
+  max-width: 34rem;
+  max-height: calc(100vh - 2rem);
+  padding: 1.1rem;
+  border: 1px solid rgba(127,127,127,.16);
+  border-radius: 1rem;
+  color: var(--text-color);
+  background: var(--board-bg-color);
+  box-shadow: 0 24px 70px rgba(20,24,35,.28);
+
+  &::backdrop { background: rgba(20,24,35,.45); backdrop-filter: blur(2px); }
+  > p { color: var(--sec-text-color); font-size: 0.8rem; }
+  textarea { width: 100%; padding: 0.75rem; border: 1px solid rgba(127,127,127,.18); border-radius: 0.65rem; color: var(--text-color); background: var(--body-bg-color); line-height: 1.6; resize: vertical; }
+}
+
+.knowledge-dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+.knowledge-dialog-head h3 { margin: 0; font-size: 1rem; }
+.knowledge-dialog-head button { border: 0; color: var(--sec-text-color); background: transparent; font-size: 1.35rem; cursor: pointer; }
+.knowledge-dialog-actions { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+.knowledge-dialog-actions .primary { padding: 0.45rem 0.75rem; border: 0; border-radius: 0.5rem; color: #fff; background: #6d5ce7; cursor: pointer; }
+.knowledge-excerpt-list { max-height: 28rem; overflow: auto; }
+.knowledge-excerpt-list > p { color: var(--sec-text-color); font-size: 0.82rem; }
+.knowledge-excerpt-list blockquote { margin: 0.6rem 0; padding: 0.7rem 0.8rem; border-left: 3px solid #7c5cff; border-radius: 0 0.55rem 0.55rem 0; background: var(--button-hover-bg-color); }
+.knowledge-excerpt-list blockquote p { margin: 0; font-size: 0.8rem; line-height: 1.65; }
+.knowledge-excerpt-list blockquote button { display: block; margin: 0.35rem 0 0 auto; padding: 0; border: 0; color: #d05067; background: transparent; font-size: 0.68rem; cursor: pointer; }
 
 .knowledge-series ol {
   display: grid;
