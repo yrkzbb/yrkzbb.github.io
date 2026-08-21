@@ -1,6 +1,16 @@
 /* global CONFIG */
 
 (function() {
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function(char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   // Modified from [hexo-generator-search](https://github.com/wzpan/hexo-generator-search)
   function localSearchFunc(path, searchSelector, resultSelector) {
     'use strict';
@@ -43,6 +53,7 @@
           // 0x03. parse query to keywords list
           var content = $input.val();
           var resultHTML = '';
+          var matched = [];
           var keywords = content.trim().toLowerCase().split(/[\s-]+/);
           $result.html('');
           if (content.trim().length <= 0) {
@@ -84,7 +95,7 @@
             }
             // 0x05. show search results
             if (isMatch) {
-              resultHTML += '<a href=\'' + data_url + '\' class=\'list-group-item list-group-item-action font-weight-bolder search-list-title\'>' + orig_data_title + '</a>';
+              var itemHTML = '<a href="' + escapeHTML(data_url) + '" class="list-group-item list-group-item-action font-weight-bolder search-list-title">' + escapeHTML(orig_data_title) + '</a>';
               var content = orig_data_content;
               if (first_occur >= 0) {
                 // cut out 100 characters
@@ -103,21 +114,25 @@
                   end = content.length;
                 }
 
-                var match_content = content.substring(start, end);
+                var match_content = escapeHTML(content.substring(start, end));
 
                 // highlight all keywords
                 keywords.forEach(function(keyword) {
-                  var regS = new RegExp(keyword, 'gi');
-                  match_content = match_content.replace(regS, '<span class="search-word">' + keyword + '</span>');
+                  var safeKeyword = escapeHTML(keyword);
+                  var regS = new RegExp(escapeRegExp(safeKeyword), 'gi');
+                  match_content = match_content.replace(regS, '<span class="search-word">$&</span>');
                 });
 
-                resultHTML += '<p class=\'search-list-content\'>' + match_content + '...</p>';
+                itemHTML += '<p class="search-list-content">' + match_content + '...</p>';
               }
+              matched.push(itemHTML);
             }
           });
-          if (resultHTML.indexOf('list-group-item') === -1) {
+          if (matched.length === 0) {
+            $result.html('<p class="search-result-status">没有找到相关文章，换个关键词试试。</p>');
             return $input.addClass('invalid').removeClass('valid');
           }
+          resultHTML = '<p class="search-result-status">找到 ' + matched.length + ' 条结果' + (matched.length > 20 ? '，显示前 20 条' : '') + '</p>' + matched.slice(0, 20).join('');
           $input.addClass('valid').removeClass('invalid');
           $result.html(resultHTML);
         });

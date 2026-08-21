@@ -18,6 +18,9 @@ for (const file of files) {
   const frontMatter = content.match(/^---\s*\n([\s\S]*?)\n---/);
   if (frontMatter && !/^title:\s*.+$/m.test(frontMatter[1]))
     errors.push(`${file}: 缺少标题`);
+  for (const image of content.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)) {
+    if (!image[1].trim()) errors.push(`${file}: 图片缺少替代文本 ${image[2]}`);
+  }
 }
 
 if (errors.length) {

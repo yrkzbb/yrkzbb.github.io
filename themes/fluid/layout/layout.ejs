@@ -9,13 +9,14 @@ var colorSchema = theme.dark_mode && theme.dark_mode.enable && theme.dark_mode.d
 <%- partial('_partials/head.ejs') %>
 
 <body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
   <%- inject_point('bodyBegin') %>
 
   <header>
     <%- inject_point('header') %>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <% if(is_post() || page.layout === '404') { %>
       <%- body %>
     <% } else { %>

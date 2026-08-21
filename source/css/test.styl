@@ -83,9 +83,21 @@
     display: block;
     width: 0;
     height: 100%;
-    background: linear-gradient(90deg, #29d, #7c5cff);
-    box-shadow: 0 0 8px rgba(34, 153, 221, 0.55);
+    background: linear-gradient(90deg, #20d9d2, #2f80ed, #8b5cf6, #ec4899, #ff8a3d, #20d9d2);
+    background-size: 240% 100%;
+    box-shadow: 0 0 6px rgba(47, 128, 237, 0.65), 0 0 12px rgba(236, 72, 153, 0.3);
+    animation: reading-progress-colors 5s linear infinite;
     transition: width 80ms linear;
+  }
+}
+
+@keyframes reading-progress-colors {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 240% 0;
   }
 }
 
@@ -153,6 +165,7 @@
   .reading-progress > span,
   .reading-indicator,
   .article-share-button {
+    animation: none;
     transition: none;
   }
 }
@@ -162,6 +175,55 @@
   color: #fff;
   background: #29d;
   border-color: #29d;
+}
+
+.search-result-status {
+  margin: 0.75rem 0;
+  color: var(--sec-text-color);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+// 键盘用户可直接跳过导航
+.skip-to-content {
+  position: fixed;
+  z-index: 2000;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #1677b3;
+  transform: translateY(-150%);
+
+  &:focus {
+    color: #fff;
+    transform: translateY(0);
+  }
+}
+
+// 代码块在长行和移动设备上的阅读控制
+.markdown-body pre {
+  position: relative;
+}
+
+.markdown-body pre.code-wrap-enabled code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.code-wrap-button {
+  position: absolute;
+  top: 0.35rem;
+  right: 2.7rem;
+  z-index: 2;
+  padding: 0.15rem 0.45rem;
+  border: 0;
+  border-radius: 0.3rem;
+  color: inherit;
+  background: rgba(127, 127, 127, 0.2);
+  font-size: 0.7rem;
+  cursor: pointer;
 }
 
 // 移动端悬浮文章目录

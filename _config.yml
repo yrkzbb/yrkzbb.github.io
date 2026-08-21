@@ -109,6 +109,12 @@ markdown:
   plugins:
     - "@traptitech/markdown-it-katex"
 
+math:
+  katex:
+    css: /vendor/katex/katex.min.css
+  mathjax:
+    css: false
+
 live2d:
   enable: true
   scriptFrom: local

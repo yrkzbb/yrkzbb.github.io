@@ -256,7 +256,7 @@ custom_css:
 # 网页访问统计
 # Analysis of website visitors
 web_analytics:
-  enable: true
+  enable: false
 
   # 遵循访客浏览器"请勿追踪"的设置，如果开启则不统计其访问
   # Follow the "Do Not Track" setting of the visitor's browser
@@ -1087,31 +1087,31 @@ static_prefix:
   internal_css: /css
   internal_img: /img
 
-  anchor: https://lib.baomitu.com/anchor-js/5.0.0/
+  anchor: /vendor/anchor/
 
-  github_markdown: https://lib.baomitu.com/github-markdown-css/4.0.0/
+  github_markdown: /vendor/github-markdown/
 
-  jquery: https://lib.baomitu.com/jquery/3.6.4/
+  jquery: /vendor/jquery/
 
-  bootstrap: https://lib.baomitu.com/twitter-bootstrap/4.6.1/
+  bootstrap: /vendor/bootstrap/
 
   prismjs: https://lib.baomitu.com/prism/1.29.0/
 
-  tocbot: https://lib.baomitu.com/tocbot/4.20.1/
+  tocbot: /vendor/tocbot/
 
-  typed: https://lib.baomitu.com/typed.js/2.0.12/
+  typed: /vendor/typed/
 
-  fancybox: https://lib.baomitu.com/fancybox/3.5.7/
+  fancybox: /vendor/fancybox/
 
-  nprogress: https://lib.baomitu.com/nprogress/0.2.0/
+  nprogress: /vendor/nprogress/
 
   mathjax: https://lib.baomitu.com/mathjax/3.2.2/
 
-  katex: https://lib.baomitu.com/KaTeX/0.16.2/
+  katex: /vendor/katex/
 
   busuanzi: https://busuanzi.ibruce.info/busuanzi/2.3/
 
-  clipboard: https://lib.baomitu.com/clipboard.js/2.0.11/
+  clipboard: /vendor/clipboard/
 
   mermaid: https://lib.baomitu.com/mermaid/8.14.0/
 
@@ -1127,6 +1127,6 @@ static_prefix:
 
   discuss: https://lib.baomitu.com/discuss/1.2.1/
 
-  hint: https://lib.baomitu.com/hint.css/2.7.0/
+  hint: /vendor/hint/
 
   moment: https://lib.baomitu.com/moment.js/2.29.4/

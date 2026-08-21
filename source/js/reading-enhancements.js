@@ -96,11 +96,15 @@
     new MutationObserver(syncToc).observe(source, { childList: true, subtree: true, attributes: true });
     syncToc();
 
+    var previousFocus = null;
     function setOpen(open) {
+      if (open) previousFocus = document.activeElement;
       panel.classList.toggle('is-open', open);
       panel.setAttribute('aria-hidden', String(!open));
       button.setAttribute('aria-expanded', String(open));
       document.body.classList.toggle('mobile-toc-open', open);
+      if (open) panel.querySelector('.mobile-toc-header button').focus();
+      else if (previousFocus) previousFocus.focus();
     }
     button.addEventListener('click', function () { setOpen(true); });
     panel.querySelector('.mobile-toc-header button').addEventListener('click', function () { setOpen(false); });
@@ -109,6 +113,52 @@
     });
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && panel.classList.contains('is-open')) setOpen(false);
+      if (event.key === 'Tab' && panel.classList.contains('is-open')) {
+        var focusable = panel.querySelectorAll('button, a[href]');
+        if (!focusable.length) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+  }
+
+  function registerCodeTools() {
+    document.querySelectorAll('.markdown-body pre').forEach(function (pre) {
+      if (pre.querySelector('code.mermaid')) return;
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-wrap-button';
+      button.textContent = '换行';
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('title', '切换代码自动换行');
+      button.addEventListener('click', function () {
+        var enabled = pre.classList.toggle('code-wrap-enabled');
+        button.setAttribute('aria-pressed', String(enabled));
+        button.textContent = enabled ? '滚动' : '换行';
+      });
+      pre.appendChild(button);
+    });
+  }
+
+  function hardenExternalLinks() {
+    document.querySelectorAll('a[target="_blank"]').forEach(function (link) {
+      var rel = new Set((link.getAttribute('rel') || '').split(/\s+/).filter(Boolean));
+      rel.add('noopener');
+      rel.add('noreferrer');
+      link.setAttribute('rel', Array.from(rel).join(' '));
+    });
+    document.querySelectorAll('img[data-fallback-src]').forEach(function (image) {
+      image.addEventListener('error', function () {
+        if (image.getAttribute('src') !== image.dataset.fallbackSrc) image.src = image.dataset.fallbackSrc;
+        else if (image.dataset.originalSrc) image.src = image.dataset.originalSrc;
+      });
     });
   }
 
@@ -171,5 +221,7 @@
     registerSearchShortcut();
     registerReadingTools();
     registerMobileToc();
+    registerCodeTools();
+    hardenExternalLinks();
   });
 })();

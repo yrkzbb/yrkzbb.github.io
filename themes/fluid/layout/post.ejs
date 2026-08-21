@@ -4,9 +4,11 @@ page.banner_img_height = page.banner_img_height || theme.post.banner_img_height
 page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
 %>
 
-<meta name="hexo-source" content="<%= page.source || '' %>">
-<link rel="stylesheet" href="<%- url_for('/css/admin-entry.css') %>">
-<link rel="stylesheet" href="<%- url_for('/css/inline-editor.css') %>">
+<% if (process.env.HEXO_ADMIN === 'true') { %>
+  <meta name="hexo-source" content="<%= page.source || '' %>">
+  <link rel="stylesheet" href="<%- url_for('/css/admin-entry.css') %>">
+  <link rel="stylesheet" href="<%- url_for('/css/inline-editor.css') %>">
+<% } %>
 
 <div class="container-fluid nopadding-x">
   <div class="row nomargin-x">
@@ -106,4 +108,6 @@ page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
   </div>
 <% } %>
 
-<script defer src="<%- url_for('/js/post-editor-link.js') %>"></script>
+<% if (process.env.HEXO_ADMIN === 'true') { %>
+  <script defer src="<%- url_for('/js/post-editor-link.js') %>"></script>
+<% } %>

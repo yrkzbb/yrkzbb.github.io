@@ -9,7 +9,12 @@
     "new": "hexo new",
     "publish": "hexo clean && hexo generate && hexo deploy",
     "server": "hexo server",
-    "test": "node scripts/validate-content.js && node --check source/admin/admin.js && node --check source/js/post-editor-link.js",
+    "admin": "HEXO_ADMIN=true hexo clean && HEXO_ADMIN=true hexo server",
+    "check:links": "node tools/check-links.js",
+    "audit": "node tools/audit-site.js",
+    "optimize:images": "node tools/optimize-images.js",
+    "test": "node scripts/validate-content.js && node tools/check-links.js --source && node --check source/admin/admin.js && node --check source/js/post-editor-link.js && node --check source/js/reading-enhancements.js",
+    "verify": "npm test && npm run build && npm run check:links && npm run audit",
     "format": "prettier --write source/js source/admin scripts"
   },
   "hexo": {
