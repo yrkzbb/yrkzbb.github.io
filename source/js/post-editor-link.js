@@ -118,7 +118,9 @@
       var script = document.createElement("script");
       script.src = src;
       script.onload = resolve;
-      script.onerror = reject;
+      script.onerror = function () {
+        reject(new Error("编辑组件加载失败，请刷新页面后重试"));
+      };
       document.head.appendChild(script);
     });
   }
@@ -488,7 +490,8 @@
       originalBody = markdown;
       waitForPublish(previousMain.sha);
     } catch (error) {
-      notify("保存失败：" + error.message, "error");
+      var message = error && error.message ? error.message : "未知错误，请刷新页面后重试";
+      notify("保存失败：" + message, "error");
       button.disabled = false;
       button.textContent = "保存并发布";
     }
