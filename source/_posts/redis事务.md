@@ -1,7 +1,10 @@
 ---
 title: redis事务
-categories: 数据库
-tags: redis
+categories:
+  - 数据库
+tags:
+  - Redis
+  - 事务
 abbrlink: 25854
 date: 2026-08-21 17:44:08
 ---

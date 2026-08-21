@@ -5,7 +5,8 @@ date: 2026-08-18 19:23:00
 categories:
   - 数据库
 tags:
-  - sql
+  - MySQL
+  - SQL
 ---
 
 ## 数据库类型与选型
