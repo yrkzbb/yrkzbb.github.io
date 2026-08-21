@@ -156,3 +156,111 @@
     transition: none;
   }
 }
+
+// 搜索键盘选择状态
+#local-search-result .search-result-active {
+  color: #fff;
+  background: #29d;
+  border-color: #29d;
+}
+
+// 移动端悬浮文章目录
+.mobile-toc-button,
+.mobile-toc-panel {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  .mobile-toc-button {
+    display: block;
+    position: fixed;
+    z-index: 1030;
+    left: 0.65rem;
+    bottom: 1rem;
+    width: 2.65rem;
+    height: 2.65rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0.65rem;
+    color: #fff;
+    background: rgba(32, 35, 42, 0.82);
+    font-size: 1.2rem;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-toc-button[hidden] {
+    display: none;
+  }
+
+  .mobile-toc-panel {
+    display: flex;
+    position: fixed;
+    z-index: 1050;
+    inset: 0;
+    align-items: flex-end;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.42);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .mobile-toc-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-toc-card {
+    width: 100%;
+    max-height: min(70vh, 36rem);
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--board-bg-color, #fff);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transform: translateY(1rem);
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-toc-panel.is-open .mobile-toc-card {
+    transform: translateY(0);
+  }
+
+  .mobile-toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+
+    button {
+      padding: 0 0.4rem;
+      border: 0;
+      color: inherit;
+      background: transparent;
+      font-size: 1.7rem;
+      cursor: pointer;
+    }
+  }
+
+  .mobile-toc-content {
+    max-height: calc(min(70vh, 36rem) - 4rem);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .tocbot-list {
+      padding-left: 1rem;
+    }
+
+    .tocbot-link {
+      display: block;
+      padding: 0.32rem 0;
+      color: inherit;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .mobile-toc-open {
+    overflow: hidden;
+  }
+}
