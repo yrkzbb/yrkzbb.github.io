@@ -14,22 +14,20 @@ var postSeries = knowledge_series(page)
     <div class="side-col post-left-col d-none d-lg-block col-lg-2">
       <% if (postSeries) { %>
         <aside class="series-rail" aria-label="<%= postSeries.name %> 系列学习导航">
-          <small>当前学习路线</small>
-          <a class="series-rail-title" href="#series-title"><%= postSeries.name %></a>
-          <div class="series-rail-meta">
-            <span>第 <%= postSeries.index + 1 %> 篇</span>
-            <strong><%= postSeries.progress %>%</strong>
+          <div class="series-rail-heading">
+            <a href="#series-title"><%= postSeries.name %> 学习路线</a>
+            <span><%= postSeries.index + 1 %> / <%= postSeries.items.length %></span>
           </div>
           <div class="series-progress" role="progressbar" aria-label="<%= postSeries.name %> 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= postSeries.progress %>">
             <span style="width:<%= postSeries.progress %>%"></span>
           </div>
           <nav>
             <% if (postSeries.index > 0) { var railPrev = postSeries.items[postSeries.index - 1] %>
-              <a href="<%= url_for(railPrev.path) %>"><small>上一篇</small><span><%= railPrev.title %></span></a>
+              <a class="previous" href="<%= url_for(railPrev.path) %>"><small>上一篇</small><strong><%= railPrev.title %></strong></a>
             <% } %>
-            <a class="current" href="#seo-header" aria-current="page"><small>正在阅读</small><span><%= page.title %></span></a>
+            <a class="current" href="#seo-header" aria-current="page"><small>当前</small><strong><%= page.title %></strong></a>
             <% if (postSeries.index < postSeries.items.length - 1) { var railNext = postSeries.items[postSeries.index + 1] %>
-              <a href="<%= url_for(railNext.path) %>"><small>下一篇</small><span><%= railNext.title %></span></a>
+              <a class="next" href="<%= url_for(railNext.path) %>"><small>下一篇</small><strong><%= railNext.title %></strong></a>
             <% } %>
           </nav>
         </aside>
