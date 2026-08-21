@@ -3,7 +3,11 @@ title: 网络IO
 abbrlink: 40088
 date: 2026-08-21 19:22:23
 categories:
+  - 计算机网络
 tags:
+  - 网络
+  - I/O
+  - epoll
 ---
 
 ## 网络 I/O 模型
