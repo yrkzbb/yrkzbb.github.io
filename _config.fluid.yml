@@ -239,6 +239,7 @@ custom_js:
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Ribbon.js # 静态彩带
   - /js/dynamic-line.js # 本地化的动态黑色线条
   - /js/reading-enhancements.js # 搜索快捷键、阅读进度和文章分享
+  - /js/knowledge-ui.js # 首页筛选、阅读发现和术语提示
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/snowflake.js # 小雪花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Cherry.js #樱花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/star.js # 鼠标跟随小星星
@@ -388,6 +389,7 @@ navbar:
         icon: "iconfont icon-category-fill",
       }
     - { key: "tag", link: "/tags/", icon: "iconfont icon-tags-fill" }
+    - { key: "insights", name: "数据", link: "/insights/", icon: "iconfont icon-chart" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     - { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
 
@@ -476,7 +478,7 @@ footer:
   # 展示网站的 PV、UV 统计数
   # Display website PV and UV statistics
   statistics:
-    enable: true
+    enable: false
 
     # 统计数据来源，使用 leancloud, umami 需要设置 `web_analytics` 中对应的参数；使用 busuanzi 不需要额外设置，但是有时不稳定，另外本地运行时 busuanzi 显示统计数据很大属于正常现象，部署后会正常
     # Data source. If use leancloud, umami, you need to set the parameter in `web_analytics`
@@ -620,7 +622,7 @@ post:
     # 浏览量计数
     # Number of visits
     views:
-      enable: true
+      enable: false
       # 统计数据来源
       # Data Source
       # Options: busuanzi | leancloud | umami

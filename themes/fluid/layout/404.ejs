@@ -1,18 +1,24 @@
 <%
 page.layout = "404"
 page.title = theme.page404.title || __('page404.title')
-page.subtitle = theme.page404.subtitle || __('page404.subtitle')
+page.subtitle = "页面走丢了，但知识还在这里"
 page.banner_img = theme.page404.banner_img
 page.banner_img_height = theme.page404.banner_img_height
 page.banner_mask_alpha = theme.page404.banner_mask_alpha
+var popular = site.posts.sort('date', -1).limit(5)
 %>
 
-<script>
-  function redirect() {
-    location.href = "<%- url_for('/') %>";
-  }
-
-  <% if (theme.page404.redirect_delay) { %>
-    setTimeout(redirect, <%= parseInt(theme.page404.redirect_delay) %>)
-  <% } %>
-</script>
+<section class="not-found-panel" aria-labelledby="not-found-title">
+  <span class="not-found-code">404</span>
+  <h1 id="not-found-title">没有找到这个页面</h1>
+  <p>链接可能已经变化。可以搜索站内内容，或者从推荐文章继续阅读。</p>
+  <div class="not-found-actions">
+    <button type="button" data-toggle="modal" data-target="#modalSearch">搜索文章</button>
+    <button type="button" data-random-post>随机文章</button>
+    <a href="<%= url_for('/') %>">返回首页</a>
+  </div>
+  <div class="not-found-posts">
+    <h2>热门文章</h2>
+    <% popular.each(function(post) { %><a href="<%= url_for(post.path) %>"><span><%= post.title %></span><time><%= date(post.date, 'YYYY-MM-DD') %></time></a><% }) %>
+  </div>
+</section>

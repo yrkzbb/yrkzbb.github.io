@@ -13,8 +13,9 @@
     "check:links": "node tools/check-links.js",
     "audit": "node tools/audit-site.js",
     "optimize:images": "node tools/optimize-images.js",
-    "test": "node scripts/validate-content.js && node tools/check-links.js --source && node --check source/admin/admin.js && node --check source/js/post-editor-link.js && node --check source/js/reading-enhancements.js",
+    "test": "node scripts/validate-content.js && node tools/check-links.js --source && node --check scripts/knowledge-features.js && node --check source/admin/admin.js && node --check source/js/post-editor-link.js && node --check source/js/reading-enhancements.js && node --check source/js/knowledge-ui.js",
     "verify": "npm test && npm run build && npm run check:links && npm run audit",
+    "lighthouse": "node tools/run-lighthouse.js",
     "format": "prettier --write source/js source/admin scripts"
   },
   "hexo": {
@@ -44,6 +45,7 @@
     "turndown-plugin-gfm": "1.0.2"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "prettier": "3.6.2"
   }
 }

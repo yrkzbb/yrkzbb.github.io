@@ -1,0 +1,41 @@
+<%
+page.subtitle = '用数据回看知识积累'
+page.banner_img = theme.page.banner_img
+page.banner_img_height = theme.page.banner_img_height
+page.banner_mask_alpha = theme.page.banner_mask_alpha
+var categoryEntries = Object.keys(page.dashboard.categories).map(function(name){ return [name, page.dashboard.categories[name]] }).sort(function(a,b){ return b[1]-a[1] })
+var maxCategory = categoryEntries.length ? categoryEntries[0][1] : 1
+var updateEntries = Object.keys(page.dashboard.updates).sort().slice(-8).map(function(month){ return [month, page.dashboard.updates[month]] })
+var maxUpdate = Math.max.apply(null, updateEntries.map(function(entry){ return entry[1] }).concat([1]))
+%>
+
+<section class="insights-dashboard">
+  <div class="insight-summary">
+    <article><strong><%= page.dashboard.posts %></strong><span>篇文章</span></article>
+    <article><strong><%= (page.dashboard.words / 10000).toFixed(1) %>万</strong><span>正文字符</span></article>
+    <article><strong><%= categoryEntries.length %></strong><span>个分类</span></article>
+    <article><strong><%= Math.round(page.dashboard.words / page.dashboard.posts) %></strong><span>篇均字符</span></article>
+  </div>
+  <div class="insight-panels">
+    <article class="insight-panel">
+      <h1>分类分布</h1>
+      <div class="category-chart">
+        <% categoryEntries.forEach(function(entry) { %>
+          <div><span><%= entry[0] %></span><div><i style="width:<%= Math.round(entry[1] / maxCategory * 100) %>%"></i></div><strong><%= entry[1] %></strong></div>
+        <% }) %>
+      </div>
+    </article>
+    <article class="insight-panel">
+      <h2>最近更新</h2>
+      <div class="insight-latest">
+        <% page.dashboard.latest.forEach(function(post) { %><a href="<%= url_for(post.path) %>"><span><%= post.title %></span><time><%= date(post.updated || post.date, 'YYYY-MM-DD') %></time></a><% }) %>
+      </div>
+    </article>
+    <article class="insight-panel insight-trend">
+      <h2>更新时间趋势</h2>
+      <div class="update-chart">
+        <% updateEntries.forEach(function(entry) { %><div><i style="height:<%= Math.max(12, Math.round(entry[1] / maxUpdate * 100)) %>%"></i><strong><%= entry[1] %></strong><span><%= entry[0] %></span></div><% }) %>
+      </div>
+    </article>
+  </div>
+</section>

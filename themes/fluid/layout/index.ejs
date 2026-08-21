@@ -7,8 +7,20 @@ page.banner_img_height = theme.index.banner_img_height
 page.banner_mask_alpha = theme.index.banner_mask_alpha
 %>
 
+<div class="home-filter" role="group" aria-label="文章主题筛选">
+  <button type="button" class="active" data-filter="all" aria-pressed="true">全部</button>
+  <button type="button" data-filter="mysql" aria-pressed="false">MySQL</button>
+  <button type="button" data-filter="redis" aria-pressed="false">Redis</button>
+  <button type="button" data-filter="network" aria-pressed="false">网络</button>
+  <button type="button" data-filter="os" aria-pressed="false">操作系统</button>
+  <span class="home-filter-count" aria-live="polite"></span>
+</div>
+
 <% page.posts.each(function (post) { %>
-  <div class="row mx-auto index-card">
+  <% var filterTags = post.tags.toArray().map(function(tag){ return tag.name }).join(' ') %>
+  <% var filterCategories = post.categories.toArray().map(function(category){ return category.name }).join(' ') %>
+  <% var filterGroup = filterTags.indexOf('MySQL') >= 0 ? 'mysql' : filterTags.indexOf('Redis') >= 0 ? 'redis' : filterCategories.indexOf('计算机网络') >= 0 ? 'network' : filterCategories.indexOf('操作系统') >= 0 ? 'os' : 'other' %>
+  <div class="row mx-auto index-card" data-topic="<%= filterGroup %>">
     <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
     <% if (index_img) { %>
       <div class="col-12 col-md-4 m-auto index-img">

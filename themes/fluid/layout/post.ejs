@@ -2,6 +2,7 @@
 page.banner_img = page.banner_img || theme.post.banner_img
 page.banner_img_height = page.banner_img_height || theme.post.banner_img_height
 page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
+var postSeries = knowledge_series(page)
 %>
 
 <% if (process.env.HEXO_ADMIN === 'true') { %>
@@ -12,11 +13,33 @@ page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
 
 <div class="container-fluid nopadding-x">
   <div class="row nomargin-x">
-    <div class="side-col d-none d-lg-block col-lg-2">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      <% if (postSeries) { %>
+        <aside class="series-rail" aria-label="<%= postSeries.name %> 系列学习导航">
+          <small>当前学习路线</small>
+          <a class="series-rail-title" href="#series-title"><%= postSeries.name %></a>
+          <div class="series-rail-meta">
+            <span>第 <%= postSeries.index + 1 %> 篇</span>
+            <strong><%= postSeries.progress %>%</strong>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="<%= postSeries.name %> 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= postSeries.progress %>">
+            <span style="width:<%= postSeries.progress %>%"></span>
+          </div>
+          <nav>
+            <% if (postSeries.index > 0) { var railPrev = postSeries.items[postSeries.index - 1] %>
+              <a href="<%= url_for(railPrev.path) %>"><small>上一篇</small><span><%= railPrev.title %></span></a>
+            <% } %>
+            <a class="current" href="#seo-header" aria-current="page"><small>正在阅读</small><span><%= page.title %></span></a>
+            <% if (postSeries.index < postSeries.items.length - 1) { var railNext = postSeries.items[postSeries.index + 1] %>
+              <a href="<%= url_for(railNext.path) %>"><small>下一篇</small><span><%= railNext.title %></span></a>
+            <% } %>
+          </nav>
+        </aside>
+      <% } %>
       <%- inject_point('postLeft') %>
     </div>
 
-    <div class="col-lg-8 nopadding-x-md">
+    <div class="post-main-col col-lg-8 nopadding-x-md">
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
@@ -52,6 +75,47 @@ page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
                 <%- page.content %>
                 <%- inject_point('postMarkdownEnd') %>
               </div>
+            <% } %>
+
+            <% var series = postSeries %>
+            <% if (series) { %>
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title"><%= series.name %> 系列</h2></div>
+                  <strong><%= series.index + 1 %> / <%= series.items.length %></strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="<%= series.name %> 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= series.progress %>"><span style="width:<%= series.progress %>%"></span></div>
+                <ol>
+                  <% series.items.forEach(function(item, index) { %>
+                    <li class="<%= index === series.index ? 'current' : index < series.index ? 'completed' : '' %>">
+                      <a href="<%= url_for(item.path) %>" <%- index === series.index ? 'aria-current="page"' : '' %>><span><%= index + 1 %></span><%= item.title %></a>
+                    </li>
+                  <% }) %>
+                </ol>
+              </section>
+            <% } %>
+
+            <% var related = related_posts(page, 5) %>
+            <% if (related.length) { %>
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  <% related.forEach(function(item) { %>
+                    <a href="<%= url_for(item.path) %>"><strong><%= item.title %></strong><small><%= item.categories.toArray().map(function(category){ return category.name }).join(' · ') %></small></a>
+                  <% }) %>
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            <% } %>
+
+            <% var changes = post_changelog(page, 4) %>
+            <% if (changes.length) { %>
+              <details class="post-changelog">
+                <summary>文章更新记录（<%= changes.length %>）</summary>
+                <ol>
+                  <% changes.forEach(function(change) { %><li><time><%= change.date %></time><span><%= change.message %></span></li><% }) %>
+                </ol>
+              </details>
             <% } %>
             <hr/>
             <div>
@@ -91,7 +155,7 @@ page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
       </div>
     </div>
 
-    <div class="side-col d-none d-lg-block col-lg-2">
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
       <%- inject_point('postRight') %>
     </div>
   </div>

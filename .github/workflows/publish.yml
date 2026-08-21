@@ -31,6 +31,9 @@ jobs:
       - name: Validate, build, check links and audit output
         run: npm run verify
 
+      - name: Lighthouse quality gate
+        run: npm run lighthouse
+
       - name: Publish main branch
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:

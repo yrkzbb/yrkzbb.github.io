@@ -22,6 +22,9 @@ function walk(dir, files = []) {
 
 if (fs.existsSync(path.join(root, "admin"))) failures.push("生产产物仍包含 /admin/");
 if (fs.existsSync(path.join(root, "js", "post-editor-link.js"))) failures.push("生产产物仍包含编辑脚本");
+for (const required of ["rss.xml", "data/posts.json", "insights/index.html", "404.html"]) {
+  if (!fs.existsSync(path.join(root, required))) failures.push(`缺少功能产物：${required}`);
+}
 
 for (const file of walk(root)) {
   bytes += fs.statSync(file).size;
@@ -42,6 +45,12 @@ for (const file of walk(root)) {
 }
 
 if (!structuredPosts) failures.push("文章缺少 BlogPosting 结构化数据");
+const home = fs.readFileSync(path.join(root, "index.html"), "utf8");
+if (!home.includes('class="home-filter"')) failures.push("首页缺少主题筛选");
+const samplePost = walk(path.join(root, "posts")).find((file) => file.endsWith("index.html"));
+const sampleHtml = samplePost ? fs.readFileSync(samplePost, "utf8") : "";
+if (!sampleHtml.includes('class="knowledge-series"')) failures.push("文章缺少系列导航");
+if (!sampleHtml.includes('class="related-posts"')) failures.push("文章缺少相关推荐");
 console.log(`产物审计：${htmlCount} 个 HTML，${(bytes / 1024 / 1024).toFixed(1)} MiB`);
 console.log(`结构化文章：${structuredPosts}；外部资源主机：${[...externalHosts].join(", ") || "无"}`);
 console.log(`文章图片属性：${optimizedImages}/${articleImages} 已补充懒加载与尺寸`);

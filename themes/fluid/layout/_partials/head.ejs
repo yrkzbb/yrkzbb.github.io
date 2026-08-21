@@ -33,6 +33,7 @@ var structuredData = is_post() ? {
 
   <link rel="apple-touch-icon" sizes="76x76" href="<%= url_for(theme.apple_touch_icon) %>">
   <link rel="icon" href="<%= url_for(theme.favicon) %>">
+  <link rel="alternate" type="application/rss+xml" title="<%= config.title %> RSS" href="<%= url_for('/rss.xml') %>">
   <% if (theme.canonical.enable) { %>
     <link rel="canonical" href="<%= url_join(config.url, page.canonical_path.replace('index.html', '')) %>"/>
   <% } %>
