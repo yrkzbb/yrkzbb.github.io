@@ -2,6 +2,7 @@
 
 const { execFileSync } = require("child_process");
 const path = require("path");
+const moment = require("moment");
 
 const SERIES = [
   { key: "mysql", name: "MySQL", titles: ["sql基础", "存储引擎", "索引", "事务", "锁", "日志", "性能调优", "架构"] },
@@ -78,13 +79,15 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
   const manifest = posts.map((post) => ({ title: post.title, url: absolute(post.path), path: "/" + post.path, date: post.date.toISOString(), categories: names(post.categories), tags: names(post.tags), excerpt: stripHtml(post.description || post.excerpt || post.content).slice(0, 140) }));
   const categories = {};
   const updates = {};
+  const today = moment().startOf("day");
+  for (let offset = 6; offset >= 0; offset -= 1) updates[today.clone().subtract(offset, "days").format("YYYY-MM-DD")] = 0;
   let words = 0;
   posts.forEach((post) => {
     const text = stripHtml(post.content || "").replace(/\s+/g, "");
     words += text.length;
     names(post.categories).forEach((name) => { categories[name] = (categories[name] || 0) + 1; });
-    const month = (post.updated || post.date).format("YYYY-MM");
-    updates[month] = (updates[month] || 0) + 1;
+    const updateDay = (post.updated || post.date).format("YYYY-MM-DD");
+    if (Object.prototype.hasOwnProperty.call(updates, updateDay)) updates[updateDay] += 1;
   });
 
   const items = posts.map((post) => {
@@ -97,6 +100,6 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
   return [
     { path: "data/posts.json", data: JSON.stringify(manifest) },
     { path: "rss.xml", data: rss },
-    { path: "insights/index.html", layout: "insights", data: { title: "站内数据", layout: "page", dashboard: { posts: posts.length, words, categories, updates, latest: posts.slice(0, 8) } } },
+    { path: "insights/index.html", layout: "insights", data: { title: "站内数据", layout: "page", dashboard: { posts: posts.length, words, categories, updates, latest: posts.slice(0, 5) } } },
   ];
 });

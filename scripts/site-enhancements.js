@@ -52,18 +52,3 @@ hexo.extend.filter.register("after_render:html", function (html) {
     return tag;
   });
 });
-
-hexo.extend.filter.register("after_generate", function () {
-  if (process.env.HEXO_ADMIN !== "true") {
-    const privateRoutes = [
-      "css/admin-entry.css",
-      "css/inline-editor.css",
-      "js/post-editor-link.js",
-      "js/vendor/turndown.js",
-      "js/vendor/turndown-plugin-gfm.js",
-    ];
-    for (const route of hexo.route.list()) {
-      if (route.startsWith("admin/") || privateRoutes.includes(route)) hexo.route.remove(route);
-    }
-  }
-}, 20);

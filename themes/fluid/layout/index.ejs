@@ -8,19 +8,18 @@ page.banner_mask_alpha = theme.index.banner_mask_alpha
 %>
 
 <div class="home-filter" role="group" aria-label="文章主题筛选">
-  <button type="button" class="active" data-filter="all" aria-pressed="true">全部</button>
-  <button type="button" data-filter="mysql" aria-pressed="false">MySQL</button>
-  <button type="button" data-filter="redis" aria-pressed="false">Redis</button>
-  <button type="button" data-filter="network" aria-pressed="false">网络</button>
-  <button type="button" data-filter="os" aria-pressed="false">操作系统</button>
+  <% var homeCategories = site.categories.filter(function(category){ return category.length > 0 }).sort('name') %>
+  <button type="button" class="active" data-filter="all" aria-pressed="true">全部 <small><%= page.posts.length %></small></button>
+  <% homeCategories.each(function(category) { %>
+    <button type="button" data-filter="<%= category._id %>" aria-pressed="false"><%= category.name %> <small><%= category.length %></small></button>
+  <% }) %>
   <span class="home-filter-count" aria-live="polite"></span>
 </div>
 
+<div class="home-post-grid">
 <% page.posts.each(function (post) { %>
-  <% var filterTags = post.tags.toArray().map(function(tag){ return tag.name }).join(' ') %>
-  <% var filterCategories = post.categories.toArray().map(function(category){ return category.name }).join(' ') %>
-  <% var filterGroup = filterTags.indexOf('MySQL') >= 0 ? 'mysql' : filterTags.indexOf('Redis') >= 0 ? 'redis' : filterCategories.indexOf('计算机网络') >= 0 ? 'network' : filterCategories.indexOf('操作系统') >= 0 ? 'os' : 'other' %>
-  <div class="row mx-auto index-card" data-topic="<%= filterGroup %>">
+  <% var filterCategories = post.categories.toArray().map(function(category){ return category._id }).join(' ') %>
+  <div class="row mx-auto index-card" data-categories="<%= filterCategories %>">
     <% var post_url = url_for(post.path), index_img = post.index_img || theme.post.default_index_img %>
     <% if (index_img) { %>
       <div class="col-12 col-md-4 m-auto index-img">
@@ -73,5 +72,6 @@ page.banner_mask_alpha = theme.index.banner_mask_alpha
     </article>
   </div>
 <% }) %>
+</div>
 
-<%- partial('_partials/paginator') %>
+<nav class="home-pagination" aria-label="首页文章分页"></nav>

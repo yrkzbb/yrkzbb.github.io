@@ -391,7 +391,7 @@ navbar:
     - { key: "tag", link: "/tags/", icon: "iconfont icon-tags-fill" }
     - { key: "insights", name: "数据", link: "/insights/", icon: "iconfont icon-chart" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
-    - { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
+    - { key: "links", name: "连接", link: "/links/", icon: "iconfont icon-link-fill" }
 
 # 搜索功能，基于 hexo-generator-search 插件，若已安装其他搜索插件请关闭此功能，以避免生成多余的索引文件
 # Search feature, based on hexo-generator-search. If you have installed other search plugins, please disable this feature to avoid generating redundant index files
@@ -1046,6 +1046,8 @@ page404:
 #---------------------------
 links:
   enable: true
+  title: 连接
+  subtitle: "Elsewhere, and people worth discovering"
   banner_img: /img/defbj.webp
   banner_img_height: 60
   banner_mask_alpha: 0.3
@@ -1060,8 +1062,8 @@ links:
   # 友链下方自定义区域，支持 HTML，可插入例如申请友链的文字
   # Custom content at the bottom of the links
   custom:
-    enable: true
-    content: "<hr><p>欢迎申请友链，请提供博客名称、简介、链接和头像地址。</p>"
+    enable: false
+    content: ""
 
   # 评论插件
   # Comment plugin

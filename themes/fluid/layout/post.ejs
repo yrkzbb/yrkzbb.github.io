@@ -5,11 +5,9 @@ page.banner_mask_alpha = page.banner_mask_alpha || theme.post.banner_mask_alpha
 var postSeries = knowledge_series(page)
 %>
 
-<% if (process.env.HEXO_ADMIN === 'true') { %>
-  <meta name="hexo-source" content="<%= page.source || '' %>">
-  <link rel="stylesheet" href="<%- url_for('/css/admin-entry.css') %>">
-  <link rel="stylesheet" href="<%- url_for('/css/inline-editor.css') %>">
-<% } %>
+<meta name="hexo-source" content="<%= page.source || '' %>">
+<link rel="stylesheet" href="<%- url_for('/css/admin-entry.css') %>">
+<link rel="stylesheet" href="<%- url_for('/css/inline-editor.css') %>">
 
 <div class="container-fluid nopadding-x">
   <div class="row nomargin-x">
@@ -172,6 +170,4 @@ var postSeries = knowledge_series(page)
   </div>
 <% } %>
 
-<% if (process.env.HEXO_ADMIN === 'true') { %>
-  <script defer src="<%- url_for('/js/post-editor-link.js') %>"></script>
-<% } %>
+<script defer src="<%- url_for('/js/post-editor-link.js') %>"></script>

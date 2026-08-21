@@ -20,11 +20,16 @@ function walk(dir, files = []) {
   return files;
 }
 
-if (fs.existsSync(path.join(root, "admin"))) failures.push("生产产物仍包含 /admin/");
-if (fs.existsSync(path.join(root, "js", "post-editor-link.js"))) failures.push("生产产物仍包含编辑脚本");
-for (const required of ["rss.xml", "data/posts.json", "insights/index.html", "404.html"]) {
+for (const required of ["rss.xml", "data/posts.json", "insights/index.html", "404.html", "admin/index.html", "admin/admin.js", "js/post-editor-link.js"]) {
   if (!fs.existsSync(path.join(root, required))) failures.push(`缺少功能产物：${required}`);
 }
+
+const editorScripts = [path.join(root, "admin", "admin.js"), path.join(root, "js", "post-editor-link.js")]
+  .filter(fs.existsSync)
+  .map((file) => fs.readFileSync(file, "utf8"))
+  .join("\n");
+if (!editorScripts.includes("sessionStorage")) failures.push("编辑器 Token 未使用会话存储");
+if (/github_pat_[A-Za-z0-9_]{20,}/.test(editorScripts)) failures.push("编辑器产物疑似包含硬编码 GitHub Token");
 
 for (const file of walk(root)) {
   bytes += fs.statSync(file).size;

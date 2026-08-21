@@ -18,30 +18,89 @@
   function registerHomeFilter() {
     var toolbar = document.querySelector('.home-filter');
     if (!toolbar) return;
-    var cards = Array.prototype.slice.call(document.querySelectorAll('.index-card[data-topic]'));
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.index-card[data-categories]'));
+    var filters = Array.prototype.slice.call(toolbar.querySelectorAll('button[data-filter]')).map(function (button) { return button.dataset.filter; });
     var count = toolbar.querySelector('.home-filter-count');
-    function apply(filter) {
-      var visible = 0;
-      cards.forEach(function (card) {
-        var show = filter === 'all' || card.dataset.topic === filter;
-        card.hidden = !show;
-        if (show) visible++;
+    var pagination = document.querySelector('.home-pagination');
+    var pageSize = 8;
+    var currentFilter = 'all';
+    var currentPage = 1;
+
+    function matchingCards(filter) {
+      return cards.filter(function (card) {
+        var categories = card.dataset.categories.split(/\s+/).filter(Boolean);
+        return filter === 'all' || categories.includes(filter);
       });
+    }
+
+    function updateAddress() {
+      if (currentFilter === 'all' && currentPage === 1) {
+        history.replaceState(null, '', location.pathname + location.search);
+        return;
+      }
+      var parameters = new URLSearchParams();
+      if (currentFilter !== 'all') parameters.set('category', currentFilter);
+      if (currentPage > 1) parameters.set('page', String(currentPage));
+      history.replaceState(null, '', '#' + parameters.toString());
+    }
+
+    function renderPagination(totalPages) {
+      if (!pagination) return;
+      pagination.innerHTML = '';
+      if (totalPages <= 1) {
+        pagination.hidden = true;
+        return;
+      }
+      pagination.hidden = false;
+      var labels = [];
+      labels.push({ page: currentPage - 1, label: '‹', disabled: currentPage === 1, aria: '上一页' });
+      for (var page = 1; page <= totalPages; page++) labels.push({ page: page, label: String(page), current: page === currentPage, aria: '第 ' + page + ' 页' });
+      labels.push({ page: currentPage + 1, label: '›', disabled: currentPage === totalPages, aria: '下一页' });
+      labels.forEach(function (item) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = item.label;
+        button.disabled = item.disabled;
+        button.dataset.page = item.page;
+        button.setAttribute('aria-label', item.aria);
+        if (item.current) {
+          button.className = 'active';
+          button.setAttribute('aria-current', 'page');
+        }
+        pagination.appendChild(button);
+      });
+    }
+
+    function apply(filter, requestedPage) {
+      currentFilter = filter;
+      var matched = matchingCards(filter);
+      var totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
+      currentPage = Math.min(Math.max(Number(requestedPage) || 1, 1), totalPages);
+      var first = (currentPage - 1) * pageSize;
+      var visibleCards = matched.slice(first, first + pageSize);
+      cards.forEach(function (card) { card.hidden = !visibleCards.includes(card); });
       toolbar.querySelectorAll('button').forEach(function (button) {
         var active = button.dataset.filter === filter;
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', String(active));
       });
-      count.textContent = visible + ' 篇';
-      if (filter === 'all') history.replaceState(null, '', location.pathname + location.search);
-      else history.replaceState(null, '', '#' + filter);
+      count.textContent = matched.length + ' 篇 · ' + currentPage + ' / ' + totalPages + ' 页';
+      renderPagination(totalPages);
+      updateAddress();
     }
     toolbar.addEventListener('click', function (event) {
       var button = event.target.closest('button[data-filter]');
-      if (button) apply(button.dataset.filter);
+      if (button) apply(button.dataset.filter, 1);
     });
-    var initial = location.hash.slice(1);
-    apply(['mysql', 'redis', 'network', 'os'].includes(initial) ? initial : 'all');
+    if (pagination) pagination.addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-page]');
+      if (!button || button.disabled) return;
+      apply(currentFilter, Number(button.dataset.page));
+      toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    var initialParameters = new URLSearchParams(location.hash.slice(1));
+    var initial = initialParameters.get('category') || 'all';
+    apply(filters.includes(initial) ? initial : 'all', initialParameters.get('page'));
   }
 
   function registerGlossary() {
