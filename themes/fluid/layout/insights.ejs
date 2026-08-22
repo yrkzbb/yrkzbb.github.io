@@ -34,7 +34,7 @@ var maxUpdate = Math.max.apply(null, updateEntries.map(function(entry){ return e
     <article class="insight-panel insight-recent">
       <h2>最近更新</h2>
       <div class="insight-latest">
-        <% page.dashboard.latest.forEach(function(post) { %><a href="<%= url_for(post.path) %>"><span><%= post.title %></span><time><%= date(post.updated || post.date, 'YYYY-MM-DD') %></time></a><% }) %>
+        <% page.dashboard.latest.forEach(function(post) { %><a href="<%= url_for(post.path) %>"><span><%= post.title %></span><time><%= date(post.date, 'YYYY-MM-DD') %></time></a><% }) %>
       </div>
     </article>
   </div>

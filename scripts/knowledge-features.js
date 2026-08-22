@@ -86,7 +86,10 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
     const text = stripHtml(post.content || "").replace(/\s+/g, "");
     words += text.length;
     names(post.categories).forEach((name) => { categories[name] = (categories[name] || 0) + 1; });
-    const updateDay = (post.updated || post.date).format("YYYY-MM-DD");
+    // Keep the dashboard consistent with the archive: Hexo falls back to a
+    // source file's mtime when `updated` is absent, which can make a bulk edit
+    // look as if every article was published on the same day.
+    const updateDay = post.date.format("YYYY-MM-DD");
     if (Object.prototype.hasOwnProperty.call(updates, updateDay)) updates[updateDay] += 1;
   });
 
