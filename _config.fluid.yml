@@ -612,12 +612,12 @@ post:
     # Estimated reading time
     min2read:
       enable: true
-      # 每个字词的长度，建议：中文≈2，英文≈5，中英混合可自行调节
+      # 中文技术文章按实际字符计数
       # Average word length (chars count in word), ZH ≈ 2, EN ≈ 5
-      awl: 2
-      # 每分钟阅读字数，如果大部分是技术文章可适度调低
+      awl: 1
+      # 中文技术文章按约 300 字/分钟估算
       # Words per minute
-      wpm: 40
+      wpm: 300
 
     # 浏览量计数
     # Number of visits
