@@ -16,7 +16,7 @@
   left 50%
   bottom 26px
   transform translateX(-50%)
-  min-width 360px
+  min-width 720px
   padding 10px 12px 10px 16px
   display flex
   align-items center
@@ -88,6 +88,38 @@
   color #dce2ef
   background transparent
   cursor pointer
+
+.inline-format-tools
+  display flex
+  align-items center
+  gap 6px
+  padding 0 8px
+  border-left 1px solid rgba(255, 255, 255, .12)
+  border-right 1px solid rgba(255, 255, 255, .12)
+
+.inline-edit-toolbar .inline-bold
+  width 32px
+  height 32px
+  padding 0
+  font-weight 800
+  font-family Georgia, serif
+
+.inline-color-label
+  margin 0 2px
+  color #aeb8ca
+  font-size 11px
+
+.inline-edit-toolbar .inline-color
+  width 20px
+  height 20px
+  padding 0
+  border 2px solid rgba(255, 255, 255, .7)
+  border-radius 50%
+  background var(--format-color)
+
+.inline-edit-actions
+  display flex
+  align-items center
 
 .inline-edit-toolbar .save
   margin-left 4px
@@ -271,6 +303,12 @@
     min-width 0
     width calc(100% - 24px)
     bottom 12px
+    overflow-x auto
+    gap 10px
+
+  .inline-edit-status,
+  .inline-color-label
+    display none
 
   .inline-editing
     margin-left -8px

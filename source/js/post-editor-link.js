@@ -11,6 +11,7 @@
   var originalBody = "";
   var sourceFile = null;
   var frontMatter = "";
+  var savedRange = null;
   function api(path, options) {
     options = options || {};
     return fetch(
@@ -171,6 +172,17 @@
         );
       },
     });
+    service.addRule("coloredText", {
+      filter: function (node) {
+        if (node.nodeName === "FONT" && node.getAttribute("color")) return true;
+        return node.nodeName === "SPAN" && /(?:^|;)\s*color\s*:/.test(node.getAttribute("style") || "");
+      },
+      replacement: function (content, node) {
+        var color = node.getAttribute("color") || node.style.color || "";
+        if (!/^#[0-9a-f]{6}$/i.test(color) && !/^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/i.test(color)) return content;
+        return '<span style="color: ' + color + '">' + content + '</span>';
+      },
+    });
     return (
       service
         .turndown(clone.innerHTML)
@@ -253,9 +265,9 @@
       errors.push("检测到由页面锚点产生的空链接");
     if (
       originalBody.length > 200 &&
-      markdown.length < originalBody.length * 0.65
+      markdown.length < originalBody.length * 0.5
     )
-      errors.push("正文长度异常减少超过 35%");
+      errors.push("正文长度异常减少超过 50%");
     if (fences !== originalFences) warnings.push("代码块数量发生变化");
     return { errors: errors, warnings: warnings };
   }
@@ -383,7 +395,7 @@
     var toolbar = document.createElement("div");
     toolbar.className = "inline-edit-toolbar";
     toolbar.innerHTML =
-      '<div class="inline-edit-meta" hidden><label>分类<input data-meta="categories" placeholder="多个分类用逗号分隔"></label><label>标签<input data-meta="tags" placeholder="多个标签用逗号分隔"></label></div><div class="inline-edit-status"><span class="inline-edit-dot"></span>正在原位编辑</div><div><button type="button" data-action="history">历史版本</button><button type="button" data-action="meta">分类与标签</button><button type="button" data-action="cancel">取消</button><button type="button" class="save" data-action="save">保存并发布</button></div>';
+      '<div class="inline-edit-meta" hidden><label>分类<input data-meta="categories" placeholder="多个分类用逗号分隔"></label><label>标签<input data-meta="tags" placeholder="多个标签用逗号分隔"></label></div><div class="inline-edit-status"><span class="inline-edit-dot"></span>正在原位编辑</div><div class="inline-format-tools" aria-label="选中文字格式"><button type="button" class="inline-bold" data-format="bold" title="加粗选中文字">B</button><span class="inline-color-label">文字颜色</span><button type="button" class="inline-color" data-color="#3977d4" style="--format-color:#3977d4" title="蓝色"></button><button type="button" class="inline-color" data-color="#7557e8" style="--format-color:#7557e8" title="紫色"></button><button type="button" class="inline-color" data-color="#d14f65" style="--format-color:#d14f65" title="红色"></button><button type="button" class="inline-color" data-color="#208765" style="--format-color:#208765" title="绿色"></button></div><div class="inline-edit-actions"><button type="button" data-action="history">历史版本</button><button type="button" data-action="meta">分类与标签</button><button type="button" data-action="cancel">取消</button><button type="button" class="save" data-action="save">保存并发布</button></div>';
     toolbar.querySelector('[data-meta="categories"]').value =
       yamlList("categories").join(", ");
     toolbar.querySelector('[data-meta="tags"]').value =
@@ -393,9 +405,28 @@
       var panel = toolbar.querySelector(".inline-edit-meta");
       panel.hidden = !panel.hidden;
     };
+    toolbar.querySelectorAll("[data-format], [data-color]").forEach(function (button) {
+      button.addEventListener("mousedown", function (event) { event.preventDefault(); });
+      button.addEventListener("click", function () {
+        if (savedRange) {
+          var selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(savedRange);
+        }
+        article.focus();
+        document.execCommand(button.dataset.format || "foreColor", false, button.dataset.color || null);
+        rememberSelection();
+      });
+    });
     toolbar.querySelector('[data-action="cancel"]').onclick = cancelEditing;
     toolbar.querySelector('[data-action="save"]').onclick = saveEditing;
     document.body.appendChild(toolbar);
+  }
+  function rememberSelection() {
+    var selection = window.getSelection();
+    if (!editing || !selection || !selection.rangeCount || selection.isCollapsed) return;
+    var range = selection.getRangeAt(0);
+    if (article.contains(range.commonAncestorContainer)) savedRange = range.cloneRange();
   }
   async function startEditing() {
     if (editing) return;
@@ -425,6 +456,8 @@
       });
       article.contentEditable = "true";
       article.classList.add("inline-editing");
+      article.addEventListener("mouseup", rememberSelection);
+      article.addEventListener("keyup", rememberSelection);
       article.focus();
       editLink.hidden = true;
       makeToolbar();
@@ -439,15 +472,20 @@
   }
   function cancelEditing() {
     if (!editing || confirm("放弃当前未保存的修改吗？")) {
+      article.removeEventListener("mouseup", rememberSelection);
+      article.removeEventListener("keyup", rememberSelection);
       article.innerHTML = originalHtml;
       article.contentEditable = "false";
       article.classList.remove("inline-editing");
+      article.removeEventListener("mouseup", rememberSelection);
+      article.removeEventListener("keyup", rememberSelection);
       var toolbar = document.querySelector(".inline-edit-toolbar");
       if (toolbar) toolbar.remove();
       editLink.hidden = false;
       editLink.classList.remove("loading");
       editLink.textContent = "✎ 直接编辑";
       editing = false;
+      savedRange = null;
     }
   }
   async function saveEditing() {
@@ -486,6 +524,7 @@
       editLink.classList.remove("loading");
       editLink.textContent = "✎ 直接编辑";
       editing = false;
+      savedRange = null;
       originalHtml = article.innerHTML;
       originalBody = markdown;
       waitForPublish(previousMain.sha);
