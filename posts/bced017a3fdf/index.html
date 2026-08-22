@@ -1,0 +1,1084 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/bced017a3fdf/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="Redis 应用场景 1. 为什么使用 Redis，它除了缓存还有哪些应用场景？ 使用 Redis 的核心原因是：它能用很低的访问延迟承担高频读写，并通过丰富的数据结构和原子操作简化常见业务实现。但是否应该使用，还要看业务对数据量、一致性、持久性和成本的要求，不是所有数据都适合放在 Redis 中。 主要优势有：  访问速度快：数据主要在内存中操作，再加上高效的数据结构和事件处理模型，适合对延迟敏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="场景">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/bced017a3fdf/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="Redis 应用场景 1. 为什么使用 Redis，它除了缓存还有哪些应用场景？ 使用 Redis 的核心原因是：它能用很低的访问延迟承担高频读写，并通过丰富的数据结构和原子操作简化常见业务实现。但是否应该使用，还要看业务对数据量、一致性、持久性和成本的要求，不是所有数据都适合放在 Redis 中。 主要优势有：  访问速度快：数据主要在内存中操作，再加上高效的数据结构和事件处理模型，适合对延迟敏">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T10:41:22.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.386Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>场景 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"场景","description":"Redis 应用场景 1. 为什么使用 Redis，它除了缓存还有哪些应用场景？ 使用 Redis 的核心原因是：它能用很低的访问延迟承担高频读写，并通过丰富的数据结构和原子操作简化常见业务实现。但是否应该使用，还要看业务对数据量、一致性、持久性和成本的要求，不是所有数据都适合放在 Redis 中。 主要优势有：  访问速度快：数据主要在内存中操作，再加上高效的数据结构和事件处理模型，适合对延迟敏","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T10:41:22.000Z","dateModified":"2026-08-22T20:33:47.386Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/bced017a3fdf/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="场景"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 18:41" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.4k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="37">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          37 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/场景.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="Redis 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">Redis 学习路线</a>
+            <span>1 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">
+            <span style="width:4%"></span>
+          </div>
+          <nav aria-label="Redis 系列目录">
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>01</small>
+                <strong>场景</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/a3e33afe7e3f/" >
+                <small>02</small>
+                <strong>数据结构</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/1fe8858b923f/" >
+                <small>03</small>
+                <strong>线程模型</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/09b3554eab36/" >
+                <small>04</small>
+                <strong>redis事务</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/22c416610a43/" >
+                <small>05</small>
+                <strong>缓存淘汰和过期删除</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/aeb3025afccc/" >
+                <small>06</small>
+                <strong>集群</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">场景</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Redis-应用场景">Redis 应用场景</h2>
+<h3 id="1-为什么使用-Redis，它除了缓存还有哪些应用场景？">1. 为什么使用 Redis，它除了缓存还有哪些应用场景？</h3>
+<p>使用 Redis 的核心原因是：<strong>它能用很低的访问延迟承担高频读写，并通过丰富的数据结构和原子操作简化常见业务实现</strong>。但是否应该使用，还要看业务对数据量、一致性、持久性和成本的要求，不是所有数据都适合放在 Redis 中。</p>
+<p>主要优势有：</p>
+<ul>
+<li><strong>访问速度快</strong>：数据主要在内存中操作，再加上高效的数据结构和事件处理模型，适合对延迟敏感的高并发访问。</li>
+<li><strong>数据结构丰富</strong>：除了 String，还提供 Hash、List、Set、Sorted Set、Stream 等结构，可以直接实现计数、排行榜、去重、队列等需求。</li>
+<li><strong>支持过期时间</strong>：可以为 Key 设置 TTL，很适合缓存、会话、验证码等有明确生命周期的数据。</li>
+<li><strong>单条命令具有原子性</strong>：像 <code>INCR</code>、<code>SET key value NX EX</code>、Set 和 Sorted Set 的操作可以减少应用层的并发竞争；需要组合多步逻辑时还可以评估 Lua 脚本或事务。</li>
+<li><strong>具备持久化和高可用能力</strong>：可以使用 RDB、AOF、主从复制、Sentinel 和 Redis Cluster，在性能、数据安全、容量和可用性之间做选择。</li>
+</ul>
+<p>典型场景包括：</p>
+<ul>
+<li>缓存数据库查询结果或热点对象，降低数据库压力。</li>
+<li>保存分布式会话、验证码和短期状态。</li>
+<li>实现计数器、限流、排行榜、去重集合和地理位置查询。</li>
+<li>利用 <code>SET ... NX EX</code>、Lua 脚本等机制实现有条件的分布式锁和协调功能。</li>
+<li>用 List、Stream 或 Pub/Sub 实现特定场景下的异步通信，但是否能替代专用消息队列，需要结合消息可靠性、堆积量和消费模型判断。</li>
+</ul>
+<p>需要注意的是，Redis 主要依赖内存，单位容量成本通常高于磁盘数据库；默认的异步主从复制也不保证强一致。因此，对严格不能丢失的核心业务数据，我通常会以数据库作为可靠数据源，再让 Redis 承担缓存或加速层，而不是不加区分地用 Redis 替代数据库。</p>
+<h3 id="2-为什么-Redis-通常比-MySQL-快？">2. 为什么 Redis 通常比 MySQL 快？</h3>
+<p>在简单 Key-Value 读写场景中，Redis 通常比 MySQL 快，核心原因是<strong>数据访问路径更短，需要完成的工作更少</strong>。但这不是一个对所有查询都成立的绝对结论，两者定位不同，需要在相同数据量、请求模型和持久化要求下比较。</p>
+<p>主要原因有：</p>
+<ul>
+<li><strong>以内存访问为主</strong>：Redis 的数据主要存放在内存中，常见操作不需要等待随机磁盘 I/O。MySQL 虽然也有 Buffer Pool，热数据同样可能命中内存，但数据页、日志和持久化等机制更复杂。</li>
+<li><strong>命令执行路径简单</strong>：Redis 常见命令可以直接对字典、跳表等数据结构操作；MySQL 通常还要经历 SQL 解析、优化、执行计划、索引或数据页访问等流程。</li>
+<li><strong>并发控制成本较低</strong>：Redis 的命令执行主路径主要是单线程串行，减少了共享数据的锁竞争和线程切换。MySQL 要支持多会话并发、事务隔离和 MVCC，管理成本更高。</li>
+<li><strong>一致性和持久性责任不同</strong>：MySQL 需要维护 redo log、undo log、事务提交和崩溃恢复等机制。Redis 可以根据需要配置 RDB 或 AOF，但它默认并不提供与关系数据库相同的事务和持久性语义。</li>
+</ul>
+<p>所以更准确地说，Redis 的优势是处理简单、高频、延迟敏感的数据访问；MySQL 的优势是复杂查询、事务、约束和可靠持久化。两者通常是配合使用，而不是直接互相替代。</p>
+<h3 id="3-本地缓存和-Redis-缓存有什么区别？">3. 本地缓存和 Redis 缓存有什么区别？</h3>
+<p>核心区别是：<strong>本地缓存在应用进程内，访问更快，但多实例之间不共享；Redis 是独立的远程缓存，需要网络访问，但可以被多个应用实例共享</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>本地缓存</th>
+<th>Redis 缓存</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>存储位置</td>
+<td>应用进程内存</td>
+<td>独立 Redis 进程的内存</td>
+</tr>
+<tr>
+<td>访问延迟</td>
+<td>无网络开销，通常更低</td>
+<td>有网络、协议和序列化开销</td>
+</tr>
+<tr>
+<td>数据共享</td>
+<td>每个应用实例各有一份</td>
+<td>多个应用实例共享一份数据</td>
+</tr>
+<tr>
+<td>一致性</td>
+<td>多份副本容易不一致，失效通知更复杂</td>
+<td>数据较集中，但仍需处理与数据库的一致性</td>
+</tr>
+<tr>
+<td>容量</td>
+<td>受单个应用进程内存限制</td>
+<td>可以独立配置容量并通过 Cluster 扩展</td>
+</tr>
+<tr>
+<td>生命周期</td>
+<td>应用重启后通常丢失</td>
+<td>与应用进程解耦，可选持久化和高可用</td>
+</tr>
+<tr>
+<td>运维成本</td>
+<td>不需要独立服务，但会占用应用内存</td>
+<td>需要部署、监控、容量管理和故障处理</td>
+</tr>
+</tbody>
+</table>
+<p>本地缓存适合数量小、访问频率高、允许短暂不一致的数据，例如配置、字典或极热数据；Redis 适合需要跨实例共享、集中设置 TTL 或容量较大的缓存。对延迟和吞吐要求很高的系统，也可以使用“本地缓存 + Redis”的两级缓存，但要额外处理更新通知、过期时间和多级数据一致性。</p>
+<h3 id="4-高并发场景下，Redis-单节点加-MySQL-单节点能承受多大并发量？">4. 高并发场景下，Redis 单节点加 MySQL 单节点能承受多大并发量？</h3>
+<p>没有一个固定数字。<strong>并发连接数、QPS 和延迟是不同指标，系统的上限取决于硬件、命令或 SQL 复杂度、数据量和分布、缓存命中率、网络、连接池以及延迟目标</strong>。没有这些条件时，直接说能承受几万或几十万并发并不严谨。</p>
+<p>如果只用于方案初估，在常见服务器、小 Key 和简单 <code>GET/SET</code> 下，Redis 单节点通常可以达到数万至十万级 ops/s；MySQL 单节点的简单主键点查询可能达到万级 QPS，事务写入往往更低。这些只是很粗的量级，Big Key、复杂 SQL、低效索引、锁竞争、AOF 刷盘策略和 MySQL 持久化配置都可能让结果相差数倍甚至数量级。</p>
+<p>评估整体容量时，我会先看缓存命中率。如果业务请求 QPS 为 <code>Q</code>，缓存命中率为 <code>H</code>，那么在忽略缓存更新等额外流量时，MySQL 承受的查询量可以粗略估算为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">MySQL QPS ≈ Q × (1 - H)<br></code></pre></td></tr></table></figure>
+<p>例如总请求是 50,000 QPS，缓存命中率是 95%，理想情况下大约有 2,500 QPS 穿透到 MySQL。但缓存雪崩或热 Key 失效时，瞬时流量可能大幅超过这个均值，所以还要设计限流、请求合并、过期时间打散和降级方案。</p>
+<p>最终不应以平均 QPS 猜测容量，而应该用真实数据量、Key 大小、SQL、索引和读写比例做压测，同时观察 CPU、内存、网络、磁盘 I/O、连接池、缓存命中率以及 <code>P95/P99</code> 延迟，再以达到延迟目标时的最大稳定 QPS 作为容量依据，并保留容量余量。</p>
+<h3 id="5-Redis-支持并发操作吗？">5. Redis 支持并发操作吗？</h3>
+<p>支持，但要区分<strong>并发接收请求</strong>和<strong>命令并行执行</strong>。Redis 可以同时维护大量客户端连接，通过 I/O 多路复用处理并发网络事件；但单个 Redis 节点上，普通命令的核心执行路径主要仍由主线程串行完成。</p>
+<p>这意味着单条 Redis 命令在服务端不会被另一条命令执行到一半时插入，所以 <code>INCR</code>、<code>HSET</code> 等单条命令具有原子性。但“先 <code>GET</code>，再根据结果 <code>SET</code>”是多条命令，中间可能穿插其他客户端的操作，需要根据场景使用 <code>WATCH</code>/<code>MULTI</code>/<code>EXEC</code>、Lua 脚本或直接使用带条件的原子命令。</p>
+<p>Redis 6 开始可以启用 I/O 线程辅助网络数据读写，但这不等于任意命令都会多线程并行修改数据。因此，对 Big Key 的复杂操作、大型 Lua 脚本或阻塞性命令，仍可能占用主线程并影响其他请求。</p>
+<h3 id="6-Redis-分布式锁的实现原理是什么，什么场景会用到？">6. Redis 分布式锁的实现原理是什么，什么场景会用到？</h3>
+<p>Redis 分布式锁的核心是：<strong>利用 Redis 的原子条件写入抢占锁，用唯一标识区分持有者，并设置过期时间避免死锁</strong>。</p>
+<p>加锁可以使用一条原子命令：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">SET lock:order:&lt;id&gt; &lt;unique-token&gt; NX PX 30000<br></code></pre></td></tr></table></figure>
+<p><code>NX</code> 保证只有 Key 不存在时才能成功，<code>PX</code> 设置超时时间，<code>unique-token</code> 用于标识锁的持有者。解锁时不能直接 <code>DEL</code>，而应该用 Lua 脚本原子地“先比较 token，相同再删除”，防止客户端因业务执行过久，误删其他客户端后来获取的锁。如果业务时间不确定，还需要评估续期机制。</p>
+<p>它适合多个应用实例需要互斥执行的场景，例如防止定时任务重复执行、避免同一资源被同时更新、并发重建同一缓存，或者控制同一用户的重复操作。</p>
+<p>但 Redis 主从复制是异步的，极端故障下可能出现锁丢失或两个客户端先后认为自己持有锁的情况。对金融扣款、库存所有权等要求严格正确性的外部资源，不能只把 Redis 锁当作绝对安全保证，还需要数据库约束、幂等校验或 fencing token 等机制。</p>
+<h3 id="7-Redis-的-Big-Key-问题是什么？">7. Redis 的 Big Key 问题是什么？</h3>
+<p>Big Key 指的是<strong>占用内存过大，或者集合成员数过多的 Key</strong>。它不只指 Key 名很长，重点是 Value 及其底层结构的体积或操作成本很大。</p>
+<p>例如，一个 String 保存了数 MB 数据，或一个 Hash、List、Set、Sorted Set 中有几十万个成员，都可能成为 Big Key。多大算“大”没有通用固定阈值，要根据延迟目标、网络带宽、实例容量和命令类型判断。同样大小的 String 和拥有大量成员的集合，操作风险也可能不同。</p>
+<h3 id="8-Big-Key-有哪些危害？">8. Big Key 有哪些危害？</h3>
+<p>Big Key 的主要问题不只是占用内存，还可能影响整个实例的延迟和可用性：</p>
+<ul>
+<li><strong>阻塞主线程</strong>：一次读取、遍历或删除大对象可能长时间占用命令执行线程，拉高其他请求的 <code>P99</code> 延迟。</li>
+<li><strong>消耗网络带宽</strong>：一次传输过大的 Value 会占用带宽和客户端缓冲区，也可能导致超时。</li>
+<li><strong>引起内存和分片倾斜</strong>：少数 Big Key 可能让某个 Cluster 节点的内存、CPU 或流量明显高于其他节点。</li>
+<li><strong>放大持久化和复制压力</strong>：Big Key 的写入、迁移和同步会产生更大的 AOF、复制流和网络开销。</li>
+<li><strong>删除延迟和内存抖动</strong>：同步 <code>DEL</code> 一个含大量成员的集合可能造成明显阻塞，大对象频繁创建和释放还可能加剧内存碎片和抖动。</li>
+</ul>
+<h3 id="9-Redis-Big-Key-如何治理？">9. Redis Big Key 如何治理？</h3>
+<p>处理 Big Key 的思路是：<strong>先识别和量化，再从数据模型上拆分，同时避免一次全量读写或同步删除</strong>。</p>
+<ul>
+<li><strong>发现</strong>：可以结合 <code>redis-cli --bigkeys</code>、<code>MEMORY USAGE</code>、慢查询、延迟监控以及对 <code>SCAN</code> 结果的抽样统计进行排查。<code>--bigkeys</code> 主要找各类型中相对较大的 Key，不能完全替代精确内存分析。</li>
+<li><strong>拆分数据</strong>：将大 String 拆成多个小块，或者按用户、日期、业务分区将大集合拆成多个 Key。在 Cluster 中要谨慎使用 Hash Tag，避免拆分后仍全部集中到同一 Slot。</li>
+<li><strong>减少存储体积</strong>：只保存必要字段，选择更合适的数据结构和编码；是否压缩要权衡 CPU 开销和网络收益。</li>
+<li><strong>分批处理</strong>：集合数据使用 <code>HSCAN</code>、<code>SSCAN</code>、<code>ZSCAN</code> 等渐进式遍历，避免一次返回全部成员。</li>
+<li><strong>安全删除</strong>：大对象可以使用 <code>UNLINK</code> 先从键空间解除，再由后台线程释放内存；执行前仍应评估后台释放速度和瞬时内存压力。</li>
+<li><strong>在入口限制</strong>：对 Value 字节数和集合成员数设置业务阈值，建立持续监控，防止 Big Key 再次生成。</li>
+</ul>
+<h3 id="10-什么是-Hot-Key？">10. 什么是 Hot Key？</h3>
+<p>Hot Key 指<strong>在某段时间内访问频率远高于其他 Key，导致请求集中在某个 Redis 节点或某个 Key 上</strong>。例如热门商品、热搜榜、爆款活动或全局配置的 Key。</p>
+<p>Hot Key 和 Big Key 不是一回事：Big Key 关心的是体积或成员数，Hot Key 关心的是访问频率。一个很小的 Key 也可以因为请求过多成为 Hot Key，同一个 Key 也可能既大又热。Redis Cluster 按 Key 将数据映射到固定 Slot，不会自动把单个 Hot Key 的请求分散到多个主节点。</p>
+<h3 id="11-如何解决-Hot-Key-问题？">11. 如何解决 Hot Key 问题？</h3>
+<p>解决 Hot Key 要先区分是读热点还是写热点，再选择分散、合并或限制请求的方案：</p>
+<ul>
+<li><strong>识别热点</strong>：结合 <code>redis-cli --hotkeys</code>、<code>MONITOR</code> 的短时诊断、客户端埋点、代理统计和节点 CPU/网络指标发现热点。<code>MONITOR</code> 开销较大，不应长时间在高负载生产环境运行。</li>
+<li><strong>本地缓存</strong>：对读多写少、允许短暂不一致的热 Key，在应用实例内增加一级缓存，大量读请求不再访问 Redis。</li>
+<li><strong>创建读副本</strong>：将同一份热数据写入多个带后缀的 Key，读请求按规则分散到不同 Key 和 Slot。该方案适合读多写少场景，代价是需要处理多副本更新和过期的一致性。</li>
+<li><strong>拆分写热点</strong>：计数器等可合并业务可以拆成多个分片 Key，将写入分散后再定期汇总。如果业务要求对单一值做强实时更新，则不能直接使用这种方法。</li>
+<li><strong>请求合并与限流</strong>：对同一 Key 的并发回源请求做 singleflight/互斥合并，对超过系统能力的流量限流、排队或降级，并在业务可接受时返回短期旧值。</li>
+</ul>
+<p>仅增加 Redis Cluster 节点不一定能解决单个 Hot Key，因为该 Key 仍然属于一个 Slot。需要从 Key 设计和请求路径上将流量真正分散。</p>
+<h3 id="12-如何保证-Redis-与-MySQL-的缓存一致性？">12. 如何保证 Redis 与 MySQL 的缓存一致性？</h3>
+<p>严格来说，在没有分布式事务或统一顺序控制的情况下，很难让 Redis 和 MySQL 在任意时刻都完全强一致。实际项目中常用 <strong>Cache Aside（旁路缓存）模式</strong>，将 MySQL 作为可靠数据源，通过更新数据库后删除缓存来获得最终一致。</p>
+<p>读取流程是：</p>
+<ol>
+<li>先读 Redis，命中就直接返回。</li>
+<li>未命中时查询 MySQL。</li>
+<li>将查询结果写入 Redis 并设置合理 TTL，然后返回数据。</li>
+</ol>
+<p>更新流程通常是：</p>
+<ol>
+<li>先在 MySQL 中提交数据修改。</li>
+<li>数据库提交成功后删除 Redis 缓存，而不是直接更新缓存。后续读请求缓存未命中，再从 MySQL 加载新值。</li>
+</ol>
+<p>“先更新 MySQL，再删缓存”通常比“先删缓存，再更新 MySQL”的不一致窗口更小，但仍需要处理删除失败以及并发读回写旧值的竞态。根据一致性要求，可以进一步采用：</p>
+<ul>
+<li><strong>失败重试</strong>：将删除缓存的任务放入可靠消息队列或本地事件表，失败后重试并监控死信。</li>
+<li><strong>订阅 binlog</strong>：通过 CDC 消费 MySQL binlog，按数据变更事件删除或更新缓存，并做好幂等、顺序和重试处理。</li>
+<li><strong>延迟双删</strong>：在特定竞态模型下，第一次删除后延迟再删一次，降低旧值被并发请求重新写入的风险。延迟时间需要结合业务请求时长设置，它仍是最终一致方案，不能当作强一致保证。</li>
+<li><strong>版本校验或串行化</strong>：在对顺序敏感的场景中为数据携带版本号，拒绝用旧版本覆盖新版本；对少量强一致路径可考虑加锁或串行化，但会牺牲可用性和吞吐量。</li>
+</ul>
+<p>TTL 只是最后的兜底，决定了错误缓存最长可能存在多久，不应用它代替更新通知。最终方案要根据业务能容忍的不一致窗口、吞吐量和系统复杂度选择。</p>
+<h3 id="13-缓存雪崩、缓存击穿和缓存穿透是什么，如何解决？">13. 缓存雪崩、缓存击穿和缓存穿透是什么，如何解决？</h3>
+<p>三者的区别在于缓存未命中的原因不同：<strong>雪崩是大量 Key 同时失效或 Redis 整体不可用，击穿是某个热 Key 失效，穿透是查询本来就不存在的数据</strong>。它们都可能让请求绕过缓存直接压到数据库，但治理方式不完全相同。</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>表现</th>
+<th>常见解决方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>缓存雪崩</td>
+<td>大批 Key 在相近时间过期，或 Redis 故障，流量集中回源</td>
+<td>TTL 加随机值打散过期时间；核心数据预热；Redis 高可用和容量预案；应用侧限流、熔断、降级及请求合并</td>
+</tr>
+<tr>
+<td>缓存击穿</td>
+<td>一个高频热 Key 到期，大量并发请求同时查询数据库</td>
+<td>对回源加互斥锁或做 singleflight，只让一个请求重建缓存；采用逻辑过期并在后台刷新；必要时对热点预热</td>
+</tr>
+<tr>
+<td>缓存穿透</td>
+<td>请求的 Key 在 Redis 和数据库中都不存在，每次都回源</td>
+<td>先做参数和权限校验；对不存在的结果做短 TTL 的空值缓存；在数据量较大时使用布隆过滤器拦截一定不存在的 Key；对恶意流量限流</td>
+</tr>
+</tbody>
+</table>
+<p>这些手段需要组合使用。例如，缓存空值会占用内存，而布隆过滤器存在误判；逻辑过期可以避免热 Key 集中回源，但客户端可能在短时间内读到旧值。选型时要结合数据一致性和可用性要求。</p>
+<h3 id="14-布隆过滤器的原理是什么？">14. 布隆过滤器的原理是什么？</h3>
+<p>布隆过滤器是一种用来判断元素是否可能存在的空间高效概率数据结构。它的结论是：<strong>判定不存在时一定不存在；判定存在时只是可能存在</strong>，因为它会有假阳性，但标准布隆过滤器在数据正确写入且位没有被删除的前提下不会有假阴性。</p>
+<p>它由一个位数组和多个 Hash 函数组成：</p>
+<ol>
+<li><strong>写入元素</strong>：用 <code>k</code> 个 Hash 函数对元素计算，得到 <code>k</code> 个位置，把位数组中对应的位设为 <code>1</code>。</li>
+<li><strong>查询元素</strong>：用相同的 Hash 函数计算位置。只要有一位是 <code>0</code>，元素就一定不存在；如果所有位都是 <code>1</code>，可能是该元素设置的，也可能是其他元素碰撞的，所以只能说可能存在。</li>
+</ol>
+<p>误判率取决于位数组大小、Hash 函数数量和实际写入的元素数。设计时应根据预期容量和可接受的误判率计算参数，实际数量大幅超过预期时，误判率会上升。标准布隆过滤器不能直接安全删除元素，因为同一个位可能被多个元素共用；如果需要删除，可以评估 Counting Bloom Filter 或定期重建。</p>
+<p>在缓存穿透场景中，请求先查布隆过滤器；如果判定不存在就直接拒绝，如果判定可能存在，仍然需要继续查 Redis 或数据库确认。</p>
+<h3 id="15-如何设计秒杀系统以处理高并发并避免超卖？">15. 如何设计秒杀系统以处理高并发并避免超卖？</h3>
+<p>秒杀系统的核心思路是：<strong>在入口拦截无效流量，用 Redis 原子地预扣库存，通过消息队列削峰后异步落库，最后由数据库条件更新和唯一约束兜底</strong>。</p>
+<p>一个常见的处理流程是：</p>
+<ol>
+<li>
+<p><strong>事前预热</strong>：将活动页面静态化并放到 CDN，将商品信息和可售库存预热到 Redis，避免开始时大量请求直接读 MySQL。</p>
+</li>
+<li>
+<p><strong>入口限流</strong>：在 CDN、网关和应用层做限流、黑名单、验证码或动态秒杀路径校验，只让系统能承受的请求进入核心流程。</p>
+</li>
+<li>
+<p><strong>原子校验和预扣</strong>：用 Redis Lua 脚本在一次原子执行中完成活动状态、用户是否重复购买、库存是否大于 <code>0</code> 的检查，然后扣减库存并记录用户预订。不能把“查库存”和“减库存”拆成两次非原子请求。</p>
+</li>
+<li>
+<p><strong>消息队列削峰</strong>：预扣成功后发送下单消息，后台消费者按 MySQL 能力异步创建订单。消息要有唯一业务 ID，并做好持久化、重试、幂等消费和死信处理。</p>
+</li>
+<li>
+<p><strong>数据库兜底</strong>：扣减数据库库存时使用带条件的原子更新，例如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> sku_stock<br><span class="hljs-keyword">SET</span> stock <span class="hljs-operator">=</span> stock <span class="hljs-operator">-</span> <span class="hljs-number">1</span><br><span class="hljs-keyword">WHERE</span> sku_id <span class="hljs-operator">=</span> ? <span class="hljs-keyword">AND</span> stock <span class="hljs-operator">&gt;</span> <span class="hljs-number">0</span>;<br></code></pre></td></tr></table></figure>
+<p>只有受影响行数为 <code>1</code> 才表示扣减成功；同时对“活动 ID + 用户 ID”等业务键建立唯一约束，防止重复消费创建多张订单。</p>
+</li>
+<li>
+<p><strong>结果查询与补偿</strong>：前端查询异步处理结果，而不是长时间阻塞等待。如果消息最终失败、订单超时未支付或数据库扣减失败，需要按幂等规则回补库存，并通过对账任务发现 Redis、订单和 MySQL 之间的差异。</p>
+</li>
+</ol>
+<p>防超卖的最后保证不应只放在 Redis。Redis 预扣用于快速过滤大部分请求，MySQL 的 <code>stock &gt; 0</code> 条件更新负责防止库存减成负数，唯一约束和幂等逻辑防止重复下单，消息与补偿机制负责处理跨系统的最终一致。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">Redis 系列</h2></div>
+                  <strong>1 / 6</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="Redis 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="17"><span style="width:17%"></span></div>
+                <ol>
+                  
+                    <li class="current">
+                      <a href="/posts/bced017a3fdf/" aria-current="page"><span>1</span>场景</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/a3e33afe7e3f/" ><span>2</span>数据结构</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/1fe8858b923f/" ><span>3</span>线程模型</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/09b3554eab36/" ><span>4</span>redis事务</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/22c416610a43/" ><span>5</span>缓存淘汰和过期删除</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/aeb3025afccc/" ><span>6</span>集群</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/22c416610a43/"><strong>缓存淘汰和过期删除</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/aeb3025afccc/"><strong>集群</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/09b3554eab36/"><strong>redis事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/1fe8858b923f/"><strong>线程模型</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/a3e33afe7e3f/"><strong>数据结构</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+        <a href="/tags/%E7%BC%93%E5%AD%98/" class="print-no-link">#缓存</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>场景</div>
+      <div>https://yrkzbb.github.io/posts/bced017a3fdf/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/a887c7648a61/" title="网络模型">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">网络模型</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/aeb3025afccc/" title="集群">
+                        <span class="hidden-mobile">集群</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

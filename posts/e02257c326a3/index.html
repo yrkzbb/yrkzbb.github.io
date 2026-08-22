@@ -1,0 +1,920 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/e02257c326a3/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="锁基础 1. MySQL 有哪些锁？应该如何理解？ MySQL 的锁可以从三个维度理解：锁多大范围、允许什么操作，以及具体锁住索引的哪一部分。  按锁定范围：包括全局锁、表级锁和行级锁。全局锁影响整个实例；表级锁包括显式表锁、协调 DDL 与 DML 的元数据锁（MDL），以及 InnoDB 的意向锁；行级锁粒度最小，适合高并发访问。 按兼容模式：分为共享锁（S 锁）和排他锁（X 锁）。S 锁之间">
+<meta property="og:type" content="article">
+<meta property="og:title" content="锁">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/e02257c326a3/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="锁基础 1. MySQL 有哪些锁？应该如何理解？ MySQL 的锁可以从三个维度理解：锁多大范围、允许什么操作，以及具体锁住索引的哪一部分。  按锁定范围：包括全局锁、表级锁和行级锁。全局锁影响整个实例；表级锁包括显式表锁、协调 DDL 与 DML 的元数据锁（MDL），以及 InnoDB 的意向锁；行级锁粒度最小，适合高并发访问。 按兼容模式：分为共享锁（S 锁）和排他锁（X 锁）。S 锁之间">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-18T19:05:59.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.388Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="锁">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>锁 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"锁","description":"锁基础 1. MySQL 有哪些锁？应该如何理解？ MySQL 的锁可以从三个维度理解：锁多大范围、允许什么操作，以及具体锁住索引的哪一部分。  按锁定范围：包括全局锁、表级锁和行级锁。全局锁影响整个实例；表级锁包括显式表锁、协调 DDL 与 DML 的元数据锁（MDL），以及 InnoDB 的意向锁；行级锁粒度最小，适合高并发访问。 按兼容模式：分为共享锁（S 锁）和排他锁（X 锁）。S 锁之间","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-18T19:05:59.000Z","dateModified":"2026-08-22T20:33:47.388Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/e02257c326a3/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="锁"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 03:05" pubdate>
+          2026年8月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.3k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="9">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          9 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/锁.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="MySQL 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">MySQL 学习路线</a>
+            <span>5 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+            <span style="width:20%"></span>
+          </div>
+          <nav aria-label="MySQL 系列目录">
+            
+              <a class="passed" href="/posts/17b7a6697a0b/" >
+                <small>01</small>
+                <strong>sql基础</strong>
+              </a>
+            
+              <a class="passed" href="/posts/1ea67698a54e/" >
+                <small>02</small>
+                <strong>存储引擎</strong>
+              </a>
+            
+              <a class="passed" href="/posts/858354479050/" >
+                <small>03</small>
+                <strong>索引</strong>
+              </a>
+            
+              <a class="passed" href="/posts/b1eff968feaa/" >
+                <small>04</small>
+                <strong>事务</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/848e251bfd61/" >
+                <small>06</small>
+                <strong>日志</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/79e80f7c9bcc/" >
+                <small>07</small>
+                <strong>性能调优</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/cc31560638cf/" >
+                <small>08</small>
+                <strong>架构</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">锁</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="锁基础">锁基础</h2>
+<h3 id="1-MySQL-有哪些锁？应该如何理解？">1. MySQL 有哪些锁？应该如何理解？</h3>
+<p>MySQL 的锁可以从三个维度理解：锁多大范围、允许什么操作，以及具体锁住索引的哪一部分。</p>
+<ol>
+<li><strong>按锁定范围</strong>：包括全局锁、表级锁和行级锁。全局锁影响整个实例；表级锁包括显式表锁、协调 DDL 与 DML 的元数据锁（MDL），以及 InnoDB 的意向锁；行级锁粒度最小，适合高并发访问。</li>
+<li><strong>按兼容模式</strong>：分为共享锁（S 锁）和排他锁（X 锁）。S 锁之间兼容，S 锁与 X 锁、两个 X 锁通常冲突。<code>SELECT ... FOR SHARE</code> 使用共享锁定读，<code>UPDATE</code>、<code>DELETE</code> 和 <code>SELECT ... FOR UPDATE</code> 通常需要排他锁。</li>
+<li><strong>按 InnoDB 行锁范围</strong>：包括只锁索引记录的 Record Lock、只锁索引间隙的 Gap Lock，以及两者组合的 Next-Key Lock。后两者主要用于阻止范围内插入新记录。</li>
+</ol>
+<h3 id="2-数据库的表锁和行锁有什么作用？">2. 数据库的表锁和行锁有什么作用？</h3>
+<p>表锁和行锁都用于协调并发访问、避免冲突操作破坏数据一致性，主要区别是锁定粒度和并发成本。</p>
+<ol>
+<li><strong>表锁</strong>：一次锁住整张表，实现和管理相对简单，获取锁的开销较小，适合全表操作或并发要求不高的场景。但锁粒度大，即使两个事务访问不同记录，也可能互相阻塞，并发能力较低。</li>
+<li><strong>行锁</strong>：只锁住相关的索引记录或范围，不同事务修改不同记录时通常可以并发执行，适合高并发 OLTP 场景。但行锁的管理成本更高，事务锁定大量记录时会占用更多锁资源，也更容易形成复杂的锁等待和死锁。</li>
+</ol>
+<p>InnoDB 的“行锁”本质上是索引记录锁，不是直接按数据页中的物理行号加锁。</p>
+<p>锁与并发更新</p>
+<h3 id="1-MySQL-两个线程的-UPDATE-同时处理同一条数据，会不会阻塞？">1. MySQL 两个线程的 <code>UPDATE</code> 同时处理同一条数据，会不会阻塞？</h3>
+<p>会不会阻塞取决于事务是否重叠，但对 InnoDB 来说，如果两个事务确实同时更新同一条记录，通常会发生阻塞。<code>UPDATE</code> 需要对目标索引记录加排他锁，同一记录上的两个排他锁不兼容。</p>
+<p>例如事务 A 先执行：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">START</span> TRANSACTION;<br><span class="hljs-keyword">UPDATE</span> account <br></code></pre></td></tr></table></figure>
+<p>在 A 提交或回滚前，事务 B 执行下面的语句通常要等待：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> account <br></code></pre></td></tr></table></figure>
+<p>A 释放锁后，B 才能继续，并基于届时可用的最新记录执行更新。如果等待超过锁等待超时时间，B 会报错；如果多个事务形成循环等待，还可能发生死锁，InnoDB 会回滚其中一个事务。</p>
+<p>如果第一条语句在 <code>autocommit=1</code> 下已经执行并提交，第二条语句再开始，就不存在同时持锁，也不会因此等待。使用 MyISAM 等其他存储引擎时，锁行为也不能按 InnoDB 行锁理解。</p>
+<h3 id="2-如果两个更新范围的条件不是主键或索引，还会阻塞吗？">2. 如果两个更新范围的条件不是主键或索引，还会阻塞吗？</h3>
+<p>有可能，而且阻塞范围往往会比预期更大。InnoDB 的行锁是加在扫描到的索引记录上的；如果过滤条件没有可用索引，执行计划通常需要扫描聚簇索引的大量记录甚至全表。</p>
+<p>例如 <code>status</code> 没有索引：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> orders <span class="hljs-keyword">SET</span> flag <span class="hljs-operator">=</span> <span class="hljs-number">1</span> <span class="hljs-keyword">WHERE</span> status <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;NEW&#x27;</span>;<br><span class="hljs-keyword">UPDATE</span> orders <span class="hljs-keyword">SET</span> flag <span class="hljs-operator">=</span> <span class="hljs-number">2</span> <span class="hljs-keyword">WHERE</span> status <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;DONE&#x27;</span>;<br></code></pre></td></tr></table></figure>
+<p>虽然两个条件在业务上互斥，但两条语句都可能从聚簇索引头部开始扫描，并对扫描涉及的记录加锁，因此仍可能发生锁等待，不能仅根据最终匹配的数据范围判断它们一定互不阻塞。</p>
+<p>3. 两条 <code>UPDATE</code> 处理同一张表中不同的主键范围，一个 <code>id &lt; 10</code>，另一个 <code>id &gt; 15</code>，会不会阻塞？底层为什么？</p>
+<p>在题设只有这两个简单主键条件的情况下，通常不会互相阻塞。因为一条语句处理 <code>id &lt; 10</code>，另一条处理 <code>id &gt; 15</code>，目标记录和需要保护的逻辑范围互不重叠。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> account <span class="hljs-keyword">SET</span> status <span class="hljs-operator">=</span> <span class="hljs-number">1</span> <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">&lt;</span> <span class="hljs-number">10</span>;<br><span class="hljs-keyword">UPDATE</span> account <span class="hljs-keyword">SET</span> status <span class="hljs-operator">=</span> <span class="hljs-number">2</span> <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">&gt;</span> <span class="hljs-number">15</span>;<br></code></pre></td></tr></table></figure>
+<p>底层原因是 InnoDB 的行锁建立在索引上。两条语句都可以使用主键索引直接做范围扫描，对各自命中的主键记录加排他锁；在 <code>REPEATABLE READ</code> 下，还会根据实际索引记录对相应边界使用 Gap Lock 或 Next-Key Lock。两边不会锁住同一条目标记录；即使稀疏数据使边界落在同一个物理索引间隙，纯间隙锁之间也是兼容的，它们的作用是阻止插入，不是互相排斥。两个事务在表级持有的意向排他锁（IX）之间也兼容，所以不会仅因操作同一张表而阻塞。</p>
+<p>这个结论有明确前提：执行计划确实使用主键范围，并且 SQL 没有通过其他条件、触发器或外键操作访问共同资源。如果实际扫描了相同记录，或者事务此前已经持有其他冲突锁，仍可能等待甚至死锁。</p>
+<p>在题设条件下通常不阻塞，最终锁范围要结合执行计划和事务上下文确认。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">MySQL 系列</h2></div>
+                  <strong>5 / 8</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="MySQL 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="63"><span style="width:63%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/17b7a6697a0b/" ><span>1</span>sql基础</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/1ea67698a54e/" ><span>2</span>存储引擎</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/858354479050/" ><span>3</span>索引</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/b1eff968feaa/" ><span>4</span>事务</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/e02257c326a3/" aria-current="page"><span>5</span>锁</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/848e251bfd61/" ><span>6</span>日志</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/79e80f7c9bcc/" ><span>7</span>性能调优</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/cc31560638cf/" ><span>8</span>架构</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/cc31560638cf/"><strong>架构</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/79e80f7c9bcc/"><strong>性能调优</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/848e251bfd61/"><strong>日志</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/b1eff968feaa/"><strong>事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/858354479050/"><strong>索引</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+        <a href="/tags/%E9%94%81/" class="print-no-link">#锁</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>锁</div>
+      <div>https://yrkzbb.github.io/posts/e02257c326a3/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/848e251bfd61/" title="日志">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">日志</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/b1eff968feaa/" title="事务">
+                        <span class="hidden-mobile">事务</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

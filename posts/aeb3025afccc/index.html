@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/aeb3025afccc/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="Redis 主从复制 1. Redis 主从同步中的增量同步和全量同步怎么实现？ Redis 主从同步分为全量同步和增量同步。 从节点第一次连接主节点，或者无法继续增量同步时，会执行全量同步。主节点执行 BGSAVE 生成 RDB 快照，同时把生成快照期间的新写命令记录到复制缓冲区；然后把 RDB 发送给从节点。从节点清空旧数据并加载 RDB，之后主节点再把缓冲区中的写命令发送过去，最后双方进入持">
+<meta property="og:type" content="article">
+<meta property="og:title" content="集群">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/aeb3025afccc/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="Redis 主从复制 1. Redis 主从同步中的增量同步和全量同步怎么实现？ Redis 主从同步分为全量同步和增量同步。 从节点第一次连接主节点，或者无法继续增量同步时，会执行全量同步。主节点执行 BGSAVE 生成 RDB 快照，同时把生成快照期间的新写命令记录到复制缓冲区；然后把 RDB 发送给从节点。从节点清空旧数据并加载 RDB，之后主节点再把缓冲区中的写命令发送过去，最后双方进入持">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T10:34:23.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.388Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="主从复制">
+<meta property="article:tag" content="集群">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>集群 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"集群","description":"Redis 主从复制 1. Redis 主从同步中的增量同步和全量同步怎么实现？ Redis 主从同步分为全量同步和增量同步。 从节点第一次连接主节点，或者无法继续增量同步时，会执行全量同步。主节点执行 BGSAVE 生成 RDB 快照，同时把生成快照期间的新写命令记录到复制缓冲区；然后把 RDB 发送给从节点。从节点清空旧数据并加载 RDB，之后主节点再把缓冲区中的写命令发送过去，最后双方进入持","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T10:34:23.000Z","dateModified":"2026-08-22T20:33:47.388Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/aeb3025afccc/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="集群"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 18:34" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="11">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/集群.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="Redis 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">Redis 学习路线</a>
+            <span>6 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="24">
+            <span style="width:24%"></span>
+          </div>
+          <nav aria-label="Redis 系列目录">
+            
+              <a class="passed" href="/posts/bced017a3fdf/" >
+                <small>01</small>
+                <strong>场景</strong>
+              </a>
+            
+              <a class="passed" href="/posts/a3e33afe7e3f/" >
+                <small>02</small>
+                <strong>数据结构</strong>
+              </a>
+            
+              <a class="passed" href="/posts/1fe8858b923f/" >
+                <small>03</small>
+                <strong>线程模型</strong>
+              </a>
+            
+              <a class="passed" href="/posts/09b3554eab36/" >
+                <small>04</small>
+                <strong>redis事务</strong>
+              </a>
+            
+              <a class="passed" href="/posts/22c416610a43/" >
+                <small>05</small>
+                <strong>缓存淘汰和过期删除</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>06</small>
+                <strong>集群</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">集群</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Redis-主从复制">Redis 主从复制</h2>
+<h3 id="1-Redis-主从同步中的增量同步和全量同步怎么实现？">1. Redis 主从同步中的增量同步和全量同步怎么实现？</h3>
+<p>Redis 主从同步分为全量同步和增量同步。</p>
+<p>从节点第一次连接主节点，或者无法继续增量同步时，会执行全量同步。主节点执行 <code>BGSAVE</code> 生成 RDB 快照，同时把生成快照期间的新写命令记录到复制缓冲区；然后把 RDB 发送给从节点。从节点清空旧数据并加载 RDB，之后主节点再把缓冲区中的写命令发送过去，最后双方进入持续的命令传播阶段。</p>
+<p>如果主从只是短暂断线，会优先进行增量同步。从节点重连时携带主节点的复制 ID 和自己已经处理到的复制偏移量。主节点判断复制 ID 是否匹配，并检查缺失的命令是否还保存在复制积压缓冲区 <code>repl_backlog</code> 中。如果满足条件，就只发送断线期间缺失的命令，从节点接着执行；否则退化为全量同步。</p>
+<p>所以增量同步能否成功，主要取决于两个条件：<strong>复制 ID 能否对应上，以及缺失的数据是否仍在复制积压缓冲区中</strong>。<code>repl_backlog</code> 是一个环形缓冲区，如果断线时间太长，缺失命令被新数据覆盖，就只能全量同步。</p>
+<p>一句话总结：<strong>全量同步通过 RDB 快照加后续增量命令建立一致数据集；增量同步通过复制 ID、复制偏移量和复制积压缓冲区补齐断线期间的数据。</strong></p>
+<h3 id="2-Redis-主从和集群可以保证数据一致性吗？">2. Redis 主从和集群可以保证数据一致性吗？</h3>
+<p>Redis 主从和集群都不能保证强一致性，通常只能保证最终一致性。</p>
+<p>原因是 Redis 默认采用异步复制。主节点写成功后就可以返回，此时数据可能还没同步到从节点。如果主节点突然宕机，从节点被提升为新主节点，这部分未同步的数据就可能丢失。</p>
+<p>Redis Cluster 的每个分片内部也是主从复制，因此同样存在这个问题。</p>
+<p>可以使用 <code>WAIT</code>、<code>min-replicas-to-write</code> 和 <code>min-replicas-max-lag</code> 降低数据丢失风险，但仍不能实现绝对的强一致性。</p>
+<p>简单来说：<strong>Redis 主从和集群主要保证高性能、高可用和最终一致性，不保证强一致性。</strong></p>
+<p>Redis Sentinel</p>
+<h3 id="1-Redis-哨兵机制的原理是什么？">1. Redis 哨兵机制的原理是什么？</h3>
+<p>Redis Sentinel 的核心作用是：<strong>在主从复制的基础上，对节点进行监控，并在主节点确认故障后自动完成主从切换</strong>。它提供的是高可用管理，不负责数据分片，数据复制仍由 Redis 主从机制完成。</p>
+<p>整个过程可以分为以下几步：</p>
+<ol>
+<li><strong>监控与发现</strong>：Sentinel 会定期向主节点、从节点和其他 Sentinel 发送 <code>PING</code>，并通过 <code>INFO</code> 等信息了解主从拓扑。多个 Sentinel 之间也会互相发现和交换监控信息。</li>
+<li><strong>主观下线</strong>：某个 Sentinel 在 <code>down-after-milliseconds</code> 时间内没有收到节点的有效响应，会单方面将其标记为主观下线，即 <code>SDOWN</code>。</li>
+<li><strong>客观下线</strong>：如果被判定主观下线的是主节点，Sentinel 会询问其他 Sentinel。当认为主节点下线的 Sentinel 数量达到配置的 <code>quorum</code>，主节点被判定为客观下线，即 <code>ODOWN</code>。</li>
+<li><strong>选举故障转移领导者</strong>：Sentinel 们会为本轮故障转移投票，选出一个 Sentinel 负责执行切换。达到 <code>quorum</code> 用于确认主节点客观下线，而真正授权故障转移还需要获得 Sentinel 的多数票，两者不能简单等同。</li>
+<li><strong>选择新主节点</strong>：领导者会从可用从节点中筛选候选者，综合考虑 <code>replica-priority</code>、复制进度等因素，选择更合适的从节点，并通过 <code>REPLICAOF NO ONE</code> 将它提升为新主节点。</li>
+<li><strong>重建主从关系</strong>：Sentinel 让其他从节点改为复制新主节点；旧主节点恢复后，也会被重新配置为新主节点的从节点。Sentinel 同时发布状态变化，客户端可以通过 Sentinel 查询当前主节点地址。</li>
+</ol>
+<p>实际部署时通常使用至少 3 个彼此独立的 Sentinel，以便进行多数派判断和故障转移授权。但 Sentinel 不会把异步主从复制变成强一致复制；如果旧主节点宕机前存在尚未复制的写入，故障转移后仍然可能丢失这部分数据。</p>
+<h3 id="2-Redis-Sentinel-选择新主节点的算法是什么？">2. Redis Sentinel 选择新主节点的算法是什么？</h3>
+<p>Sentinel 故障转移时有两次选举：先由 Sentinel 节点投票选出一个 Leader，再由这个 Leader 选择新的 Redis 主节点。</p>
+<p>选择新主节点时，首先排除不合格的从节点，比如已下线、长时间没有响应、与原主节点断开过久，以及 <code>replica-priority</code> 为 0 的节点。</p>
+<p>然后对候选节点依次比较：</p>
+<ol>
+<li><code>replica-priority</code>，数值越小越优先；</li>
+<li>复制偏移量，越大表示数据通常越新，越优先；</li>
+<li>如果前两项相同，就选择运行 ID 字典序更小的节点，用于确定性地打破平局。</li>
+</ol>
+<p>选出后，Sentinel 向它发送 <code>REPLICAOF NO ONE</code>，再让其他从节点复制这个新主节点。</p>
+<p>简单来说就是：<strong>先排除不合格节点，再按人工优先级、数据新旧程度和运行 ID 选主。</strong></p>
+<p>Redis Cluster</p>
+<h3 id="1-Redis-有哪些集群模式，Redis-Cluster-的优缺点是什么？">1. Redis 有哪些集群模式，Redis Cluster 的优缺点是什么？</h3>
+<p>Redis 常见有三种集群模式：<strong>主从复制、Sentinel 和 Redis Cluster</strong>。</p>
+<p>主从解决读扩展和数据备份，但不能自动故障转移；Sentinel 在主从基础上实现自动故障转移，但不支持数据分片；Redis Cluster 同时支持分片和高可用。</p>
+<p>Redis Cluster 把 16384 个哈希槽分配给不同主节点，Key 通过 CRC16 计算所属槽，每个主节点可以配置从节点，主节点故障后自动提升从节点。</p>
+<p>优点是支持水平扩容、分散数据和请求，并且具有自动故障转移能力。缺点是运维复杂，多 Key 操作、事务和 Lua 脚本通常要求 Key 在同一槽；客户端需要处理重定向，而且异步复制可能在故障切换时丢失少量数据。</p>
+<p>简单来说，数据量不大、只需要高可用时使用 Sentinel；单机容量或吞吐达到瓶颈时使用 Redis Cluster。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">Redis 系列</h2></div>
+                  <strong>6 / 6</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="Redis 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span style="width:100%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/bced017a3fdf/" ><span>1</span>场景</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/a3e33afe7e3f/" ><span>2</span>数据结构</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/1fe8858b923f/" ><span>3</span>线程模型</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/09b3554eab36/" ><span>4</span>redis事务</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/22c416610a43/" ><span>5</span>缓存淘汰和过期删除</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/aeb3025afccc/" aria-current="page"><span>6</span>集群</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/bced017a3fdf/"><strong>场景</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/22c416610a43/"><strong>缓存淘汰和过期删除</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/09b3554eab36/"><strong>redis事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/1fe8858b923f/"><strong>线程模型</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/a3e33afe7e3f/"><strong>数据结构</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+        <a href="/tags/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" class="print-no-link">#主从复制</a>
+      
+        <a href="/tags/%E9%9B%86%E7%BE%A4/" class="print-no-link">#集群</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>集群</div>
+      <div>https://yrkzbb.github.io/posts/aeb3025afccc/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/bced017a3fdf/" title="场景">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">场景</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/22c416610a43/" title="缓存淘汰和过期删除">
+                        <span class="hidden-mobile">缓存淘汰和过期删除</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

@@ -1,0 +1,1049 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/ebee359e45de/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="进程与线程 1. 线程和进程的区别是什么？ 核心区别是：进程是资源分配和隔离的基本单位，线程是 CPU 调度和执行的基本单位。  进程通常拥有独立的虚拟地址空间、文件描述符表和权限信息等资源；同一进程内的线程共享这些资源。 每个线程都有自己的程序计数器、寄存器、栈和线程局部存储，以保存独立的执行状态。 进程之间默认相互隔离，通信需要借助 IPC；线程共享进程内存，通信更直接，但必须处理并发同步问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="进程管理">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/ebee359e45de/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="进程与线程 1. 线程和进程的区别是什么？ 核心区别是：进程是资源分配和隔离的基本单位，线程是 CPU 调度和执行的基本单位。  进程通常拥有独立的虚拟地址空间、文件描述符表和权限信息等资源；同一进程内的线程共享这些资源。 每个线程都有自己的程序计数器、寄存器、栈和线程局部存储，以保存独立的执行状态。 进程之间默认相互隔离，通信需要借助 IPC；线程共享进程内存，通信更直接，但必须处理并发同步问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T11:20:44.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.388Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="进程">
+<meta property="article:tag" content="线程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>进程管理 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"进程管理","description":"进程与线程 1. 线程和进程的区别是什么？ 核心区别是：进程是资源分配和隔离的基本单位，线程是 CPU 调度和执行的基本单位。  进程通常拥有独立的虚拟地址空间、文件描述符表和权限信息等资源；同一进程内的线程共享这些资源。 每个线程都有自己的程序计数器、寄存器、栈和线程局部存储，以保存独立的执行状态。 进程之间默认相互隔离，通信需要借助 IPC；线程共享进程内存，通信更直接，但必须处理并发同步问题","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T11:20:44.000Z","dateModified":"2026-08-22T20:33:47.388Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/ebee359e45de/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="进程管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 19:20" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="31">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/进程管理.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="操作系统 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">操作系统 学习路线</a>
+            <span>2 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+            <span style="width:8%"></span>
+          </div>
+          <nav aria-label="操作系统 系列目录">
+            
+              <a class="passed" href="/posts/51416497c267/" >
+                <small>01</small>
+                <strong>用户态和内核态</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>02</small>
+                <strong>进程管理</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/ef846162030d/" >
+                <small>03</small>
+                <strong>中断</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/0160369d0c9c/" >
+                <small>04</small>
+                <strong>内存管理</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/b24e86585b0f/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">进程管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="进程与线程">进程与线程</h2>
+<h3 id="1-线程和进程的区别是什么？">1. 线程和进程的区别是什么？</h3>
+<p>核心区别是：<strong>进程是资源分配和隔离的基本单位，线程是 CPU 调度和执行的基本单位</strong>。</p>
+<ul>
+<li>进程通常拥有独立的虚拟地址空间、文件描述符表和权限信息等资源；同一进程内的线程共享这些资源。</li>
+<li>每个线程都有自己的程序计数器、寄存器、栈和线程局部存储，以保存独立的执行状态。</li>
+<li>进程之间默认相互隔离，通信需要借助 IPC；线程共享进程内存，通信更直接，但必须处理并发同步问题。</li>
+<li>创建和切换进程通常比同一进程内的线程开销大，但具体差距取决于操作系统实现和工作负载。</li>
+<li>一个线程发生普通错误，通常会导致其所在进程退出，进而影响该进程内的其他线程；一个普通进程崩溃通常不会直接破坏其他进程。</li>
+</ul>
+<h3 id="2-进程、线程、协程的区别是什么？">2. 进程、线程、协程的区别是什么？</h3>
+<p>三者主要区别在于<strong>资源隔离、调度主体和切换成本</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>进程</th>
+<th>线程</th>
+<th>协程</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>资源关系</td>
+<td>拥有独立地址空间和系统资源</td>
+<td>共享所属进程的大部分资源</td>
+<td>通常共享所属线程的资源</td>
+</tr>
+<tr>
+<td>调度者</td>
+<td>操作系统内核</td>
+<td>操作系统内核</td>
+<td>通常由语言运行时或用户态调度器调度</td>
+</tr>
+<tr>
+<td>独立状态</td>
+<td>地址空间、进程上下文等</td>
+<td>寄存器、栈、线程局部存储等</td>
+<td>协程栈、程序位置等</td>
+</tr>
+<tr>
+<td>切换开销</td>
+<td>通常较大</td>
+<td>通常小于进程</td>
+<td>通常最小，可在用户态完成</td>
+</tr>
+<tr>
+<td>隔离性</td>
+<td>强</td>
+<td>较弱</td>
+<td>更弱</td>
+</tr>
+</tbody>
+</table>
+<p>协程适合大量 I/O 密集型任务，但协程本身不等于并行。如果多个协程只运行在一个内核线程上，它们无法同时使用多个 CPU 核心；而且一次阻塞式系统调用还可能阻塞整个线程，除非运行时使用异步 I/O 或把任务调度到其他线程。</p>
+<h3 id="3-为什么进程崩溃通常不会对其他进程产生很大影响？">3. 为什么进程崩溃通常不会对其他进程产生很大影响？</h3>
+<p>核心原因是操作系统通过<strong>虚拟内存和权限机制实现了进程隔离</strong>。每个进程通常拥有独立的虚拟地址空间，进程只能访问页表中映射且权限允许的内存。发生越界访问等异常时，CPU 会陷入内核，操作系统一般只终止或通知当前进程，并回收它占用的资源。</p>
+<p>不过这不是绝对的。进程可能通过共享内存、文件、套接字等方式影响其他进程；关键服务崩溃也可能造成业务不可用。如果进程触发了内核或驱动缺陷、耗尽系统资源，影响范围还可能扩展到整个系统。</p>
+<h3 id="4-进程是分配资源的基本单位，这里的资源指什么？">4. 进程是分配资源的基本单位，这里的资源指什么？</h3>
+<p>这里主要指操作系统为进程建立或管理的资源集合，例如：</p>
+<ul>
+<li>独立的虚拟地址空间，包括代码段、数据段、堆、栈和内存映射；</li>
+<li>打开的文件、套接字、管道等内核对象及其描述符；</li>
+<li>进程身份和权限信息，例如用户 ID、用户组和安全凭据；</li>
+<li>信号处理配置、当前工作目录、环境变量等运行环境；</li>
+<li>CPU 时间、内存等资源的使用统计和限制。</li>
+</ul>
+<p>“基本单位”不代表所有资源都完全独占。例如同一进程的线程共享地址空间和文件描述符，一些内存页、动态库和文件也可以在多个进程之间共享。</p>
+<h3 id="5-为什么进程之下还要设计线程？">5. 为什么进程之下还要设计线程？</h3>
+<p>主要是为了在保留进程资源边界的同时，提供一种<strong>更轻量的并发执行方式</strong>。</p>
+<p>如果只使用进程，一个应用的多个执行任务需要各自维护地址空间，并通过 IPC 交换数据，创建、通信和切换成本相对较高。线程共享同一进程的内存和文件等资源，可以方便地协作；当一个线程等待 I/O 时，其他线程仍可运行；在多核 CPU 上，多个线程还可以真正并行执行。</p>
+<p>代价是共享状态会带来数据竞争、死锁等问题，而且一个线程的严重错误往往会影响整个进程。</p>
+<h3 id="6-多线程相比单线程有哪些优势和劣势？">6. 多线程相比单线程有哪些优势和劣势？</h3>
+<p>多线程的主要优势是提升<strong>并发能力和响应性</strong>：I/O 密集型任务可以在部分线程等待时运行其他任务；CPU 密集型任务在可并行拆分且有多核资源时，也可能缩短总耗时。此外，线程间共享数据比进程间通信更直接。</p>
+<p>它的劣势是程序复杂度和运行开销都会增加，包括线程创建与切换、栈内存占用、锁竞争和缓存一致性开销。共享数据还可能产生竞态条件、死锁、活锁和可见性问题，使测试与排查更困难。</p>
+<p>因此，多线程并不一定比单线程快。任务规模小、难以并行，或者同步竞争严重时，单线程反而可能更简单、更高效。</p>
+<h3 id="7-多线程是不是越多越好？线程太多会有什么问题？">7. 多线程是不是越多越好？线程太多会有什么问题？</h3>
+<p>不是。合适的线程数取决于任务类型、CPU 核数、阻塞比例、内存限制和外部资源容量。</p>
+<p>线程过多可能导致：</p>
+<ul>
+<li>调度和上下文切换增多，CPU 时间消耗在切换而不是业务计算上；</li>
+<li>每个线程的栈和管理结构占用内存，严重时可能耗尽内存；</li>
+<li>线程争抢锁、CPU 缓存、数据库连接和磁盘等资源，吞吐量反而下降；</li>
+<li>缓存失效和缓存一致性开销增加，尾延迟变差；</li>
+<li>超过系统线程数、文件描述符或下游服务限制。</li>
+</ul>
+<p>CPU 密集型任务的工作线程数通常接近可用 CPU 核数；I/O 密集型任务可以适当增加，但应通过线程池设置上限，并结合压测结果、CPU 利用率、阻塞时间和下游容量调整，不能只套固定公式。</p>
+<h3 id="8-进程切换和线程切换有什么区别？">8. 进程切换和线程切换有什么区别？</h3>
+<p>两者都需要保存当前执行单元的 CPU 上下文，并恢复下一个执行单元的上下文。区别在于：如果切换到另一个进程，通常还要切换虚拟地址空间及相关内存管理状态；同一进程内的线程共享地址空间和大部分资源，一般不需要完成这些工作。</p>
+<p>因此，同一进程内的线程切换通常开销更小。跨进程切换可能使 TLB 和 CPU 缓存的有效内容减少，但现代处理器的地址空间标识等机制可以保留部分 TLB 项，所以不能简单认为每次进程切换都会清空全部缓存。</p>
+<p>如果是不同进程中的线程互相切换，本质上同样涉及进程地址空间切换，其成本会更接近进程切换。</p>
+<h3 id="9-为什么线程切换通常比进程切换快，节省了什么资源？">9. 为什么线程切换通常比进程切换快，节省了什么资源？</h3>
+<p>这里主要指<strong>同一进程内的线程切换</strong>。它通常不需要切换页表和虚拟地址空间，也不需要更换文件描述符等共享资源，因此减少了内存管理相关操作，并更有可能保留有效的 TLB 和 CPU 缓存数据。</p>
+<p>不过，线程切换仍要保存和恢复程序计数器、栈指针、通用寄存器等执行上下文，也会进入内核调度，并可能造成缓存扰动。它是“通常更快”，不是没有成本；若线程间锁竞争严重或工作集差异很大，间接开销仍可能很明显。</p>
+<h3 id="10-线程切换的详细过程是什么？上下文保存在哪里？">10. 线程切换的详细过程是什么？上下文保存在哪里？</h3>
+<p>以操作系统调度的内核线程为例，典型过程是：</p>
+<ol>
+<li>当前线程因时间片耗尽、阻塞、主动让出 CPU 或被更高优先级线程抢占而进入内核。</li>
+<li>CPU 和内核保存当前线程的程序计数器、栈指针、通用寄存器、状态寄存器等现场。</li>
+<li>调度器更新线程状态，从可运行队列中选择下一个线程。</li>
+<li>内核切换到目标线程的内核栈，恢复其寄存器和调度上下文；如果目标线程属于另一个进程，还要切换地址空间相关状态。</li>
+<li>从内核返回后，目标线程从上次暂停的位置继续运行。</li>
+</ol>
+<p>上下文通常保存在该线程的<strong>内核栈</strong>以及内核维护的线程控制结构中，例如 Linux 的 <code>task_struct</code> 及架构相关线程结构。浮点和 SIMD 寄存器等扩展状态也需要保存，具体保存时机和位置取决于操作系统与 CPU 架构。用户态协程切换则通常由运行时把必要寄存器、栈指针等保存到协程对象中，不一定进入内核。</p>
+<h3 id="11-进程有哪些状态？它们如何切换？">11. 进程有哪些状态？它们如何切换？</h3>
+<p>经典五状态模型包括：</p>
+<ul>
+<li><strong>新建态</strong>：进程正在创建，尚未进入就绪队列；</li>
+<li><strong>就绪态</strong>：已经具备运行条件，正在等待 CPU；</li>
+<li><strong>运行态</strong>：正在 CPU 上执行；</li>
+<li><strong>阻塞态</strong>：正在等待 I/O、锁或某个事件；</li>
+<li><strong>终止态</strong>：执行完成或被终止，等待系统完成清理。</li>
+</ul>
+<p>主要切换关系是：新建完成后进入就绪态；调度器选中后由就绪态进入运行态；时间片用完或被抢占时回到就绪态；等待 I/O 或事件时进入阻塞态；等待条件满足后回到就绪态；运行完成或被终止时进入终止态。</p>
+<p>有些教材或操作系统还会细分挂起、僵尸等状态，但它们不属于经典五状态模型中的五种基本状态。</p>
+<h3 id="12-进程上下文包括哪些内容？">12. 进程上下文包括哪些内容？</h3>
+<p>进程上下文是进程暂停后能够恢复执行所需的状态，通常包括：</p>
+<ul>
+<li><strong>CPU 上下文</strong>：程序计数器、栈指针、通用寄存器、状态寄存器，以及浮点或 SIMD 状态；</li>
+<li><strong>内存上下文</strong>：页表、虚拟内存区域、代码段、数据段、堆和栈等地址空间信息；</li>
+<li><strong>内核管理信息</strong>：进程状态、调度优先级、时间统计、内核栈和信号状态等；</li>
+<li><strong>资源与运行环境</strong>：打开的文件和套接字、当前目录、权限凭据等。</li>
+</ul>
+<p>上下文切换时并不会复制上述全部内容。内核主要切换恢复执行所必需的 CPU、调度和地址空间状态，其余资源通常仍由内核数据结构持有并按需访问。</p>
+<h2 id="进程间通信">进程间通信</h2>
+<h3 id="1-进程间通信有哪些方式？">1. 进程间通信有哪些方式？</h3>
+<p>常见的进程间通信（IPC）方式包括：</p>
+<ul>
+<li><strong>管道</strong>：包括匿名管道和命名管道，适合传输字节流；</li>
+<li><strong>消息队列</strong>：以消息为单位发送和接收数据；</li>
+<li><strong>共享内存</strong>：多个进程映射同一段物理内存，数据传输开销较小，但需要额外同步；</li>
+<li><strong>信号量</strong>：主要用于进程间同步和互斥，也可表达有限的计数信息；</li>
+<li><strong>信号</strong>：用于异步通知，只能携带有限信息；</li>
+<li><strong>套接字</strong>：既可用于同一主机，也可用于跨主机通信；</li>
+<li><strong>内存映射文件</strong>：多个进程通过映射同一文件共享数据。</li>
+</ul>
+<p>选择时要结合通信范围、数据量、吞吐与延迟、消息边界、同步需求和实现复杂度。例如大数据量的本机通信可考虑共享内存，而跨主机通信通常使用套接字。</p>
+<h3 id="2-管道有哪几种？">2. 管道有哪几种？</h3>
+<p>管道主要分为两种：</p>
+<ul>
+<li><strong>匿名管道</strong>：没有文件名，通常用于具有亲缘关系的进程，例如父子进程。Unix/Linux 中 <code>pipe()</code> 创建的普通管道是单向字节流；需要双向通信时通常建立两条管道，或使用支持双向通信的其他 IPC。</li>
+<li><strong>命名管道（FIFO）</strong>：在文件系统中有名字，无亲缘关系的进程也可以通过约定路径打开并通信。它仍然按照先进先出的字节流方式工作。</li>
+</ul>
+<p>两者传输的数据通常由内核缓冲区暂存，容量有限；写满时写端可能阻塞，读空时读端可能阻塞，具体行为还取决于是否使用非阻塞模式。</p>
+<h3 id="3-信号和信号量有什么区别？">3. 信号和信号量有什么区别？</h3>
+<p>信号和信号量用途不同：<strong>信号用于异步事件通知，信号量用于同步、互斥或资源计数</strong>。</p>
+<ul>
+<li>信号由内核通知进程发生了某个事件，例如 <code>SIGINT</code>、<code>SIGTERM</code>；进程可以使用默认行为、忽略部分信号或注册处理函数。传统信号通常不能可靠累计同类事件，能携带的信息也有限。</li>
+<li>信号量维护一个计数值。执行等待操作时，计数不足的线程或进程会阻塞；释放操作增加计数并唤醒等待者。计数信号量适合管理固定数量的资源，二值信号量可用于互斥或事件同步。</li>
+</ul>
+<p>因此，二者虽然名称相似，但不能互相等价替代。</p>
+<h3 id="4-共享内存是怎么实现的？">4. 共享内存是怎么实现的？</h3>
+<p>共享内存的核心是：<strong>操作系统把同一组物理内存页映射到多个进程各自的虚拟地址空间中</strong>。这些虚拟地址可以不同，但页表项最终指向相同的物理页，因此一个进程写入后，其他进程可以直接读取，不需要在进程之间反复复制大块数据。</p>
+<p>常见实现包括 POSIX 共享内存配合 <code>mmap()</code>、System V 共享内存，以及多个进程共同 <code>mmap()</code> 同一个文件。</p>
+<p>共享内存只解决数据共享，不自动保证并发安全。多个进程同时读写时，还需要配合进程共享的互斥锁、信号量或原子操作，并设计好数据布局、生命周期和异常退出后的恢复方式。</p>
+<h2 id="线程同步">线程同步</h2>
+<h3 id="1-线程间通信有哪些方式？">1. 线程间通信有哪些方式？</h3>
+<p>同一进程的线程天然共享地址空间，因此可以直接通过<strong>共享变量和共享对象</strong>交换数据，但需要同步机制保证可见性和一致性。常见方式包括：</p>
+<ul>
+<li>使用互斥锁、读写锁或自旋锁保护共享数据；</li>
+<li>使用条件变量、事件或信号量进行等待与通知；</li>
+<li>使用线程安全的消息队列，把共享状态转换为消息传递；</li>
+<li>使用原子变量和无锁数据结构完成简单状态通信；</li>
+<li>使用 <code>Future</code>、<code>Promise</code> 等高层抽象传递异步结果。</li>
+</ul>
+<p>线程局部存储用于保存线程私有数据，不属于线程间共享通信方式。实际开发中通常优先选择线程池、并发队列等成熟抽象，减少手工管理共享状态。</p>
+<h3 id="2-除了互斥锁，还有哪些锁？分别适用于什么场景？">2. 除了互斥锁，还有哪些锁？分别适用于什么场景？</h3>
+<p>常见锁及适用场景有：</p>
+<ul>
+<li><strong>读写锁</strong>：允许多个读者同时访问，写者独占，适合读多写少且临界区不能太短的场景；否则维护读写状态的成本可能抵消收益。</li>
+<li><strong>自旋锁</strong>：获取失败后不睡眠，而是循环等待，适合临界区很短、竞争较少，并且线程不适合睡眠的场景；等待时间长会浪费 CPU。</li>
+<li><strong>可重入锁</strong>：同一线程可以重复获取，适合存在递归调用或嵌套调用的场景，但必须按获取次数正确释放。</li>
+<li><strong>乐观锁</strong>：读取时不独占资源，更新时通过版本号或 CAS 检查冲突，适合冲突概率较低的场景；冲突频繁时重试成本较高。</li>
+<li><strong>悲观锁</strong>：访问前先加锁，适合冲突概率高、发生冲突后的回滚成本较高的场景。</li>
+<li><strong>公平锁与非公平锁</strong>：公平锁按等待顺序获取，可降低饥饿风险但调度开销通常更大；非公平锁允许插队，通常吞吐量更高，但等待时间可能不均衡。</li>
+</ul>
+<p>信号量和条件变量也是常用同步原语，但严格来说不一定属于“锁”。选择时应结合读写比例、临界区长度、竞争程度、公平性和是否允许线程阻塞判断。</p>
+<h2 id="进程调度">进程调度</h2>
+<h3 id="1-常见的进程调度算法有哪些？">1. 常见的进程调度算法有哪些？</h3>
+<p>常见调度算法包括：</p>
+<ul>
+<li><strong>先来先服务（FCFS）</strong>：按到达顺序执行，实现简单，但短任务可能被长任务拖延；</li>
+<li><strong>短作业优先（SJF）</strong>：优先执行预计运行时间短的任务，平均等待时间较低，但难以准确预测运行时间，长任务可能饥饿；</li>
+<li><strong>最短剩余时间优先（SRTF）</strong>：SJF 的抢占式版本，新到达的更短任务可以抢占当前任务；</li>
+<li><strong>优先级调度</strong>：高优先级任务先运行，可抢占或不可抢占，但低优先级任务可能饥饿，可通过优先级老化缓解；</li>
+<li><strong>时间片轮转（RR）</strong>：每个就绪进程轮流运行一个时间片，响应较公平；时间片太小会增加切换开销，太大则接近 FCFS；</li>
+<li><strong>多级队列调度</strong>：按任务类型或优先级划分多个固定队列，各队列采用不同策略；</li>
+<li><strong>多级反馈队列（MLFQ）</strong>：允许任务在不同优先级队列间移动，兼顾交互任务响应速度和长任务吞吐量。</li>
+</ul>
+<p>实时系统还会使用最早截止时间优先（EDF）、速率单调调度（RM）等算法。评价调度算法不能只看吞吐量，还要结合响应时间、周转时间、公平性、截止期限和上下文切换成本。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">操作系统 系列</h2></div>
+                  <strong>2 / 5</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="操作系统 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40"><span style="width:40%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/51416497c267/" ><span>1</span>用户态和内核态</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/ebee359e45de/" aria-current="page"><span>2</span>进程管理</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/ef846162030d/" ><span>3</span>中断</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/0160369d0c9c/" ><span>4</span>内存管理</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/b24e86585b0f/" ><span>5</span>锁</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/ef846162030d/"><strong>中断</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/0160369d0c9c/"><strong>内存管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/b24e86585b0f/"><strong>锁</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/51416497c267/"><strong>用户态和内核态</strong><small>操作系统</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="print-no-link">#操作系统</a>
+      
+        <a href="/tags/%E8%BF%9B%E7%A8%8B/" class="print-no-link">#进程</a>
+      
+        <a href="/tags/%E7%BA%BF%E7%A8%8B/" class="print-no-link">#线程</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>进程管理</div>
+      <div>https://yrkzbb.github.io/posts/ebee359e45de/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/b24e86585b0f/" title="锁">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">锁</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/51416497c267/" title="用户态和内核态">
+                        <span class="hidden-mobile">用户态和内核态</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

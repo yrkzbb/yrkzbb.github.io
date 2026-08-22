@@ -1,0 +1,941 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/1ea67698a54e/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="MySQL 执行流程 1. 执行一条 SQL 请求的过程是什么？ 一条查询 SQL 的整体流程可以概括为：连接器 → 查询缓存（MySQL 8.0 已移除）→ 解析器 → 预处理器 → 优化器 → 执行器 → 存储引擎。  MySQL 执行一条 SQL 查询语句的流程 客户端先通过连接器建立连接，然后 SQL 经过解析器生成语法树；执行 SQL 时再依次经过预处理、优化和执行三个阶段，最后由执行器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="存储引擎">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/1ea67698a54e/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="MySQL 执行流程 1. 执行一条 SQL 请求的过程是什么？ 一条查询 SQL 的整体流程可以概括为：连接器 → 查询缓存（MySQL 8.0 已移除）→ 解析器 → 预处理器 → 优化器 → 执行器 → 存储引擎。  MySQL 执行一条 SQL 查询语句的流程 客户端先通过连接器建立连接，然后 SQL 经过解析器生成语法树；执行 SQL 时再依次经过预处理、优化和执行三个阶段，最后由执行器">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-18T13:50:19.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.387Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="InnoDB">
+<meta property="article:tag" content="存储引擎">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>存储引擎 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"存储引擎","description":"MySQL 执行流程 1. 执行一条 SQL 请求的过程是什么？ 一条查询 SQL 的整体流程可以概括为：连接器 → 查询缓存（MySQL 8.0 已移除）→ 解析器 → 预处理器 → 优化器 → 执行器 → 存储引擎。  MySQL 执行一条 SQL 查询语句的流程 客户端先通过连接器建立连接，然后 SQL 经过解析器生成语法树；执行 SQL 时再依次经过预处理、优化和执行三个阶段，最后由执行器","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-18T13:50:19.000Z","dateModified":"2026-08-22T20:33:47.387Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/1ea67698a54e/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="存储引擎"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-18 21:50" pubdate>
+          2026年8月18日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="8">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          8 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/存储引擎.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="MySQL 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">MySQL 学习路线</a>
+            <span>2 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+            <span style="width:8%"></span>
+          </div>
+          <nav aria-label="MySQL 系列目录">
+            
+              <a class="passed" href="/posts/17b7a6697a0b/" >
+                <small>01</small>
+                <strong>sql基础</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>02</small>
+                <strong>存储引擎</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/858354479050/" >
+                <small>03</small>
+                <strong>索引</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/b1eff968feaa/" >
+                <small>04</small>
+                <strong>事务</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/e02257c326a3/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/848e251bfd61/" >
+                <small>06</small>
+                <strong>日志</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/79e80f7c9bcc/" >
+                <small>07</small>
+                <strong>性能调优</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/cc31560638cf/" >
+                <small>08</small>
+                <strong>架构</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">存储引擎</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="MySQL-执行流程">MySQL 执行流程</h2>
+<h3 id="1-执行一条-SQL-请求的过程是什么？">1. 执行一条 SQL 请求的过程是什么？</h3>
+<p>一条查询 SQL 的整体流程可以概括为：<code>连接器 → 查询缓存（MySQL 8.0 已移除）→ 解析器 → 预处理器 → 优化器 → 执行器 → 存储引擎</code>。</p>
+<p><a href="/img/mysql-sql-execution-flow.png" title="MySQL 执行一条 SQL 查询语句的流程"><img src="/img/mysql-sql-execution-flow.avif" srcset="/img/loading.gif" lazyload alt="MySQL 执行一条 SQL 查询语句的流程" loading="lazy" decoding="async" sizes="(max-width: 768px) 100vw, 900px" width="1026" height="612" data-fallback-src="/img/mysql-sql-execution-flow.webp" data-original-src="/img/mysql-sql-execution-flow.png"></a></p>
+<p>MySQL 执行一条 SQL 查询语句的流程</p>
+<p>客户端先通过连接器建立连接，然后 SQL 经过解析器生成语法树；执行 SQL 时再依次经过预处理、优化和执行三个阶段，最后由执行器调用存储引擎读取数据并返回结果。MySQL 8.0 已经移除了查询缓存。</p>
+<h2 id="MySQL-存储引擎">MySQL 存储引擎</h2>
+<h3 id="1-讲一讲-MySQL-的引擎吧，你有什么了解？">1. 讲一讲 MySQL 的引擎吧，你有什么了解？</h3>
+<p>存储引擎是 MySQL 中真正负责数据存储和读取的组件，采用插件化设计，可以在建表时通过 <code>ENGINE</code> 指定。</p>
+<ul>
+<li><strong>InnoDB</strong>：MySQL 默认的存储引擎，支持事务、行级锁、MVCC、外键和崩溃恢复，适合绝大多数高并发读写及要求数据一致性的业务场景。</li>
+<li><strong>MyISAM</strong>：不支持事务和外键，只支持表级锁，读性能较好但并发写能力和崩溃恢复能力较弱，实际业务中已经较少使用。</li>
+<li><strong>Memory</strong>：数据主要存放在内存中，访问速度快，但数据库重启后数据会丢失；只支持表级锁，适合临时数据或中间结果。</li>
+<li><strong>Archive</strong>：支持高压缩比，适合大量写入、很少修改的归档数据，但查询和索引能力有限。</li>
+</ul>
+<p>2. MySQL 为什么使用 InnoDB 作为默认存储引擎？</p>
+<p>MySQL 将 InnoDB 作为默认存储引擎，主要是因为它在数据可靠性和并发性能之间取得了较好的平衡：</p>
+<ol>
+<li><strong>支持事务</strong>：InnoDB 支持 ACID，可以通过提交和回滚保证业务操作的一致性。</li>
+<li><strong>并发性能较好</strong>：它支持行级锁和 MVCC，读写之间的阻塞较少，适合高并发场景。</li>
+<li><strong>支持崩溃恢复</strong>：InnoDB 通过 redo log、undo log 等机制，在数据库异常宕机后恢复数据，保证持久性和一致性。</li>
+<li><strong>支持外键约束</strong>：可以在数据库层面维护表之间的引用完整性。</li>
+<li><strong>索引与缓存机制完善</strong>：InnoDB 使用 B+ 树索引和 Buffer Pool，能够减少磁盘 I/O，提高查询和写入效率。</li>
+</ol>
+<p>相比之下，MyISAM 不支持事务和行级锁，发生异常后恢复能力也较弱。因此对于绝大多数需要事务、高并发和可靠性的业务，InnoDB 更适合作为默认存储引擎。</p>
+<h3 id="3-说一下-MySQL-中-InnoDB-与-MyISAM-的区别？">3. 说一下 MySQL 中 InnoDB 与 MyISAM 的区别？</h3>
+<p>InnoDB 和 MyISAM 的主要区别有以下几点：</p>
+<ol>
+<li><strong>事务</strong>：InnoDB 支持事务和 ACID，MyISAM 不支持事务。</li>
+<li><strong>锁粒度</strong>：InnoDB 支持行级锁和表级锁，并通过 MVCC 提高并发性能；MyISAM 主要使用表级锁，并发写能力较弱。</li>
+<li><strong>崩溃恢复</strong>：InnoDB 通过 redo log、undo log 等机制支持崩溃恢复；MyISAM 的恢复能力较弱，异常宕机后表可能损坏。</li>
+<li><strong>索引结构</strong>：InnoDB 使用聚簇索引，主键索引的叶子节点保存完整行数据，二级索引保存主键值；MyISAM 使用非聚簇索引，索引与数据分开存储，索引叶子节点保存数据记录的地址。</li>
+<li><strong>行数统计</strong>：MyISAM 会保存表的总行数，所以无条件的 <code>COUNT(*)</code> 可以直接读取；InnoDB 通常需要根据可见性统计记录，不能简单保存一个所有事务都适用的精确行数。</li>
+</ol>
+<p>MySQL 数据文件</p>
+<h3 id="1-数据管理中，MySQL-的数据文件大体分为哪些？">1. 数据管理中，MySQL 的数据文件大体分为哪些？</h3>
+<ol>
+<li>
+<p><strong><code>mysql.ibd</code></strong>：使用事务性数据字典，数据库、表、字段和索引等元数据主要保存在 <code>mysql.ibd</code> 中。</p>
+</li>
+<li>
+<p><strong><code>表名.ibd</code></strong>：开启独立表空间时，每张 InnoDB 表对应一个 <code>.ibd</code> 文件，保存该表的数据、索引以及序列化字典信息。</p>
+</li>
+<li>
+<p><strong><code>ibdata1</code></strong>：InnoDB 系统表空间文件，用于保存系统相关数据；如果未使用独立表空间，用户表数据也可能存放在其中。</p>
+</li>
+<li>
+<p><strong>undo 和 redo 文件</strong>：undo 表空间用于事务回滚和 MVCC，redo log 用于保证持久性和崩溃恢复。</p>
+</li>
+<li>
+<p><strong>binlog 文件</strong>：记录数据库的数据变更，主要用于主从复制和数据恢复；是否生成取决于二进制日志配置。</p>
+</li>
+</ol>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">MySQL 系列</h2></div>
+                  <strong>2 / 8</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="MySQL 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"><span style="width:25%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/17b7a6697a0b/" ><span>1</span>sql基础</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/1ea67698a54e/" aria-current="page"><span>2</span>存储引擎</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/858354479050/" ><span>3</span>索引</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/b1eff968feaa/" ><span>4</span>事务</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/e02257c326a3/" ><span>5</span>锁</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/848e251bfd61/" ><span>6</span>日志</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/79e80f7c9bcc/" ><span>7</span>性能调优</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/cc31560638cf/" ><span>8</span>架构</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/cc31560638cf/"><strong>架构</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/79e80f7c9bcc/"><strong>性能调优</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/848e251bfd61/"><strong>日志</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/e02257c326a3/"><strong>锁</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/b1eff968feaa/"><strong>事务</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+        <a href="/tags/InnoDB/" class="print-no-link">#InnoDB</a>
+      
+        <a href="/tags/%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" class="print-no-link">#存储引擎</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>存储引擎</div>
+      <div>https://yrkzbb.github.io/posts/1ea67698a54e/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月18日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/858354479050/" title="索引">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">索引</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/17b7a6697a0b/" title="sql基础">
+                        <span class="hidden-mobile">sql基础</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

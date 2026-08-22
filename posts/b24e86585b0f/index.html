@@ -1,0 +1,917 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/b24e86585b0f/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="线程同步与锁 1. 为什么并发执行线程要加锁？ 核心原因是：多个线程并发访问共享可变数据时，一组逻辑操作往往不是原子的。如果不进行同步，线程执行步骤可能交错，产生竞态条件，导致数据丢失、状态不一致，或者一个线程看不到另一个线程的最新修改。 例如，count++ 通常包含读取、加一和写回多个步骤。两个线程同时执行时，都可能读取到相同的旧值，最终只增加一次。对这段操作加互斥锁，可以让同一时刻只有一个线">
+<meta property="og:type" content="article">
+<meta property="og:title" content="锁">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/b24e86585b0f/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="线程同步与锁 1. 为什么并发执行线程要加锁？ 核心原因是：多个线程并发访问共享可变数据时，一组逻辑操作往往不是原子的。如果不进行同步，线程执行步骤可能交错，产生竞态条件，导致数据丢失、状态不一致，或者一个线程看不到另一个线程的最新修改。 例如，count++ 通常包含读取、加一和写回多个步骤。两个线程同时执行时，都可能读取到相同的旧值，最终只增加一次。对这段操作加互斥锁，可以让同一时刻只有一个线">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T11:20:56.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.387Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="并发">
+<meta property="article:tag" content="锁">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>锁 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"锁","description":"线程同步与锁 1. 为什么并发执行线程要加锁？ 核心原因是：多个线程并发访问共享可变数据时，一组逻辑操作往往不是原子的。如果不进行同步，线程执行步骤可能交错，产生竞态条件，导致数据丢失、状态不一致，或者一个线程看不到另一个线程的最新修改。 例如，count++ 通常包含读取、加一和写回多个步骤。两个线程同时执行时，都可能读取到相同的旧值，最终只增加一次。对这段操作加互斥锁，可以让同一时刻只有一个线","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T11:20:56.000Z","dateModified":"2026-08-22T20:33:47.387Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/b24e86585b0f/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="锁"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 19:20" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="12">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/操作系统-锁.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="操作系统 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">操作系统 学习路线</a>
+            <span>5 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+            <span style="width:20%"></span>
+          </div>
+          <nav aria-label="操作系统 系列目录">
+            
+              <a class="passed" href="/posts/51416497c267/" >
+                <small>01</small>
+                <strong>用户态和内核态</strong>
+              </a>
+            
+              <a class="passed" href="/posts/ebee359e45de/" >
+                <small>02</small>
+                <strong>进程管理</strong>
+              </a>
+            
+              <a class="passed" href="/posts/ef846162030d/" >
+                <small>03</small>
+                <strong>中断</strong>
+              </a>
+            
+              <a class="passed" href="/posts/0160369d0c9c/" >
+                <small>04</small>
+                <strong>内存管理</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">锁</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="线程同步与锁">线程同步与锁</h2>
+<h3 id="1-为什么并发执行线程要加锁？">1. 为什么并发执行线程要加锁？</h3>
+<p>核心原因是：多个线程并发访问<strong>共享可变数据</strong>时，一组逻辑操作往往不是原子的。如果不进行同步，线程执行步骤可能交错，产生竞态条件，导致数据丢失、状态不一致，或者一个线程看不到另一个线程的最新修改。</p>
+<p>例如，<code>count++</code> 通常包含读取、加一和写回多个步骤。两个线程同时执行时，都可能读取到相同的旧值，最终只增加一次。对这段操作加互斥锁，可以让同一时刻只有一个线程进入临界区，同时建立必要的内存可见性保证。</p>
+<p>但并发执行不代表一定要加锁。如果线程不共享可变状态，或者使用不可变对象、线程局部数据、消息传递、原子变量及正确设计的无锁结构，就可以不使用传统互斥锁。锁的粒度也要合理：范围太大会降低并发度，范围太小则可能无法保护完整的不变量。</p>
+<h3 id="2-自旋锁是什么？应用在哪些场景？">2. 自旋锁是什么？应用在哪些场景？</h3>
+<p>自旋锁是一种获取失败后<strong>不立即阻塞或睡眠，而是在 CPU 上循环检查锁状态</strong>的锁。它避免了线程睡眠、唤醒和调度切换的开销，但等待期间会持续消耗 CPU。</p>
+<p>它适合以下场景：</p>
+<ul>
+<li>临界区很短，锁预计很快就会释放；</li>
+<li>锁竞争较少；</li>
+<li>多核环境下，持锁线程可以在另一个 CPU 核心上继续运行并及时释放锁；</li>
+<li>内核、中断上下文等不适合睡眠的代码区域；</li>
+<li>用户态同步库中的短时间自适应等待，即先自旋几次，失败后再阻塞。</li>
+</ul>
+<p>如果临界区较长、竞争激烈，或者运行环境只有一个可用 CPU 核心，长时间自旋会浪费 CPU，阻塞式互斥锁通常更合适。持有自旋锁时一般也不应该执行可能阻塞或耗时较长的操作。</p>
+<h3 id="3-乐观锁和悲观锁有什么区别？">3. 乐观锁和悲观锁有什么区别？</h3>
+<p>核心区别是对冲突概率的假设不同：<strong>悲观锁假设冲突容易发生，访问共享数据前先加锁；乐观锁假设冲突较少，先执行操作，提交更新时再检测冲突</strong>。</p>
+<ul>
+<li>悲观锁通常使用互斥锁、读写锁或数据库行锁实现。它能直接阻止其他执行者修改数据，适合冲突频繁、临界区较长，或者冲突后回滚代价较高的场景；代价是可能发生阻塞、上下文切换和死锁。</li>
+<li>乐观锁通常使用版本号、时间戳或 CAS 实现。更新时比较数据是否仍是读取时的版本，成功则提交，失败则重试或返回冲突。它适合读多写少、冲突概率低的场景；竞争激烈时频繁重试可能浪费 CPU，并可能出现饥饿问题。</li>
+</ul>
+<p>乐观锁不等于完全“无锁”，具体实现仍可能在底层使用锁；CAS 方案还要考虑 ABA 问题。选择哪一种不能只看名称，应结合冲突率、重试成本、临界区长度和延迟要求判断。</p>
+<h2 id="死锁">死锁</h2>
+<h3 id="1-死锁发生的条件是什么？">1. 死锁发生的条件是什么？</h3>
+<p>死锁是多个线程或进程互相等待对方持有的资源，导致所有参与者都无法继续执行。经典的 Coffman 四个必要条件是：</p>
+<ol>
+<li><strong>互斥条件</strong>：资源同一时刻只能被一个执行者占用；</li>
+<li><strong>请求并保持条件</strong>：已经持有资源的执行者继续请求其他资源，并且等待时不释放现有资源；</li>
+<li><strong>不可剥夺条件</strong>：资源不能被系统强制收回，只能由持有者主动释放；</li>
+<li><strong>循环等待条件</strong>：存在一个执行者等待环，每个执行者都在等待下一个执行者持有的资源。</li>
+</ol>
+<p>四个条件同时成立才可能发生死锁，破坏其中任意一个条件都可以从机制上防止死锁。</p>
+<h3 id="2-如何避免死锁？">2. 如何避免死锁？</h3>
+<p>实践中最常用的方法是<strong>规定全局一致的加锁顺序，破坏循环等待条件</strong>。例如所有线程都必须先获取锁 A，再获取锁 B，不能反向获取。</p>
+<p>还可以采用以下措施：</p>
+<ul>
+<li>尽量一次申请所需资源，避免持有部分资源时继续等待其他资源；</li>
+<li>缩小临界区，不在持锁期间执行网络 I/O、磁盘 I/O 等不可控的阻塞操作；</li>
+<li>使用 <code>tryLock</code> 或带超时的加锁，获取失败时释放已经持有的锁，经过退避后重试；</li>
+<li>减少嵌套锁，优先使用更高层的并发容器或消息传递；</li>
+<li>在资源需求可预知时，使用银行家算法等方法，只批准不会让系统进入不安全状态的申请；</li>
+<li>对无法完全预防的系统建立死锁检测与恢复机制，例如检测等待图中的环并终止或回滚部分任务。</li>
+</ul>
+<p>需要区分的是：超时和检测并没有从根本上阻止死锁产生，而是让系统能够退出等待或在发生后恢复。</p>
+<h3 id="3-讲一下银行家算法。">3. 讲一下银行家算法。</h3>
+<p>银行家算法是一种<strong>死锁避免算法</strong>。它不会简单地满足所有资源请求，而是在分配前进行安全性检查：只有分配后系统仍存在一个能让所有进程依次完成的安全序列，才批准这次请求，否则让申请者继续等待。</p>
+<p>算法通常维护以下数据：</p>
+<ul>
+<li><code>Available</code>：当前各类资源的可用数量；</li>
+<li><code>Max</code>：每个进程对各类资源的最大需求；</li>
+<li><code>Allocation</code>：已经分配给每个进程的资源；</li>
+<li><code>Need</code>：每个进程仍需要的资源，满足 <code>Need = Max - Allocation</code>。</li>
+</ul>
+<p>收到进程的 <code>Request</code> 后，先检查 <code>Request &lt;= Need</code> 且 <code>Request &lt;= Available</code>。然后假设完成这次分配，再执行安全性检查：从剩余资源中寻找一个满足 <code>Need &lt;= Work</code> 的未完成进程，假设它执行完成并释放其 <code>Allocation</code>，不断重复。如果最终所有进程都能完成，说明存在安全序列，系统处于安全状态，可以正式分配；否则撤销试分配并让进程等待。</p>
+<p>安全状态表示当前存在避免死锁的执行顺序；不安全状态不等于已经发生死锁，只表示继续运行存在死锁风险。银行家算法要求事先知道最大资源需求，还要反复进行安全性检查，因此更适合资源种类和数量相对固定、最大需求可预测的场景，在通用操作系统中并不常直接用于普通进程调度。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">操作系统 系列</h2></div>
+                  <strong>5 / 5</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="操作系统 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span style="width:100%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/51416497c267/" ><span>1</span>用户态和内核态</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/ebee359e45de/" ><span>2</span>进程管理</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/ef846162030d/" ><span>3</span>中断</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/0160369d0c9c/" ><span>4</span>内存管理</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/b24e86585b0f/" aria-current="page"><span>5</span>锁</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/ef846162030d/"><strong>中断</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/0160369d0c9c/"><strong>内存管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/ebee359e45de/"><strong>进程管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/51416497c267/"><strong>用户态和内核态</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/e02257c326a3/"><strong>锁</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="print-no-link">#操作系统</a>
+      
+        <a href="/tags/%E5%B9%B6%E5%8F%91/" class="print-no-link">#并发</a>
+      
+        <a href="/tags/%E9%94%81/" class="print-no-link">#锁</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>锁</div>
+      <div>https://yrkzbb.github.io/posts/b24e86585b0f/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/0160369d0c9c/" title="内存管理">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">内存管理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/ebee359e45de/" title="进程管理">
+                        <span class="hidden-mobile">进程管理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

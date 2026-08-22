@@ -1,0 +1,974 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/848e251bfd61/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="日志基础 1. MySQL 的日志文件分为哪几种？ MySQL 的日志可以先分为 Server 层日志和存储引擎层日志。常见的 Server 层日志包括错误日志、慢查询日志、通用查询日志和 binlog；InnoDB 还维护 redo log 和 undo log。  错误日志（Error Log）：记录 MySQL 启停、运行异常、崩溃恢复等重要信息，主要用于故障排查。 慢查询日志（Slow Q">
+<meta property="og:type" content="article">
+<meta property="og:title" content="日志">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/848e251bfd61/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="日志基础 1. MySQL 的日志文件分为哪几种？ MySQL 的日志可以先分为 Server 层日志和存储引擎层日志。常见的 Server 层日志包括错误日志、慢查询日志、通用查询日志和 binlog；InnoDB 还维护 redo log 和 undo log。  错误日志（Error Log）：记录 MySQL 启停、运行异常、崩溃恢复等重要信息，主要用于故障排查。 慢查询日志（Slow Q">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-18T19:25:28.000Z">
+<meta property="article:modified_time" content="2026-08-22T20:33:47.387Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="日志">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>日志 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"日志","description":"日志基础 1. MySQL 的日志文件分为哪几种？ MySQL 的日志可以先分为 Server 层日志和存储引擎层日志。常见的 Server 层日志包括错误日志、慢查询日志、通用查询日志和 binlog；InnoDB 还维护 redo log 和 undo log。  错误日志（Error Log）：记录 MySQL 启停、运行异常、崩溃恢复等重要信息，主要用于故障排查。 慢查询日志（Slow Q","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-18T19:25:28.000Z","dateModified":"2026-08-22T20:33:47.387Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/848e251bfd61/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="日志"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 03:25" pubdate>
+          2026年8月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.1k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="21">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/日志.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="MySQL 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">MySQL 学习路线</a>
+            <span>6 / 25</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章学习位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="24">
+            <span style="width:24%"></span>
+          </div>
+          <nav aria-label="MySQL 系列目录">
+            
+              <a class="passed" href="/posts/17b7a6697a0b/" >
+                <small>01</small>
+                <strong>sql基础</strong>
+              </a>
+            
+              <a class="passed" href="/posts/1ea67698a54e/" >
+                <small>02</small>
+                <strong>存储引擎</strong>
+              </a>
+            
+              <a class="passed" href="/posts/858354479050/" >
+                <small>03</small>
+                <strong>索引</strong>
+              </a>
+            
+              <a class="passed" href="/posts/b1eff968feaa/" >
+                <small>04</small>
+                <strong>事务</strong>
+              </a>
+            
+              <a class="passed" href="/posts/e02257c326a3/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>06</small>
+                <strong>日志</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/79e80f7c9bcc/" >
+                <small>07</small>
+                <strong>性能调优</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/cc31560638cf/" >
+                <small>08</small>
+                <strong>架构</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-review">
+              <div class="series-rail-section-head"><p>快速回顾</p><button type="button" data-edit-review>编辑</button></div>
+              <ul data-quick-review></ul>
+            </div>
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">日志</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="日志基础">日志基础</h2>
+<h3 id="1-MySQL-的日志文件分为哪几种？">1. MySQL 的日志文件分为哪几种？</h3>
+<p>MySQL 的日志可以先分为 Server 层日志和存储引擎层日志。常见的 Server 层日志包括错误日志、慢查询日志、通用查询日志和 binlog；InnoDB 还维护 redo log 和 undo log。</p>
+<ol>
+<li><strong>错误日志（Error Log）</strong>：记录 MySQL 启停、运行异常、崩溃恢复等重要信息，主要用于故障排查。</li>
+<li><strong>慢查询日志（Slow Query Log）</strong>：记录执行时间超过阈值等符合条件的 SQL，用于性能分析。</li>
+<li><strong>通用查询日志（General Query Log）</strong>：记录客户端连接和收到的语句，信息量很大，通常只在临时诊断时开启。</li>
+<li><strong>binlog</strong>：Server 层的逻辑变更日志，主要用于复制和基于时间点恢复。</li>
+<li><strong>redo log</strong>：InnoDB 的物理变更日志，主要保证事务持久性，并用于崩溃恢复。</li>
+<li><strong>undo log</strong>：保存撤销修改所需的信息，用于事务回滚和 MVCC 构造历史版本。</li>
+</ol>
+<p>2. 讲一下 binlog。</p>
+<p>binlog 是 MySQL Server 层记录数据库变更的逻辑日志，不属于某个特定存储引擎。它会记录 DML 产生的数据变化以及 DDL 等变更事件，通常不记录普通 <code>SELECT</code>。它主要有两个用途：把主库的变更传递给从库进行复制，以及配合全量备份做基于时间点恢复。</p>
+<p>binlog 常见格式有：</p>
+<ol>
+<li><strong><code>STATEMENT</code></strong>：记录产生变更的 SQL，日志量可能较小，但部分非确定性语句可能导致主从结果不一致。</li>
+<li><strong><code>ROW</code></strong>：记录行发生了什么变化，复制结果更确定，但批量修改时日志量可能较大。</li>
+<li><strong><code>MIXED</code></strong>：通常使用 <code>STATEMENT</code>，在有风险的场景切换为 <code>ROW</code>。</li>
+</ol>
+<p>binlog 以事件形式追加写入文件，并按文件大小或管理操作轮换。事务提交时，线程先把该事务的 binlog 内容写入 binlog cache，再在提交阶段写入 binlog 文件。<code>sync_binlog</code> 控制 binlog 多久执行一次持久化同步；例如 <code>sync_binlog=1</code> 通常表示每次事务提交都同步一次，持久性更强，但写盘开销也更高。</p>
+<p>binlog 是逻辑日志，不能替代 InnoDB 的 redo log。它也不是默认永久保留，实际可恢复范围取决于备份、保留策略以及日志是否完整。</p>
+<h3 id="3-undo-log-的作用是什么？">3. undo log 的作用是什么？</h3>
+<p>undo log 主要有两个作用：支持事务回滚，以及为 MVCC 提供历史版本。</p>
+<ol>
+<li><strong>事务回滚</strong>：InnoDB 修改数据前会记录能够撤销该操作的信息。如果语句失败、事务执行 <code>ROLLBACK</code> 或被选为死锁牺牲者，可以利用 undo log 将修改恢复到之前的状态。</li>
+<li><strong>MVCC</strong>：记录中的回滚指针可以关联到 undo log 中的旧版本。快照读根据 Read View 判断当前版本不可见时，会沿版本链查找对当前事务可见的历史版本。</li>
+</ol>
+<p>事务提交后，undo 也不一定马上删除：只要仍有 Read View 可能访问其中的历史版本，就需要等待 purge 线程后续清理。</p>
+<h3 id="4-有了-undo-log，为什么还需要-redo-log？">4. 有了 undo log，为什么还需要 redo log？</h3>
+<p>因为两者解决的问题不同：undo log 主要保证原子性，负责“修改失败后怎么撤销”；redo log 主要保证持久性，负责“已经提交的修改在崩溃后怎么重做”。</p>
+<p>例如事务修改了 Buffer Pool 中的数据页，但数据页尚未刷回表空间：</p>
+<ul>
+<li>如果事务回滚，需要根据 undo log 恢复旧值。</li>
+<li>如果事务已经提交后 MySQL 崩溃，需要根据已持久化的 redo log 恢复新值。</li>
+</ul>
+<p>因此只有 undo log，无法保证已提交但尚未写回数据文件的修改在崩溃后仍然存在；只有 redo log，也无法方便地撤销未提交事务或为 MVCC 提供旧版本。两者不能互相替代。</p>
+<h2 id="事务提交与崩溃恢复">事务提交与崩溃恢复</h2>
+<h3 id="1-redo-log-怎么保证事务持久性？">1. redo log 怎么保证事务持久性？</h3>
+<p>redo log 通过 WAL（Write-Ahead Logging，预写日志）保证持久性：修改数据页时，InnoDB 不要求立即把随机分布的数据页全部刷盘，而是先生成 redo 记录；事务提交时，按配置确保相关 redo 已经持久化，然后才向客户端返回提交成功。</p>
+<p>数据页可以留在 Buffer Pool 中成为脏页，稍后再刷回表空间。如果提交后、数据页刷盘前发生崩溃，InnoDB 启动时会从检查点之后扫描 redo log，重做已经提交或需要恢复的页修改，并结合 undo 等信息处理未完成事务。redo 记录通过 LSN 标识顺序；检查点表示此前相关脏页已经推进到可安全复用日志空间的位置，使容量有限的 redo 文件能够循环使用，也缩小崩溃恢复需要扫描的范围。</p>
+<p>持久性强度受 <code>innodb_flush_log_at_trx_commit</code> 影响。在常见的 <code>1</code> 配置下，每次事务提交都会将 redo 从日志缓冲区写入日志文件并执行持久化同步；设置为 <code>0</code> 或 <code>2</code> 可以减少同步开销，但操作系统或主机崩溃时可能丢失最近一段事务。因此不能脱离配置说 redo 在任何故障下都绝对不丢数据。</p>
+<h3 id="2-能不能只用-binlog，不用-redo-log？">2. 能不能只用 binlog，不用 redo log？</h3>
+<p>对 InnoDB 的正常事务恢复来说不能。binlog 和 redo log 位于不同层次，记录内容和用途也不同，不能直接互相替代。</p>
+<p>binlog 是 Server 层的逻辑变更日志，适合复制和基于备份重放；redo log 是 InnoDB 面向数据页恢复的物理日志，包含页修改所需的信息和日志序列位置，可以高效地把崩溃前尚未刷盘的脏页恢复到一致状态。</p>
+<p>如果没有 redo log，事务提交时就可能需要把涉及的所有数据页同步写回各自的随机位置，性能会显著下降；而且 InnoDB 现有的检查点和崩溃恢复机制也无法只依靠 binlog 工作。反过来，只有 redo log 也不能替代 binlog 的跨存储引擎复制和基于时间点恢复能力。</p>
+<h3 id="3-binlog-两阶段提交过程是怎样的？">3. binlog 两阶段提交过程是怎样的？</h3>
+<p>两阶段提交用于让 InnoDB redo log 和 Server 层 binlog 对同一事务保持一致。概念上的过程是：</p>
+<ol>
+<li><strong>Prepare 阶段</strong>：InnoDB 写入 redo log，并把事务标记为 <code>PREPARE</code> 状态。</li>
+<li><strong>写 binlog</strong>：Server 层把事务的 binlog 写入文件，并按配置持久化。</li>
+<li><strong>Commit 阶段</strong>：InnoDB 在 redo log 中记录事务提交，事务完成。</li>
+</ol>
+<p>如果没有这个协议，可能出现 redo 已提交但 binlog 没写，或者 binlog 已写但 redo 未提交，导致崩溃恢复后的主库数据与复制、时间点恢复结果不一致。</p>
+<p>恢复时，如果 redo 中的事务已经提交，直接按已提交处理；如果只到 <code>PREPARE</code>，MySQL 会检查 binlog 中是否存在该事务的完整提交记录：存在则提交，否则回滚。实际实现还会使用组提交等机制优化刷盘次数，但面试回答两阶段提交时，核心是说明它解决 redo log 与 binlog 的一致性问题。</p>
+<h3 id="4-一条-UPDATE-语句的具体执行过程是怎样的？">4. 一条 <code>UPDATE</code> 语句的具体执行过程是怎样的？</h3>
+<p>一条 InnoDB <code>UPDATE</code> 大致经历 Server 层解析和优化、存储引擎读写记录、生成事务日志以及提交几个阶段。</p>
+<ol>
+<li>客户端发送 SQL，Server 层进行权限检查、解析和预处理，优化器选择执行计划。</li>
+<li>执行器调用 InnoDB，根据执行计划通过索引查找目标记录；所需数据页不在 Buffer Pool 时，需要先从磁盘读入。</li>
+<li>InnoDB 对目标索引记录加锁，检查条件，并生成用于回滚和 MVCC 的 undo 信息。</li>
+<li>InnoDB 在 Buffer Pool 中修改数据页，使其成为脏页，同时生成 redo 记录并写入 redo log buffer；如果索引列发生变化，还要维护相关索引。</li>
+<li>Server 层把逻辑变更写入该事务的 binlog cache。</li>
+<li>提交时通过两阶段提交协调 redo log 和 binlog；提交成功后释放事务持有的锁。脏页不必在提交时立即写回表空间，之后由后台线程按策略刷盘。</li>
+</ol>
+<p>具体锁范围、读取行数和日志量取决于索引、执行计划、隔离级别、更新列以及命中的数据量，不能把 <code>UPDATE</code> 简化成“直接在磁盘 B+ 树上改一个值”。</p>
+<h3 id="5-MySQL-如何保障数据不丢失？">5. MySQL 如何保障数据不丢失？</h3>
+<p>MySQL 不能在所有硬件损坏、人为误删和多副本同时故障下无条件保证数据绝不丢失。更准确地说，它通过事务日志、刷盘策略、页保护、备份和复制降低不同故障下的数据丢失风险。</p>
+<ol>
+<li><strong>redo log 与 WAL</strong>：保证已提交但尚未刷入数据文件的 InnoDB 修改可以在崩溃后重做。</li>
+<li><strong>undo log</strong>：回滚未完成事务，使数据库恢复到事务一致状态。</li>
+<li><strong>binlog 与两阶段提交</strong>：保证 binlog 和 InnoDB 提交状态一致，并支持复制和基于时间点恢复。</li>
+<li><strong>刷盘配置</strong>：要求较强持久性时，通常使用 <code>innodb_flush_log_at_trx_commit=1</code> 和 <code>sync_binlog=1</code>。如果降低刷盘频率换取吞吐，主机崩溃时可能损失最近的事务。</li>
+<li><strong>Doublewrite</strong>：降低数据页写入过程中发生部分页写、导致页面损坏的风险。</li>
+<li><strong>备份和复制</strong>：定期全量或增量备份、校验恢复流程，并根据业务使用异步、半同步或更强的一致性复制方案，应对磁盘损坏、误操作和实例级故障。</li>
+</ol>
+<p>因此要先明确要防的是进程崩溃、操作系统崩溃、断电、磁盘损坏还是误删除，再设计相应的恢复点目标和恢复时间目标，不能只凭一个日志参数承诺“零丢失”。</p>
+<h2 id="数据页写入与可靠性">数据页写入与可靠性</h2>
+<h3 id="1-redo-log-是在内存里吗？">1. redo log 是在内存里吗？</h3>
+<p>redo log 既涉及内存缓冲区，也涉及磁盘上的日志文件。</p>
+<p>事务执行过程中，redo 记录通常先写入内存中的 redo log buffer，随后由 InnoDB 写入 redo 日志文件，并根据 <code>innodb_flush_log_at_trx_commit</code> 等配置决定何时执行持久化同步。写入操作系统页缓存不等于已经稳定落盘，只有完成相应的持久化同步，才能在主机断电等故障后依赖它恢复。</p>
+<p>所以，redo log buffer 用于减少频繁的小写入并支持批量刷盘，磁盘上的 redo 日志文件才是崩溃恢复所依赖的持久化介质。</p>
+<h3 id="2-为什么要写-redo-log，而不是直接写到-B-树里？">2. 为什么要写 redo log，而不是直接写到 B+ 树里？</h3>
+<p>因为直接把每次修改同步写回 B+ 树数据页，会产生大量随机 I/O，而且一次很小的行修改也可能要求写入整个数据页。redo log 采用 WAL，把离散的数据页修改先转换为体积更小、接近顺序追加的日志写入，事务可以更快完成持久化。</p>
+<p>修改后的数据页仍然会写回 B+ 树所在的表空间，只是不要求在每次提交时立即完成。后台线程可以合并多次修改、按检查点和脏页比例批量刷盘，从而减少随机写和重复写。发生崩溃时，则从检查点位置开始使用 redo log 恢复尚未刷盘的修改。</p>
+<p>因此 redo log 不是不写 B+ 树，而是把“事务提交时必须完成的持久化工作”和“数据页最终写回”解耦，以顺序日志写换取更好的吞吐和可恢复性。</p>
+<h3 id="3-了解-MySQL-的-Doublewrite-Buffer-吗？">3. 了解 MySQL 的 Doublewrite Buffer 吗？</h3>
+<p>Doublewrite 是 InnoDB 防止部分页写（torn page）的机制。InnoDB 数据页通常比底层存储的一次原子写单位大，如果写数据页过程中断电或系统崩溃，表空间中的页面可能一部分是新数据、一部分是旧数据，形成损坏页。</p>
+<p>刷脏页时，InnoDB 会先把页面写入 doublewrite 区域并持久化，再把页面写到各自表空间的最终位置。如果崩溃恢复时发现最终位置的页面损坏，可以从 doublewrite 中找到完整页面副本进行修复，然后再应用 redo log。</p>
+<p>需要 Doublewrite 是因为 redo log 通常记录的是基于原页面的物理变化；如果作为恢复基础的数据页本身已经撕裂，就不能可靠地只靠 redo 修好。Doublewrite 会增加一定写放大，但其第一阶段可以批量、较顺序地写入，并且现代 MySQL 使用专门的 doublewrite 文件等方式优化开销。它和 binlog 写两份、主从复制都不是同一个概念。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">MySQL 系列</h2></div>
+                  <strong>6 / 8</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="MySQL 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="75"><span style="width:75%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/17b7a6697a0b/" ><span>1</span>sql基础</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/1ea67698a54e/" ><span>2</span>存储引擎</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/858354479050/" ><span>3</span>索引</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/b1eff968feaa/" ><span>4</span>事务</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/e02257c326a3/" ><span>5</span>锁</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/848e251bfd61/" aria-current="page"><span>6</span>日志</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/79e80f7c9bcc/" ><span>7</span>性能调优</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/cc31560638cf/" ><span>8</span>架构</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/cc31560638cf/"><strong>架构</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/79e80f7c9bcc/"><strong>性能调优</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/e02257c326a3/"><strong>锁</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/b1eff968feaa/"><strong>事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/858354479050/"><strong>索引</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-23</time><span>docs: update article inline</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+        <a href="/tags/%E6%97%A5%E5%BF%97/" class="print-no-link">#日志</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>日志</div>
+      <div>https://yrkzbb.github.io/posts/848e251bfd61/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/79e80f7c9bcc/" title="性能调优">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">性能调优</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/e02257c326a3/" title="锁">
+                        <span class="hidden-mobile">锁</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>
