@@ -30,15 +30,16 @@
     <% } %>
 
     <% if (theme.post.meta.min2read.enable) { %>
-      <span class="post-meta mr-2">
+      <% var awl = parseInt(theme.post.meta.min2read.awl, 10) %>
+      <% var wpm = parseInt(theme.post.meta.min2read.wpm, 10) %>
+      <% var estimatedMinutes = min2read(page, { awl: awl, wpm: wpm }) %>
+      <span class="post-meta mr-2" data-reading-minutes="<%= estimatedMinutes %>">
         <i class="iconfont icon-clock-fill"></i>
-        <% var awl = parseInt(theme.post.meta.min2read.awl, 10) %>
-        <% var wpm = parseInt(theme.post.meta.min2read.wpm, 10) %>
         <% if (theme.post.meta.min2read.format) { %>
           <!-- compatible with older versions-->
-          <%- theme.post.meta.min2read.format.replace('{}', min2read(page, { awl: awl, wpm: wpm })) %>
+          <%- theme.post.meta.min2read.format.replace('{}', estimatedMinutes) %>
         <% } else { %>
-          <%- __('post.meta.min2read', min2read(page, { awl: awl, wpm: wpm })) %>
+          <%- __('post.meta.min2read', estimatedMinutes) %>
         <% } %>
       </span>
     <% } %>

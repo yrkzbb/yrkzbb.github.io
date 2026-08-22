@@ -175,7 +175,12 @@
     progress.innerHTML = '<span></span>';
     document.body.appendChild(progress);
 
-    var totalMinutes = Math.max(1, Math.ceil(article.textContent.replace(/\s+/g, '').length / 500));
+    var readingMeta = document.querySelector('[data-reading-minutes]');
+    var configuredMinutes = readingMeta ? Number(readingMeta.dataset.readingMinutes) : 0;
+    var readingContent = document.querySelector('.markdown-body') || article;
+    var totalMinutes = configuredMinutes > 0
+      ? configuredMinutes
+      : Math.max(1, Math.ceil(readingContent.textContent.replace(/\s+/g, '').length / 150));
     var indicator = document.createElement('div');
     indicator.className = 'reading-indicator';
     indicator.setAttribute('aria-live', 'polite');
