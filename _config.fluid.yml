@@ -615,9 +615,9 @@ post:
       # 中文技术文章按实际字符计数
       # Average word length (chars count in word), ZH ≈ 2, EN ≈ 5
       awl: 1
-      # 中文技术文章按约 300 字/分钟估算
+      # 中文技术文章按约 150 字/分钟估算
       # Words per minute
-      wpm: 300
+      wpm: 150
 
     # 浏览量计数
     # Number of visits
