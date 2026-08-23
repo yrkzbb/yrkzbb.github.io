@@ -36,6 +36,8 @@ npm run server
 | `npm test` | 校验文章、链接和脚本语法 |
 | `npm run verify` | 执行测试、构建、产物链接检查和站点审计 |
 | `npm run lighthouse` | 执行 Lighthouse 质量检查 |
+| `npm run check:markdown` | 检查中英文空格、列表及 Markdown 排版 |
+| `npm run format:markdown` | 自动修正常见 Markdown 排版问题 |
 | `npm run publish` | 本地生成并部署到配置的 Git 仓库 |
 
 ## 目录结构
@@ -83,3 +85,9 @@ npm run verify
 推送到 `source` 分支后，[发布工作流](.github/workflows/publish.yml)会执行依赖安装、完整校验和 Lighthouse 检查。全部通过后，生成的 `public/` 内容会自动发布到 `main` 分支，GitHub Pages 随后更新线上站点。
 
 在线写作台的使用和 Token 安全说明见 [ADMIN.md](ADMIN.md)。
+
+## 阅读功能
+
+文章页提供标题锚点复制、图片灯箱、专注阅读、章节进度、表格与代码工具、移动端工具栏、个人笔记及导出、表情反馈、段落勘误、主题配色和分享卡片。笔记、阅读反馈与配色均仅保存在访问者的浏览器中。
+
+站点还会根据文章标签生成 `/knowledge-graph/` 知识图谱。GitHub Discussions 评论使用 Giscus；启用仓库 Discussions 并在 `_config.fluid.yml` 填写 `repo-id`、`category` 与 `category-id` 后即可嵌入评论区。

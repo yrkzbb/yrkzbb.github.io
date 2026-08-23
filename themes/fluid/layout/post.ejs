@@ -167,6 +167,13 @@ var publication = publication_position(page)
             </div>
 
             <%- inject_point('postComments') %>
+            <% if (theme.post.comments.enable && theme.post.comments.type === 'giscus' && (!theme.giscus || !theme.giscus.repo || !theme.giscus['repo-id'] || !theme.giscus.category || !theme.giscus['category-id'])) { %>
+              <section class="discussion-setup-notice" aria-label="GitHub Discussions 评论">
+                <strong>参与讨论</strong>
+                <p>嵌入式 GitHub Discussions 评论正在等待仓库 Discussion 分类完成绑定。</p>
+                <a href="https://github.com/yrkzbb/yrkzbb.github.io/discussions" target="_blank" rel="noopener noreferrer">前往 GitHub Discussions</a>
+              </section>
+            <% } %>
           </article>
         </div>
       </div>

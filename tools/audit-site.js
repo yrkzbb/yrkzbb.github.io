@@ -20,7 +20,7 @@ function walk(dir, files = []) {
   return files;
 }
 
-for (const required of ["rss.xml", "data/posts.json", "insights/index.html", "404.html", "admin/index.html", "admin/admin.js", "js/post-editor-link.js"]) {
+for (const required of ["rss.xml", "data/posts.json", "data/knowledge-graph.json", "knowledge-graph/index.html", "insights/index.html", "404.html", "admin/index.html", "admin/admin.js", "js/post-editor-link.js", "js/article-workbench.js"]) {
   if (!fs.existsSync(path.join(root, required))) failures.push(`缺少功能产物：${required}`);
 }
 

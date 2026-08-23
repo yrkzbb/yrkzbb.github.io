@@ -240,6 +240,7 @@ custom_js:
   - /js/dynamic-line.js # 本地化的动态黑色线条
   - /js/reading-enhancements.js # 搜索快捷键、阅读进度和文章分享
   - /js/knowledge-ui.js # 首页筛选、阅读发现和术语提示
+  - /js/article-workbench.js # 锚点、灯箱、专注模式、笔记、反馈和阅读工具栏
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/snowflake.js # 小雪花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/Cherry.js #樱花飘落
   # - //cdn.jsdelivr.net/gh/EmoryHuang/BlogBeautify@1.1/star.js # 鼠标跟随小星星
@@ -389,6 +390,7 @@ navbar:
         icon: "iconfont icon-category-fill",
       }
     - { key: "tag", link: "/tags/", icon: "iconfont icon-tags-fill" }
+    - { key: "knowledgeGraph", name: "图谱", link: "/knowledge-graph/", icon: "iconfont icon-map" }
     - { key: "insights", name: "数据", link: "/insights/", icon: "iconfont icon-chart" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     - { key: "links", name: "连接", link: "/links/", icon: "iconfont icon-link-fill" }
