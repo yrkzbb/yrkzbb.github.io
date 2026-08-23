@@ -918,10 +918,10 @@ cusdis:
 # Based on GitHub Discussions, similar to Utterances
 # See: https://giscus.app/
 giscus:
-  repo:
-  repo-id:
-  category:
-  category-id:
+  repo: yrkzbb/yrkzbb.github.io
+  repo-id: R_kgDOT8TYVw
+  category: General
+  category-id: DIC_kwDOT8TYV84DECTB
   theme-light: light
   theme-dark: dark
   mapping: pathname
