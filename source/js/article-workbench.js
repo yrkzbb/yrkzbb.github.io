@@ -401,14 +401,44 @@
     dialog("主题配色", body);
   }
   function exportPdf() {
-    document.body.classList.add("pdf-export-mode");
+    preparePdfDocument();
     toast("请在打印窗口中选择“另存为 PDF”");
     window.setTimeout(function () {
       window.print();
     }, 180);
   }
-  window.addEventListener("afterprint", function () {
+  function preparePdfDocument() {
+    if (document.querySelector(".pdf-document")) return;
+    var printable = document.createElement("article");
+    printable.className = "pdf-document";
+    var header = document.createElement("header");
+    var title = document.createElement("h1");
+    title.textContent = document.querySelector("#seo-header").textContent.trim();
+    var source = document.createElement("p");
+    source.textContent = "yrk's Blog · " + location.href;
+    header.appendChild(title);
+    header.appendChild(source);
+    var content = article.cloneNode(true);
+    content
+      .querySelectorAll(
+        ".heading-anchor-copy, .paragraph-report, .article-table-tools, .copy-btn, .code-widget, .article-reactions",
+      )
+      .forEach(function (node) {
+        node.remove();
+      });
+    printable.appendChild(header);
+    printable.appendChild(content);
+    document.body.appendChild(printable);
+    document.body.classList.add("pdf-export-mode");
+  }
+  function cleanupPdfDocument() {
     document.body.classList.remove("pdf-export-mode");
+    var printable = document.querySelector(".pdf-document");
+    if (printable) printable.remove();
+  }
+  window.addEventListener("beforeprint", preparePdfDocument);
+  window.addEventListener("afterprint", function () {
+    window.setTimeout(cleanupPdfDocument, 0);
   });
 
   // 移动端阅读工具栏
