@@ -337,8 +337,6 @@
     var rail = document.querySelector('.series-rail');
     if (!rail) return;
     var mastery = document.querySelector('[data-mastery]');
-    var reviewList = document.querySelector('[data-quick-review]');
-    var editReview = document.querySelector('[data-edit-review]');
     var feedback = document.querySelector('.series-rail-feedback');
     var article = document.querySelector('.markdown-body');
     var path = location.pathname;
@@ -397,53 +395,6 @@
       });
       if (termSection) termSection.hidden = uniqueTerms.length === 0;
     }
-
-    // 快速回顾：默认取前五个二级标题，可本地编辑
-    var headings = article ? Array.prototype.slice.call(article.querySelectorAll('h2')).slice(0, 5) : [];
-    var defaultReview = headings.map(function (heading) { return heading.textContent.replace(/#$/, '').trim(); });
-    var reviewMap = loadMap('yrk_article_reviews');
-    function currentReview() { return Array.isArray(reviewMap[path]) ? reviewMap[path] : defaultReview; }
-    function renderReview() {
-      if (!reviewList) return;
-      reviewList.innerHTML = '';
-      currentReview().slice(0, 5).forEach(function (text, index) {
-        var item = document.createElement('li');
-        var button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = text;
-        button.onclick = function () { if (headings[index]) headings[index].scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-        item.appendChild(button);
-        reviewList.appendChild(item);
-      });
-    }
-    if (editReview) editReview.addEventListener('click', function () {
-      var dialog = makeDialog('编辑快速回顾');
-      var hint = document.createElement('p');
-      hint.textContent = '每行一条，最多保留 5 条；清空后保存可恢复自动生成。';
-      var textarea = document.createElement('textarea');
-      textarea.value = currentReview().join('\n');
-      textarea.rows = 8;
-      var actions = document.createElement('div');
-      actions.className = 'knowledge-dialog-actions';
-      var save = document.createElement('button');
-      save.type = 'button';
-      save.className = 'primary';
-      save.textContent = '保存到本机';
-      save.onclick = function () {
-        var values = textarea.value.split('\n').map(function (value) { return value.trim(); }).filter(Boolean).slice(0, 5);
-        if (values.length) reviewMap[path] = values;
-        else delete reviewMap[path];
-        saveMap('yrk_article_reviews', reviewMap);
-        renderReview();
-        dialog.close();
-        showFeedback(values.length ? '快速回顾已保存' : '已恢复自动生成');
-      };
-      actions.appendChild(save);
-      dialog.append(hint, textarea, actions);
-      dialog.showModal();
-      textarea.focus();
-    });
-    renderReview();
 
     // 掌握度
     var masteryMap = loadMap('yrk_article_mastery');

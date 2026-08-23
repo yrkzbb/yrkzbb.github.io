@@ -7,7 +7,7 @@ const moment = require("moment");
 const SERIES = [
   { key: "mysql", name: "MySQL", titles: ["sql基础", "存储引擎", "索引", "事务", "锁", "日志", "性能调优", "架构"] },
   { key: "redis", name: "Redis", titles: ["场景", "数据结构", "线程模型", "redis事务", "缓存淘汰和过期删除", "集群"] },
-  { key: "network", name: "计算机网络", titles: ["网络模型", "应用层", "传输层", "网络IO", "网络场景", "网络攻击"] },
+  { key: "network", name: "计算机网络", titles: ["网络模型", "应用层", "运输层", "网络IO", "网络场景", "网络攻击"] },
   { key: "os", name: "操作系统", titles: ["用户态和内核态", "进程管理", "中断", "内存管理", "锁"] },
 ];
 
@@ -39,6 +39,20 @@ function seriesFor(post, posts) {
 
 hexo.extend.helper.register("knowledge_series", function (post) {
   return seriesFor(post, this.site.posts);
+});
+
+hexo.extend.helper.register("publication_position", function (post) {
+  const posts = this.site.posts.toArray().slice().sort((a, b) => {
+    const dateDifference = a.date.valueOf() - b.date.valueOf();
+    return dateDifference || String(a.path).localeCompare(String(b.path));
+  });
+  const index = posts.findIndex((item) => item.path === post.path);
+  if (index < 0) return null;
+  return {
+    current: index + 1,
+    total: posts.length,
+    progress: Math.round(((index + 1) / posts.length) * 100),
+  };
 });
 
 hexo.extend.helper.register("related_posts", function (post, limit = 5) {
