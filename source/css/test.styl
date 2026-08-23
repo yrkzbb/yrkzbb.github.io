@@ -414,6 +414,18 @@ html[data-reader-palette] .markdown-body blockquote { border-left-color: var(--r
 .workbench-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 .mobile-reading-toolbar { display: none; }
 .pdf-document { display: none; }
+.pdf-document.is-rendering { position: fixed; z-index: -1; top: 0; left: -10000px; display: block; width: 720px; padding: 42px 48px; color: #15181c; background: #fff; font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+.pdf-document.is-rendering > header { margin-bottom: 1.6rem; padding-bottom: 1rem; border-bottom: 2px solid #168bd2; }
+.pdf-document.is-rendering > header h1 { margin: 0 0 .4rem; color: #15181c; font-size: 2rem; line-height: 1.3; }
+.pdf-document.is-rendering > header p { margin: 0; color: #66717d; font-size: .75rem; overflow-wrap: anywhere; }
+.pdf-document.is-rendering .markdown-body { margin: 0; color: #15181c; font-size: 1rem; line-height: 1.75; }
+.pdf-document.is-rendering .markdown-body * { color: inherit; -webkit-text-fill-color: currentColor; font-family: inherit; opacity: 1; visibility: visible; transform: none; }
+.pdf-document.is-rendering .markdown-body h2 { padding-bottom: .35rem; border-bottom: 1px solid #d9dee3; }
+.pdf-document.is-rendering .markdown-body pre,
+.pdf-document.is-rendering .markdown-body code { background: #f5f6f8; }
+.pdf-download-ready { display: grid; justify-items: center; gap: 1rem; padding: .6rem .2rem .4rem; text-align: center; }
+.pdf-download-ready p { margin: 0; color: var(--sec-text-color); }
+.pdf-download-ready a { display: inline-flex; min-width: 9rem; min-height: 2.7rem; align-items: center; justify-content: center; border-radius: 999px; color: #fff !important; background: var(--reader-accent); box-shadow: 0 8px 20px rgba(40, 80, 120, .2); font-weight: 700; }
 
 @media (max-width: 767.98px) {
   body { padding-bottom: 3.8rem; }

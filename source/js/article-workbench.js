@@ -400,15 +400,182 @@
     });
     dialog("主题配色", body);
   }
-  function exportPdf() {
-    preparePdfDocument();
-    toast("请在打印窗口中选择“另存为 PDF”");
-    window.setTimeout(function () {
-      window.print();
-    }, 180);
+  function loadPdfLibrary(src, test) {
+    if (test()) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[src="' + src + '"]');
+      if (existing) {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      var script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  async function canvasForPdf(element) {
+    return window.html2canvas(element, {
+      backgroundColor: "#ffffff",
+      logging: false,
+      scale: Math.min(2, window.devicePixelRatio || 1.5),
+      useCORS: true,
+    });
+  }
+  function addCanvasToPdf(pdf, canvas, state) {
+    var sourceY = 0;
+    var pixelsPerPoint = canvas.width / state.contentWidth;
+    while (sourceY < canvas.height) {
+      var available = state.pageHeight - state.margin - state.y;
+      if (available < 30) {
+        pdf.addPage();
+        state.y = state.margin;
+        available = state.pageHeight - state.margin - state.y;
+      }
+      var remainingPoints = (canvas.height - sourceY) / pixelsPerPoint;
+      var slicePoints = Math.min(available, remainingPoints);
+      var slicePixels = Math.max(
+        1,
+        Math.min(canvas.height - sourceY, Math.floor(slicePoints * pixelsPerPoint)),
+      );
+      var slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = slicePixels;
+      slice
+        .getContext("2d")
+        .drawImage(
+          canvas,
+          0,
+          sourceY,
+          canvas.width,
+          slicePixels,
+          0,
+          0,
+          canvas.width,
+          slicePixels,
+        );
+      var renderedHeight = slicePixels / pixelsPerPoint;
+      pdf.addImage(
+        slice.toDataURL("image/jpeg", 0.94),
+        "JPEG",
+        state.margin,
+        state.y,
+        state.contentWidth,
+        renderedHeight,
+        undefined,
+        "FAST",
+      );
+      state.y += renderedHeight;
+      sourceY += slicePixels;
+      if (sourceY < canvas.height) {
+        pdf.addPage();
+        state.y = state.margin;
+      }
+    }
+  }
+  async function exportPdf(event) {
+    var button = event && event.currentTarget;
+    if (button) button.disabled = true;
+    toast("正在生成 PDF，请稍候…");
+    try {
+      await Promise.all([
+        loadPdfLibrary("/vendor/html2canvas/html2canvas.min.js", function () {
+          return typeof window.html2canvas === "function";
+        }),
+        loadPdfLibrary("/vendor/jspdf/jspdf.umd.min.js", function () {
+          return Boolean(window.jspdf && window.jspdf.jsPDF);
+        }),
+      ]);
+      var printable = preparePdfDocument();
+      printable.classList.add("is-rendering");
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await Promise.all(
+        Array.from(printable.querySelectorAll("img")).map(function (image) {
+          if (image.complete) return Promise.resolve();
+          return new Promise(function (resolve) {
+            image.onload = resolve;
+            image.onerror = resolve;
+          });
+        }),
+      );
+      var pdf = new window.jspdf.jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+        compress: true,
+      });
+      var state = {
+        margin: 40,
+        y: 40,
+        pageHeight: pdf.internal.pageSize.getHeight(),
+        contentWidth: pdf.internal.pageSize.getWidth() - 80,
+      };
+      var blocks = [
+        printable.querySelector("header"),
+      ].concat(Array.from(printable.querySelector(".markdown-body").children));
+      for (var index = 0; index < blocks.length; index += 1) {
+        var canvas = await canvasForPdf(blocks[index]);
+        var height = (canvas.height * state.contentWidth) / canvas.width;
+        if (
+          state.y > state.margin &&
+          height < state.pageHeight - state.margin * 2 &&
+          state.y + height > state.pageHeight - state.margin
+        ) {
+          pdf.addPage();
+          state.y = state.margin;
+        }
+        addCanvasToPdf(pdf, canvas, state);
+        state.y += 7;
+      }
+      var total = pdf.getNumberOfPages();
+      for (var page = 1; page <= total; page += 1) {
+        pdf.setPage(page);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(130, 138, 148);
+        pdf.text(
+          page + " / " + total,
+          pdf.internal.pageSize.getWidth() - state.margin,
+          pdf.internal.pageSize.getHeight() - 18,
+          { align: "right" },
+        );
+      }
+      var filename = document
+        .querySelector("#seo-header")
+        .textContent.trim()
+        .replace(/[\\/:*?"<>|]/g, "-");
+      var blobUrl = URL.createObjectURL(pdf.output("blob"));
+      var ready = document.createElement("div");
+      ready.className = "pdf-download-ready";
+      var message = document.createElement("p");
+      message.textContent =
+        "文章已经按 A4 页面排版完成，点击下方按钮保存到本地。";
+      var download = document.createElement("a");
+      download.href = blobUrl;
+      download.download = (filename || "article") + ".pdf";
+      download.textContent = "下载 PDF";
+      download.onclick = function () {
+        window.setTimeout(function () {
+          URL.revokeObjectURL(blobUrl);
+        }, 60000);
+      };
+      ready.appendChild(message);
+      ready.appendChild(download);
+      dialog("PDF 已生成", ready);
+      toast("PDF 已生成，请点击下载");
+    } catch (error) {
+      console.error("PDF export failed", error);
+      toast("PDF 生成失败，请稍后重试");
+    } finally {
+      cleanupPdfDocument();
+      if (button) button.disabled = false;
+    }
   }
   function preparePdfDocument() {
-    if (document.querySelector(".pdf-document")) return;
+    var existing = document.querySelector(".pdf-document");
+    if (existing) return existing;
     var printable = document.createElement("article");
     printable.className = "pdf-document";
     var header = document.createElement("header");
@@ -429,17 +596,12 @@
     printable.appendChild(header);
     printable.appendChild(content);
     document.body.appendChild(printable);
-    document.body.classList.add("pdf-export-mode");
+    return printable;
   }
   function cleanupPdfDocument() {
-    document.body.classList.remove("pdf-export-mode");
     var printable = document.querySelector(".pdf-document");
     if (printable) printable.remove();
   }
-  window.addEventListener("beforeprint", preparePdfDocument);
-  window.addEventListener("afterprint", function () {
-    window.setTimeout(cleanupPdfDocument, 0);
-  });
 
   // 移动端阅读工具栏
   var toolbar = document.createElement("nav");

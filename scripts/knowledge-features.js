@@ -1,6 +1,7 @@
 "use strict";
 
 const { execFileSync } = require("child_process");
+const fs = require("fs");
 const path = require("path");
 const moment = require("moment");
 
@@ -236,6 +237,18 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
 
   return [
     { path: "data/posts.json", data: JSON.stringify(manifest) },
+    {
+      path: "vendor/html2canvas/html2canvas.min.js",
+      data: fs.readFileSync(
+        path.join(process.cwd(), "node_modules/html2canvas/dist/html2canvas.min.js"),
+      ),
+    },
+    {
+      path: "vendor/jspdf/jspdf.umd.min.js",
+      data: fs.readFileSync(
+        path.join(process.cwd(), "node_modules/jspdf/dist/jspdf.umd.min.js"),
+      ),
+    },
     { path: "rss.xml", data: rss },
     {
       path: "insights/index.html",
