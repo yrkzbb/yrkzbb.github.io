@@ -101,6 +101,10 @@
 // 返回顶部按钮
 #scroll-top-button {
   border-radius: 0.5rem;
+
+  &.post-scroll-top {
+    bottom: -60px;
+  }
 }
 
 // 文章目录长标题自动换行，避免省略号截断
@@ -214,7 +218,8 @@
 @media (prefers-reduced-motion: reduce) {
   .reading-progress > span,
   .reading-indicator,
-  .article-share-button {
+  .article-share-button,
+  #scroll-top-button {
     animation: none;
     transition: none;
   }

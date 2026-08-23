@@ -85,15 +85,16 @@ Fluid.events = {
     }
     var posDisplay = false;
     var scrollDisplay = false;
+    var isPostButton = topArrow.hasClass('post-scroll-top');
     // Position
     var setTopArrowPos = function() {
       var boardRight = board[0].getClientRects()[0].right;
       var bodyWidth = document.body.offsetWidth;
       var right = bodyWidth - boardRight;
-      posDisplay = right >= 50;
+      posDisplay = isPostButton || right >= 50;
       topArrow.css({
         'bottom': posDisplay && scrollDisplay ? '20px' : '-60px',
-        'right' : right - 64 + 'px'
+        'right' : isPostButton && right < 50 ? '0.65rem' : right - 64 + 'px'
       });
     };
     setTopArrowPos();
@@ -108,7 +109,12 @@ Fluid.events = {
       });
     });
     // Click
-    topArrow.on('click', function() {
+    topArrow.on('click', function(event) {
+      event.preventDefault();
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        window.scrollTo(0, 0);
+        return;
+      }
       jQuery('body,html').animate({
         scrollTop: 0,
         easing   : 'swing'
