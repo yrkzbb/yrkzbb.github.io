@@ -13,7 +13,7 @@
     "check:links": "node tools/check-links.js",
     "audit": "node tools/audit-site.js",
     "optimize:images": "node tools/optimize-images.js",
-    "test": "node scripts/validate-content.js && node tools/check-links.js --source && node tools/format-markdown.js && node --check scripts/knowledge-features.js && node --check source/admin/admin.js && node --check source/js/post-editor-link.js && node --check source/js/reading-enhancements.js && node --check source/js/knowledge-ui.js && node --check source/js/article-workbench.js && node --check source/js/knowledge-graph.js && node --check source/js/duration.js",
+    "test": "node scripts/validate-content.js && node tools/check-links.js --source && node tools/format-markdown.js && node --check scripts/knowledge-features.js && node --check source/admin/admin.js && node --check source/js/post-editor-link.js && node --check source/js/reading-enhancements.js && node --check source/js/knowledge-ui.js && node --check source/js/article-workbench.js && node --check source/js/duration.js",
     "verify": "npm test && npm run build && npm run check:links && npm run audit",
     "lighthouse": "node tools/run-lighthouse.js",
     "format": "prettier --write source/js source/admin scripts",

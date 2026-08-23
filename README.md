@@ -88,6 +88,6 @@ npm run verify
 
 ## 阅读功能
 
-文章页提供标题锚点复制、图片灯箱、专注阅读、章节进度、表格与代码工具、移动端工具栏、个人笔记及导出、表情反馈、段落勘误、主题配色和分享卡片。笔记、阅读反馈与配色均仅保存在访问者的浏览器中。
+文章页提供标题锚点复制、图片灯箱、专注阅读、章节进度、表格与代码工具、移动端工具栏、个人笔记及导出、表情反馈、段落勘误、主题配色和 PDF 导出。笔记、阅读反馈与配色均仅保存在访问者的浏览器中。
 
-站点还会根据文章标签生成 `/knowledge-graph/` 知识图谱。GitHub Discussions 评论使用 Giscus；启用仓库 Discussions 并在 `_config.fluid.yml` 填写 `repo-id`、`category` 与 `category-id` 后即可嵌入评论区。
+GitHub Discussions 评论使用 Giscus；启用仓库 Discussions 并在 `_config.fluid.yml` 填写 `repo-id`、`category` 与 `category-id` 后即可嵌入评论区。

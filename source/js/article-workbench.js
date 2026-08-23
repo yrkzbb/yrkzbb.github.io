@@ -304,19 +304,63 @@
     paragraph.appendChild(report);
   });
 
-  // 配色选择与分享卡片
+  // 阅读主题与 PDF 导出
   var palettes = {
-    default: "",
-    ocean: "#1677b3",
-    violet: "#7557e8",
-    forest: "#16856b",
-    sunset: "#db5d3b",
+    default: {
+      label: "晴空",
+      description: "清爽明亮的经典蓝",
+      accent: "#168bd2",
+      soft: "#e8f5fc",
+      page: "#eef5f9",
+      surface: "#ffffff",
+      heading: "#203447",
+    },
+    ocean: {
+      label: "深海",
+      description: "沉静专注的海洋蓝",
+      accent: "#087e9b",
+      soft: "#def5f7",
+      page: "#e8f4f5",
+      surface: "#fbffff",
+      heading: "#164957",
+    },
+    violet: {
+      label: "鸢尾",
+      description: "柔和克制的紫罗兰",
+      accent: "#7557e8",
+      soft: "#eeeaff",
+      page: "#f1effa",
+      surface: "#fefeff",
+      heading: "#433472",
+    },
+    forest: {
+      label: "森林",
+      description: "舒缓耐看的自然绿",
+      accent: "#16856b",
+      soft: "#e2f5ee",
+      page: "#ebf4ef",
+      surface: "#fcfffd",
+      heading: "#245a4e",
+    },
+    sunset: {
+      label: "落日",
+      description: "温暖活跃的珊瑚橙",
+      accent: "#d65b3f",
+      soft: "#fff0e9",
+      page: "#f8efea",
+      surface: "#fffdfb",
+      heading: "#713c31",
+    },
   };
   function applyPalette(name) {
-    document.documentElement.style.setProperty(
-      "--reader-accent",
-      palettes[name] || "#29d",
-    );
+    var palette = palettes[name] || palettes.default;
+    var root = document.documentElement;
+    root.dataset.readerPalette = palettes[name] ? name : "default";
+    root.style.setProperty("--reader-accent", palette.accent);
+    root.style.setProperty("--reader-accent-soft", palette.soft);
+    root.style.setProperty("--reader-page-bg", palette.page);
+    root.style.setProperty("--reader-surface", palette.surface);
+    root.style.setProperty("--reader-heading", palette.heading);
     localStorage.setItem("yrk_reader_palette", name);
   }
   applyPalette(localStorage.getItem("yrk_reader_palette") || "default");
@@ -324,64 +368,55 @@
     var body = document.createElement("div");
     body.className = "palette-options";
     Object.keys(palettes).forEach(function (name) {
+      var palette = palettes[name];
       var button = document.createElement("button");
       button.type = "button";
       button.dataset.palette = name;
-      button.style.setProperty("--swatch", palettes[name] || "#29d");
-      button.textContent = {
-        default: "默认",
-        ocean: "海洋",
-        violet: "紫罗兰",
-        forest: "森林",
-        sunset: "日落",
-      }[name];
+      button.style.setProperty("--swatch", palette.accent);
+      button.style.setProperty("--swatch-soft", palette.soft);
+      button.style.setProperty("--swatch-page", palette.page);
+      button.innerHTML =
+        '<span class="palette-preview" aria-hidden="true"><i></i><i></i><i></i></span><span class="palette-copy"><strong>' +
+        palette.label +
+        "</strong><small>" +
+        palette.description +
+        '</small></span><span class="palette-check" aria-hidden="true">✓</span>';
+      function updateSelected() {
+        var selected =
+          localStorage.getItem("yrk_reader_palette") || "default";
+        body.querySelectorAll("button").forEach(function (item) {
+          var active = item.dataset.palette === selected;
+          item.classList.toggle("is-selected", active);
+          item.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+      }
       button.onclick = function () {
         applyPalette(name);
-        toast("配色已切换");
+        updateSelected();
+        toast("已切换为“" + palette.label + "”主题");
       };
       body.appendChild(button);
+      updateSelected();
     });
     dialog("主题配色", body);
   }
-  function shareCard() {
-    var canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 630;
-    var ctx = canvas.getContext("2d");
-    var gradient = ctx.createLinearGradient(0, 0, 1200, 630);
-    gradient.addColorStop(0, "#172033");
-    gradient.addColorStop(
-      1,
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--reader-accent")
-        .trim() || "#7557e8",
-    );
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1200, 630);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 64px sans-serif";
-    var title = document.querySelector("#seo-header").textContent.trim();
-    var words = title.match(/.{1,14}/g) || [title];
-    words.slice(0, 3).forEach(function (line, index) {
-      ctx.fillText(line, 90, 210 + index * 82);
-    });
-    ctx.font = "28px sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,.8)";
-    ctx.fillText("yrk's Blog", 90, 525);
-    ctx.fillText(location.host, 90, 570);
-    var link = document.createElement("a");
-    link.download = "article-share-card.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    toast("分享卡片已生成");
+  function exportPdf() {
+    document.body.classList.add("pdf-export-mode");
+    toast("请在打印窗口中选择“另存为 PDF”");
+    window.setTimeout(function () {
+      window.print();
+    }, 180);
   }
+  window.addEventListener("afterprint", function () {
+    document.body.classList.remove("pdf-export-mode");
+  });
 
   // 移动端阅读工具栏
   var toolbar = document.createElement("nav");
   toolbar.className = "mobile-reading-toolbar";
   toolbar.setAttribute("aria-label", "移动端阅读工具");
   toolbar.innerHTML =
-    '<button type="button" data-mobile-toc>目录</button><button type="button" data-focus-mode>专注阅读</button><button type="button" data-notes>笔记</button><button type="button" data-palette>配色</button><button type="button" data-card>分享卡片</button>';
+    '<button type="button" data-mobile-toc>目录</button><button type="button" data-focus-mode>专注阅读</button><button type="button" data-notes>笔记</button><button type="button" data-palette>配色</button><button type="button" data-export-pdf>导出 PDF</button>';
   document.body.appendChild(toolbar);
   toolbar.querySelector("[data-mobile-toc]").onclick = function () {
     var toc = document.querySelector(".mobile-toc-button");
@@ -390,16 +425,16 @@
   toolbar.querySelector("[data-focus-mode]").onclick = toggleFocus;
   toolbar.querySelector("[data-notes]").onclick = openNotes;
   toolbar.querySelector("[data-palette]").onclick = openPalette;
-  toolbar.querySelector("[data-card]").onclick = shareCard;
+  toolbar.querySelector("[data-export-pdf]").onclick = exportPdf;
   // 桌面工具入口
   var desktop = document.createElement("div");
   desktop.className = "desktop-reading-tools";
   desktop.innerHTML =
-    '<button type="button" data-focus-mode>专注阅读</button><button type="button" data-notes>个人笔记</button><button type="button" data-palette>配色</button><button type="button" data-card>分享卡片</button>';
+    '<button type="button" data-focus-mode>专注阅读</button><button type="button" data-notes>个人笔记</button><button type="button" data-palette>配色</button><button type="button" data-export-pdf>导出 PDF</button>';
   article.parentNode.insertBefore(desktop, article);
   desktop.querySelector("[data-focus-mode]").onclick = toggleFocus;
   desktop.querySelector("[data-notes]").onclick = openNotes;
   desktop.querySelector("[data-palette]").onclick = openPalette;
-  desktop.querySelector("[data-card]").onclick = shareCard;
+  desktop.querySelector("[data-export-pdf]").onclick = exportPdf;
   setFocus(localStorage.getItem("yrk_focus_mode") === "1");
 })();

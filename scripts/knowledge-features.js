@@ -236,34 +236,6 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
 
   return [
     { path: "data/posts.json", data: JSON.stringify(manifest) },
-    {
-      path: "data/knowledge-graph.json",
-      data: JSON.stringify({
-        nodes: Object.entries(
-          posts.reduce((all, post) => {
-            names(post.tags).forEach((tag) => {
-              all[tag] = (all[tag] || 0) + 1;
-            });
-            return all;
-          }, {}),
-        ).map(([id, count]) => ({ id, count })),
-        links: Object.entries(
-          posts.reduce((all, post) => {
-            const tags = names(post.tags).sort();
-            tags.forEach((source, index) =>
-              tags.slice(index + 1).forEach((target) => {
-                const key = `${source}\u0000${target}`;
-                all[key] = (all[key] || 0) + 1;
-              }),
-            );
-            return all;
-          }, {}),
-        ).map(([key, weight]) => {
-          const [source, target] = key.split("\u0000");
-          return { source, target, weight };
-        }),
-      }),
-    },
     { path: "rss.xml", data: rss },
     {
       path: "insights/index.html",
@@ -279,11 +251,6 @@ hexo.extend.generator.register("knowledge_outputs", function (locals) {
           latest: posts.slice(0, 5),
         },
       },
-    },
-    {
-      path: "knowledge-graph/index.html",
-      layout: "knowledge-graph",
-      data: { title: "知识图谱", layout: "page" },
     },
   ];
 });

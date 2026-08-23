@@ -390,7 +390,6 @@ navbar:
         icon: "iconfont icon-category-fill",
       }
     - { key: "tag", link: "/tags/", icon: "iconfont icon-tags-fill" }
-    - { key: "knowledgeGraph", name: "图谱", link: "/knowledge-graph/", icon: "iconfont icon-map" }
     - { key: "insights", name: "数据", link: "/insights/", icon: "iconfont icon-chart" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     - { key: "links", name: "连接", link: "/links/", icon: "iconfont icon-link-fill" }
