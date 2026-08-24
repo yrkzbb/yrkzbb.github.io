@@ -133,7 +133,7 @@
     var clone = article.cloneNode(true);
     clone
       .querySelectorAll(
-        '.headerlink, .copy-btn, .code-widget, h1 a[href^="#"], h2 a[href^="#"], h3 a[href^="#"], h4 a[href^="#"], h5 a[href^="#"], h6 a[href^="#"]',
+        '.headerlink, .heading-anchor-copy, .paragraph-report, .article-reactions, .article-table-tools, .copy-btn, .code-widget, h1 a[href^="#"], h2 a[href^="#"], h3 a[href^="#"], h4 a[href^="#"], h5 a[href^="#"], h6 a[href^="#"]',
       )
       .forEach(function (node) {
         node.remove();
@@ -175,12 +175,19 @@
     service.addRule("coloredText", {
       filter: function (node) {
         if (node.nodeName === "FONT" && node.getAttribute("color")) return true;
-        return node.nodeName === "SPAN" && /(?:^|;)\s*color\s*:/.test(node.getAttribute("style") || "");
+        return (
+          node.nodeName === "SPAN" &&
+          /(?:^|;)\s*color\s*:/.test(node.getAttribute("style") || "")
+        );
       },
       replacement: function (content, node) {
         var color = node.getAttribute("color") || node.style.color || "";
-        if (!/^#[0-9a-f]{6}$/i.test(color) && !/^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/i.test(color)) return content;
-        return '<span style="color: ' + color + '">' + content + '</span>';
+        if (
+          !/^#[0-9a-f]{6}$/i.test(color) &&
+          !/^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/i.test(color)
+        )
+          return content;
+        return '<span style="color: ' + color + '">' + content + "</span>";
       },
     });
     return (
@@ -405,28 +412,43 @@
       var panel = toolbar.querySelector(".inline-edit-meta");
       panel.hidden = !panel.hidden;
     };
-    toolbar.querySelectorAll("[data-format], [data-color]").forEach(function (button) {
-      button.addEventListener("mousedown", function (event) { event.preventDefault(); });
-      button.addEventListener("click", function () {
-        if (savedRange) {
-          var selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(savedRange);
-        }
-        article.focus();
-        document.execCommand(button.dataset.format || "foreColor", false, button.dataset.color || null);
-        rememberSelection();
+    toolbar
+      .querySelectorAll("[data-format], [data-color]")
+      .forEach(function (button) {
+        button.addEventListener("mousedown", function (event) {
+          event.preventDefault();
+        });
+        button.addEventListener("click", function () {
+          if (savedRange) {
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedRange);
+          }
+          article.focus();
+          document.execCommand(
+            button.dataset.format || "foreColor",
+            false,
+            button.dataset.color || null,
+          );
+          rememberSelection();
+        });
       });
-    });
     toolbar.querySelector('[data-action="cancel"]').onclick = cancelEditing;
     toolbar.querySelector('[data-action="save"]').onclick = saveEditing;
     document.body.appendChild(toolbar);
   }
   function rememberSelection() {
     var selection = window.getSelection();
-    if (!editing || !selection || !selection.rangeCount || selection.isCollapsed) return;
+    if (
+      !editing ||
+      !selection ||
+      !selection.rangeCount ||
+      selection.isCollapsed
+    )
+      return;
     var range = selection.getRangeAt(0);
-    if (article.contains(range.commonAncestorContainer)) savedRange = range.cloneRange();
+    if (article.contains(range.commonAncestorContainer))
+      savedRange = range.cloneRange();
   }
   async function startEditing() {
     if (editing) return;
@@ -529,7 +551,8 @@
       originalBody = markdown;
       waitForPublish(previousMain.sha);
     } catch (error) {
-      var message = error && error.message ? error.message : "未知错误，请刷新页面后重试";
+      var message =
+        error && error.message ? error.message : "未知错误，请刷新页面后重试";
       notify("保存失败：" + message, "error");
       button.disabled = false;
       button.textContent = "保存并发布";
