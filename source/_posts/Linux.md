@@ -50,80 +50,66 @@ ps -eo pid,ppid,user,stat,%cpu,%mem,etime,cmd --sort=-%cpu
 
 其中 `ps aux` 常用于观察资源占用，`ps -ef` 更侧重进程的用户、父子关系和完整命令。详细格式中还可能看到：`PPID` 表示父进程 ID，`STAT` 表示进程状态，`VSZ` 表示虚拟内存大小，`RSS` 表示驻留物理内存大小，`ELAPSED` 或 `ETIME` 表示进程已经运行的时间，`COMMAND` 或 `CMD` 表示启动命令及参数。
 
-<span style="color: rgb(32, 52, 71)">2\.</span> `top` <span style="color: rgb(32, 52, 71)">命令会展示什么？每一项数据分别表示什么？</span>
+### 2\. `top` 命令会展示什么？每一项数据分别表示什么？
 
-`top` 用于**动态观察系统负载、CPU、内存以及各进程的资源占用**，默认会周期性刷新。<span style="color: rgb(113, 128, 150)">勘误</span>
+`top` 用于**动态观察系统负载、CPU、内存以及各进程的资源占用**，输出主要分为系统汇总区和进程列表区。
 
-1.  **运行时间与评价负载**
-    
-    ```text
-    top - 10:20:30 up 5 days, 2:10, 2 users, load average: 0.52, 0.40, 0.35
-    ```
-    
-    -   `load average`：最近 1、5、15 分钟的平均负载，主要反映可运行任务和不可中断睡眠任务的数量，并不是 CPU 使用率。判断负载是否偏高时，要结合 CPU 逻辑核心数和任务类型分析。
-2.  **任务状态**
-    
-    ```text
-    Tasks: 200 total, 1 running, 198 sleeping, 0 stopped, 1 zombie
-    ```
-    
-3.  **CPU 使用情况**
-    
-    ```text
-    %Cpu(s): 5.0 us, 2.0 sy, 0.0 ni, 92.0 id, 1.0 wa, 0.0 hi, 0.0 si, 0.0 st
-    ```
-    
-    -   显示CPU的总体使用率以及每个CPU核心的使用率。
-4.  **物理内存与交换空间**
-    
-    ```text
-    MiB Mem : 16000 total, 1000 free, 9000 used, 6000 buff/cache
-    MiB Swap:  2048 total, 2000 free,   48 used. 6200 avail Mem
-    ```
-    
+系统汇总区包含：
 
-显示物理内存的总量、已使用量、空闲量、缓冲区和缓存区的使用量。显示交换空间的总量、已使用量和剩余量。
+1.  **运行时间与负载**：显示当前时间、系统运行时长、登录会话数，以及最近 1、5、15 分钟的 `load average`。平均负载主要统计可运行任务和不可中断睡眠任务的数量，不是 CPU 使用率。
+2.  **任务状态**：显示 `total`、`running`、`sleeping`、`stopped` 和 `zombie` 等任务数量。
+3.  **CPU 使用情况**：`us` 是用户态时间，`sy` 是内核态时间，`id` 是空闲时间，`wa` 是 I/O 等待时间，`hi`、`si` 分别是硬中断和软中断时间，`st` 是虚拟机被宿主机占用的时间。
+4.  **内存与 Swap**：显示 `total`、`free`、`used`、`buff/cache` 和 `avail Mem`。Linux 会利用空闲内存做缓存，因此判断内存余量时通常更应关注 `avail Mem`。
+
+进程列表常见字段包括：`PID`、`USER`、调度优先级 `PR`、nice 值 `NI`、虚拟内存 `VIRT`、驻留内存 `RES`、共享内存 `SHR`、进程状态 `S`、`%CPU`、`%MEM`、累计 CPU 时间 `TIME+` 和命令名 `COMMAND`。
+
+实际排查时，我会先从汇总区判断压力大致来自 CPU、内存还是 I/O，再按 `P` 或 `M` 对进程的 CPU、内存占用排序。`top` 展示的是周期性采样结果，具体结论还要结合连续趋势和其他监控指标判断。
 
 ### 3\. 已知一个进程名，如何杀掉这个进程？
 
-如果已经知道进程名，可以直接用 `pkill` 或 `killall`，不用手动查 PID：
+我会先精确确认目标进程，再发送 `SIGTERM` 让它正常清理并退出；只有进程无响应时，才使用 `SIGKILL` 强制终止：
 
-```
-pkill <进程名>          # 按进程名模糊匹配并杀死
-pkill -9 <进程名>       # 强制终止
-killall <进程名>        # 按进程名精确匹配并杀死所有同名进程
+```bash
+pgrep -a -x nginx
+pkill -x nginx
+
+# 确认仍无法退出时再强制终止
+pkill -KILL -x nginx
 ```
 
-一般优先用 `SIGTERM`（`kill <PID>`）让进程做一些清理工作再退出；只有在进程不响应或卡死时才使用 `SIGKILL`（`kill -9`），因为它会直接强制终止进程，来不及释放资源。
+`-x` 表示完整匹配进程名，可以降低误杀名称相似进程的风险。`pkill` 会处理所有符合条件的进程；如果只想终止其中一个，应该先确认 PID，再执行 `kill PID`。`SIGKILL` 不能被进程捕获，可能使数据和资源来不及清理，因此不能一开始就使用 `-9`。
 
 ### 4\. Linux 如何查看进程状态？
 
-可以通过 `ps` 命令或者 `top` 命令来查看进程的状态。
-
-比如我想看 nginx 进程的状态，可以在 linux 输入这条命令：
-
-```
-ps -auxf | grep nginx
-```
-
-```
-[root@xiaolin ~]# ps -auxf | grep nginx
-root  9313  0.0  0.0  112812  980  pts/1  S+  16:01  0:00  \_ grep --color=auto nginx
-root  7297  0.0  0.0   40464 1192  ?      Ss  Jun11  0:00  nginx: master process /usr/sbin/nginx
-nginx 7298  2.1  2.9  91516 55004 ?      S   Jun11 527:36  \_ nginx: worker process
-```
-
-## `top` <span style="color: rgb(44, 62, 80)">命令除了能看进程的状态，还能看到系统的信息，比如系统负载、内存、CPU 使用率等等</span>
-
-## 5\. Linux 如何查看线程状态？
-
-Linux 内核把线程作为可调度任务管理，所以可以用 `ps`、`top` 或 `/proc` 查看某个进程中的线程：
-
-  
+可以使用 `ps` 查看目标进程的状态和上下文，需要持续观察时再使用 `top`：
 
 ```bash
-
+ps -o pid,ppid,user,stat,%cpu,%mem,etime,wchan:24,cmd -p PID
+top -p PID
 ```
+
+`STAT` 的首字符表示主要状态：`R` 表示运行或等待 CPU，`S` 表示可中断睡眠，`D` 表示不可中断睡眠，`T` 表示停止，`Z` 表示僵尸。`WCHAN` 可以辅助观察睡眠中的进程正在内核哪个位置等待。
+
+还可以查看 `/proc/PID/status` 获取状态、线程数、内存和信号等详细信息。进程状态是瞬时结果，分析卡顿时应连续观察，并结合 CPU、I/O、锁和系统调用判断。
+
+### 5\. Linux 如何查看线程状态？
+
+Linux 内核把线程作为可调度任务管理，可以使用 `ps`、`top` 或 `/proc` 查看某个进程中的线程：
+
+```bash
+ps -T -p PID -o pid,tid,stat,pcpu,comm,wchan:24
+top -H -p PID
+ls /proc/PID/task
+```
+
+-   `ps -T -p PID`：列出指定进程的所有线程，`PID` 是线程组 ID，`TID` 是线程 ID；
+-   `top -H -p PID`：动态观察该进程中各线程的 CPU、内存和状态；
+-   `/proc/PID/task/TID/status`：查看某个线程的详细状态；
+-   `pidstat -t -p PID 1`：如果安装了 `sysstat`，可以每秒观察各线程的 CPU 使用情况。
+
+[![使用 ps 和 top 查看 Linux 线程状态](/img/linux-thread-status.png)](/img/linux-thread-status.png "使用 ps 和 top 查看 Linux 线程状态")
+
+图片中的 `top -H` 会显示全系统线程，`ps -eT` 会显示所有进程的线程；已知目标 PID 时，使用带 `-p PID` 的写法更精确。线程状态码与进程类似，例如 `R`、`S`、`D`、`T`。如果要继续分析线程阻塞原因，还需要根据语言和场景配合调用栈或系统调用工具。
 
 ## 系统资源监控
 
