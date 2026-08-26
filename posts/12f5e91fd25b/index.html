@@ -1,0 +1,916 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/12f5e91fd25b/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="网络 I&#x2F;O 模型 1. 你了解过哪些 I&#x2F;O 模型？ 以 Unix 网络 I&#x2F;O 为例，常见模型有五种：  阻塞 I&#x2F;O：调用 read、recv 等操作后，线程会等待数据就绪并完成复制，期间通常不能继续处理其他工作； 非阻塞 I&#x2F;O：数据未就绪时调用立即返回，例如返回 EAGAIN，程序需要稍后重试；如果只是不断轮询，会浪费 CPU； I&#x2F;O 多路复用：使用 select、poll、epoll">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络IO">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/12f5e91fd25b/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="网络 I&#x2F;O 模型 1. 你了解过哪些 I&#x2F;O 模型？ 以 Unix 网络 I&#x2F;O 为例，常见模型有五种：  阻塞 I&#x2F;O：调用 read、recv 等操作后，线程会等待数据就绪并完成复制，期间通常不能继续处理其他工作； 非阻塞 I&#x2F;O：数据未就绪时调用立即返回，例如返回 EAGAIN，程序需要稍后重试；如果只是不断轮询，会浪费 CPU； I&#x2F;O 多路复用：使用 select、poll、epoll">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T11:22:23.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="I&#x2F;O">
+<meta property="article:tag" content="epoll">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>网络IO - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"网络IO","description":"网络 I/O 模型 1. 你了解过哪些 I/O 模型？ 以 Unix 网络 I/O 为例，常见模型有五种：  阻塞 I/O：调用 read、recv 等操作后，线程会等待数据就绪并完成复制，期间通常不能继续处理其他工作； 非阻塞 I/O：数据未就绪时调用立即返回，例如返回 EAGAIN，程序需要稍后重试；如果只是不断轮询，会浪费 CPU； I/O 多路复用：使用 select、poll、epoll","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T11:22:23.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/12f5e91fd25b/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="网络IO"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 19:22" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="15">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/网络IO.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">网络IO</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="网络-I-O-模型">网络 I/O 模型</h2>
+<h3 id="1-你了解过哪些-I-O-模型？">1. 你了解过哪些 I/O 模型？</h3>
+<p>以 Unix 网络 I/O 为例，常见模型有五种：</p>
+<ul>
+<li><strong>阻塞 I/O</strong>：调用 <code>read</code>、<code>recv</code> 等操作后，线程会等待数据就绪并完成复制，期间通常不能继续处理其他工作；</li>
+<li><strong>非阻塞 I/O</strong>：数据未就绪时调用立即返回，例如返回 <code>EAGAIN</code>，程序需要稍后重试；如果只是不断轮询，会浪费 CPU；</li>
+<li><strong>I/O 多路复用</strong>：使用 <code>select</code>、<code>poll</code>、<code>epoll</code> 等接口同时等待多个描述符，就绪后再执行实际读写；</li>
+<li><strong>信号驱动 I/O</strong>：描述符就绪时由内核发送信号通知进程，应用收到通知后进行读写，使用相对较少；</li>
+<li><strong>异步 I/O</strong>：应用提交操作后继续执行，由内核完成数据传输并通知结果，例如部分平台的 AIO、<code>io_uring</code> 或 IOCP 能力。</li>
+</ul>
+<p>阻塞与非阻塞描述的是一次 I/O 调用是否等待；同步与异步更关注数据传输由谁完成以及完成结果如何通知。I/O 多路复用通常仍属于同步 I/O，因为就绪后应用还要主动调用 <code>read</code> 或 <code>write</code> 完成数据传输。</p>
+<h3 id="2-服务器处理并发请求有哪几种方式？">2. 服务器处理并发请求有哪几种方式？</h3>
+<p>常见并发服务器模型包括：</p>
+<ul>
+<li><strong>迭代式处理</strong>：一个请求处理完再处理下一个，实现简单，只适合并发需求很低或单次处理极短的场景；</li>
+<li><strong>每连接一个进程</strong>：隔离性较好，但创建和切换进程的成本较高；</li>
+<li><strong>每连接一个线程</strong>：编程直观，但大量连接会带来线程栈、调度和上下文切换开销；</li>
+<li><strong>进程池或线程池</strong>：复用固定数量的工作单元，限制资源消耗，适合任务数量较多但并发上限需要控制的场景；</li>
+<li><strong>事件驱动模型</strong>：少量线程通过 I/O 多路复用管理大量连接，通常采用 Reactor 模式；</li>
+<li><strong>异步完成模型</strong>：提交异步 I/O，完成后由系统通知，常对应 Proactor 思路；</li>
+<li><strong>混合模型</strong>：事件循环负责网络 I/O，再把计算、阻塞操作或业务任务交给工作线程池。</li>
+</ul>
+<p>选择时要结合连接数量、单个请求耗时、CPU 或 I/O 密集程度、隔离要求和开发复杂度。高并发网络服务通常使用事件驱动与线程池结合，而不是简单地为每个连接创建一个线程。</p>
+<h2 id="I-O-多路复用">I/O 多路复用</h2>
+<h3 id="1-讲一下-I-O-多路复用。">1. 讲一下 I/O 多路复用。</h3>
+<p>I/O 多路复用是指：<strong>一个线程通过一个等待接口，同时关注多个文件描述符的就绪事件</strong>。没有事件时线程可以阻塞；当一个或多个描述符可读、可写或发生异常时，内核通知应用，应用再处理对应连接。</p>
+<p>典型流程是：</p>
+<ol>
+<li>将监听套接字和已连接套接字注册到多路复用接口；</li>
+<li>调用 <code>select</code>、<code>poll</code> 或 <code>epoll_wait</code> 等接口等待事件；</li>
+<li>接口返回后，找出就绪描述符；</li>
+<li>对就绪连接执行 <code>accept</code>、<code>read</code>、<code>write</code> 等非阻塞操作；</li>
+<li>更新关注事件并再次等待。</li>
+</ol>
+<p>它的优势是少量线程就能管理大量连接，减少线程数量和上下文切换。但它并不会让单个 I/O 操作本身更快，也不能消除业务计算开销。如果事件处理函数执行时间过长，会阻塞整个事件循环，因此耗时计算和阻塞调用通常需要转移到工作线程池。</p>
+<h3 id="2-select、poll、epoll-的区别是什么？">2. <code>select</code>、<code>poll</code>、<code>epoll</code> 的区别是什么？</h3>
+<p>三者都能等待多个文件描述符的就绪事件，但数据结构和就绪事件获取方式不同：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th><code>select</code></th>
+<th><code>poll</code></th>
+<th><code>epoll</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>描述符集合</td>
+<td>位图</td>
+<td><code>pollfd</code> 数组</td>
+<td>内核维护的兴趣集合与就绪队列</td>
+</tr>
+<tr>
+<td>数量限制</td>
+<td>受 <code>FD_SETSIZE</code> 限制</td>
+<td>无固定的小型位图上限，但受系统资源限制</td>
+<td>受系统资源限制</td>
+</tr>
+<tr>
+<td>每次等待</td>
+<td>需要传入并重建集合</td>
+<td>需要传入整个数组</td>
+<td>注册后只需等待就绪事件</td>
+</tr>
+<tr>
+<td>查找就绪项</td>
+<td>通常扫描整个集合</td>
+<td>通常扫描整个数组</td>
+<td>直接返回就绪项</td>
+</tr>
+<tr>
+<td>触发模式</td>
+<td>水平触发</td>
+<td>水平触发</td>
+<td>支持水平触发和边缘触发</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>可移植性较好</td>
+<td>多种 Unix-like 系统</td>
+<td>Linux 专有</td>
+</tr>
+</tbody>
+</table>
+<p>当描述符数量很多但同时活跃的连接较少时，<code>epoll</code> 通常更有优势，因为无需每次复制并线性扫描全部描述符。连接数量较少或大部分连接始终活跃时，三者的实际差距可能没有想象中大，还要结合事件处理逻辑、系统调用次数和数据分布通过压测判断。</p>
+<h3 id="3-epoll-的边缘触发和水平触发有什么区别？">3. <code>epoll</code> 的边缘触发和水平触发有什么区别？</h3>
+<p>核心区别是通知条件：</p>
+<ul>
+<li><strong>水平触发（LT）</strong>：只要描述符仍处于就绪状态，<code>epoll_wait</code> 就会继续报告它。例如接收缓冲区还有数据未读完，下次等待仍会收到可读事件。LT 是默认模式，逻辑更简单，容错性较好。</li>
+<li><strong>边缘触发（ET）</strong>：通常只在描述符状态从未就绪变为就绪时通知。应用收到事件后应持续读或写，直到非阻塞操作返回 <code>EAGAIN</code>，否则剩余数据可能不会立即再次触发通知。</li>
+</ul>
+<p>ET 可以减少重复通知和部分系统调用，但编程要求更严格，通常必须配合非阻塞描述符和“处理到 <code>EAGAIN</code>”的循环。它不一定在所有场景都比 LT 快；如果连接规模不大或业务处理才是瓶颈，差异可能很小。</p>
+<h2 id="高性能网络框架">高性能网络框架</h2>
+<h3 id="1-Redis、Nginx、Netty-依赖什么实现高性能？">1. Redis、Nginx、Netty 依赖什么实现高性能？</h3>
+<p>它们都大量使用<strong>非阻塞 I/O、事件驱动和 I/O 多路复用</strong>，但高性能不只是依赖 <code>epoll</code>。</p>
+<ul>
+<li><strong>Redis</strong>：核心命令执行通常采用事件循环，利用 <code>epoll</code>、<code>kqueue</code> 等平台接口管理连接，避免为每个连接创建线程；内存数据结构、高效编码和较短的命令执行路径也很重要。较新的 Redis 还可以使用 I/O 线程处理部分网络读写，但命令执行模型不能简单概括为“完全多线程”。</li>
+<li><strong>Nginx</strong>：通常采用多个 worker 进程，每个 worker 使用事件循环和平台多路复用接口处理大量连接；同时利用非阻塞 I/O、连接复用、缓冲、<code>sendfile</code> 等机制。避免在 worker 中执行阻塞操作是保持响应能力的关键。</li>
+<li><strong>Netty</strong>：基于 Java NIO 的 <code>Selector</code> 和 EventLoop 模型，也可在支持的平台使用原生 <code>epoll</code>、<code>kqueue</code> 等传输；它还通过线程模型、内存池、<code>ByteBuf</code>、批量处理和部分零拷贝能力减少分配与数据复制开销。</li>
+</ul>
+<p>因此，它们的共同点是用少量线程管理大量连接，并尽量减少阻塞、线程切换、内存分配和数据复制。实际性能仍受业务逻辑、连接活跃度、数据大小、系统配置和硬件条件影响。</p>
+<h2 id="零拷贝">零拷贝</h2>
+<h3 id="1-零拷贝是什么？">1. 零拷贝是什么？</h3>
+<p>零拷贝是一类<strong>减少数据在用户空间与内核空间之间的 CPU 拷贝和上下文切换</strong>的技术。“零”通常不是指整个链路完全没有任何数据移动，而是尽量避免由 CPU 执行不必要的中间复制。</p>
+<p>例如传统文件发送可能经历：磁盘数据进入内核页缓存，再复制到用户缓冲区，然后复制回套接字缓冲区，最后由 DMA 发送到网卡。使用 Linux 的 <code>sendfile()</code>，内核可以直接在文件和套接字之间传递数据，避免数据先进入用户空间；部分硬件和内核还可以通过描述符传递进一步减少实际数据复制。</p>
+<p>常见相关机制包括 <code>sendfile</code>、<code>splice</code>、<code>mmap</code>、<code>writev</code>，以及应用层通过缓冲区切片或组合避免复制。它们减少的拷贝阶段并不完全相同，也有各自的文件类型、协议和平台限制。</p>
+<p>零拷贝适合文件传输、代理转发等大数据搬运场景。如果应用必须在用户态解析、修改或加密数据，就不一定能绕过用户空间；小数据场景下，系统调用和管理成本也可能抵消收益，所以仍要结合实际链路和压测结果选择。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/5b6ea937cadb/"><strong>网络攻击</strong><small>计算机网络</small></a>
+                  
+                    <a href="/posts/538a5fbd6ebf/"><strong>网络场景</strong><small>计算机网络</small></a>
+                  
+                    <a href="/posts/c65f388caac2/"><strong>运输层</strong><small>计算机网络</small></a>
+                  
+                    <a href="/posts/4c0afad60d87/"><strong>应用层</strong><small>计算机网络</small></a>
+                  
+                    <a href="/posts/a887c7648a61/"><strong>网络模型</strong><small>计算机网络</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E7%BD%91%E7%BB%9C/" class="print-no-link">#网络</a>
+      
+        <a href="/tags/I-O/" class="print-no-link">#I/O</a>
+      
+        <a href="/tags/epoll/" class="print-no-link">#epoll</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>网络IO</div>
+      <div>https://yrkzbb.github.io/posts/12f5e91fd25b/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/a8cd4b0ab423/" title="Linux">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Linux</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/ef846162030d/" title="中断">
+                        <span class="hidden-mobile">中断</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

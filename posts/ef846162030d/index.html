@@ -1,0 +1,932 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/ef846162030d/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="中断基础 1. 什么是中断？ 中断是一种让 CPU 暂时停止当前执行流程，转而处理特定事件，处理完成后再恢复原流程的机制。 例如，网卡收到数据、磁盘完成 I&#x2F;O、定时器到期时，设备可以通知 CPU 执行相应的中断处理程序。这样 CPU 不必一直轮询设备状态，可以在设备工作期间执行其他任务。 广义上，硬件中断、CPU 执行指令时产生的异常，以及软件主动触发的陷入，都可能使控制权转移到内核。不过严格分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="中断">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/ef846162030d/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="中断基础 1. 什么是中断？ 中断是一种让 CPU 暂时停止当前执行流程，转而处理特定事件，处理完成后再恢复原流程的机制。 例如，网卡收到数据、磁盘完成 I&#x2F;O、定时器到期时，设备可以通知 CPU 执行相应的中断处理程序。这样 CPU 不必一直轮询设备状态，可以在设备工作期间执行其他任务。 广义上，硬件中断、CPU 执行指令时产生的异常，以及软件主动触发的陷入，都可能使控制权转移到内核。不过严格分">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T11:21:14.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="中断">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>中断 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"中断","description":"中断基础 1. 什么是中断？ 中断是一种让 CPU 暂时停止当前执行流程，转而处理特定事件，处理完成后再恢复原流程的机制。 例如，网卡收到数据、磁盘完成 I/O、定时器到期时，设备可以通知 CPU 执行相应的中断处理程序。这样 CPU 不必一直轮询设备状态，可以在设备工作期间执行其他任务。 广义上，硬件中断、CPU 执行指令时产生的异常，以及软件主动触发的陷入，都可能使控制权转移到内核。不过严格分","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T11:21:14.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/ef846162030d/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="中断"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 19:21" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="8">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          8 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/中断.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="操作系统 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">操作系统 学习路线</a>
+            <span>24 / 34</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章发布位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="71">
+            <span style="width:71%"></span>
+          </div>
+          <nav aria-label="操作系统 系列目录">
+            
+              <a class="passed" href="/posts/51416497c267/" >
+                <small>01</small>
+                <strong>用户态和内核态</strong>
+              </a>
+            
+              <a class="passed" href="/posts/ebee359e45de/" >
+                <small>02</small>
+                <strong>进程管理</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>03</small>
+                <strong>中断</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/0160369d0c9c/" >
+                <small>04</small>
+                <strong>内存管理</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/b24e86585b0f/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">中断</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="中断基础">中断基础</h2>
+<h3 id="1-什么是中断？">1. 什么是中断？</h3>
+<p>中断是一种让 CPU <strong>暂时停止当前执行流程，转而处理特定事件，处理完成后再恢复原流程</strong>的机制。</p>
+<p>例如，网卡收到数据、磁盘完成 I/O、定时器到期时，设备可以通知 CPU 执行相应的中断处理程序。这样 CPU 不必一直轮询设备状态，可以在设备工作期间执行其他任务。</p>
+<p>广义上，硬件中断、CPU 执行指令时产生的异常，以及软件主动触发的陷入，都可能使控制权转移到内核。不过严格分类中，外部硬件中断通常是异步的，异常则与当前指令同步发生，二者不能完全等同。</p>
+<h3 id="2-中断的处理流程是怎样的？">2. 中断的处理流程是怎样的？</h3>
+<p>以外部硬件中断为例，典型流程如下：</p>
+<ol>
+<li>设备完成操作或发生事件，向中断控制器发出中断请求；</li>
+<li>中断控制器根据屏蔽状态和优先级选择中断，并把中断向量通知 CPU；</li>
+<li>CPU 通常在当前指令执行到可中断边界后响应请求，保存返回位置和必要的处理器状态；如果从用户态进入内核态，还会切换特权级和相应的栈；</li>
+<li>CPU 根据中断向量找到入口代码，内核入口继续保存需要保护的寄存器上下文；</li>
+<li>中断处理程序确认中断来源，读取或写入设备状态，清除中断条件，并向中断控制器发送处理完成信号；</li>
+<li>对耗时较长的工作，内核通常只在中断上下文中完成紧急部分，再把其余任务推迟到软中断、工作队列等机制中执行；</li>
+<li>处理结束后，内核可能检查是否需要调度其他任务，随后恢复上下文并执行中断返回，从原来的位置或被调度的新任务继续运行。</li>
+</ol>
+<p>中断响应期间是否屏蔽同级中断、能否被更高优先级中断嵌套，以及上下文具体保存在哪里，会因 CPU 架构和操作系统实现而不同。</p>
+<h3 id="3-中断的类型有哪些？">3. 中断的类型有哪些？</h3>
+<p>常见分类可以从触发来源和是否可屏蔽两个角度理解。</p>
+<p>按触发来源划分：</p>
+<ul>
+<li><strong>外部硬件中断</strong>：由 CPU 外部设备异步触发，例如时钟、网卡、磁盘和键盘中断；</li>
+<li><strong>异常</strong>：CPU 执行当前指令时同步产生，例如缺页、除零、非法指令和调试断点。异常还可根据能否恢复细分为故障、陷阱和终止等类型；</li>
+<li><strong>软件触发的中断或陷入</strong>：程序执行专门指令，主动把控制权交给内核。传统系统调用可以使用软件中断实现，现代处理器通常还提供开销更低的专用系统调用指令，因此不能认为系统调用一定通过软件中断完成。</li>
+</ul>
+<p>按是否可以屏蔽划分：</p>
+<ul>
+<li><strong>可屏蔽中断</strong>：可以由 CPU 或中断控制器暂时屏蔽，多数普通设备中断属于这一类；</li>
+<li><strong>不可屏蔽中断（NMI）</strong>：普通中断屏蔽机制不能禁止，通常用于硬件严重错误、看门狗等必须及时处理的事件。</li>
+</ul>
+<p>不同教材和 CPU 架构对“中断”与“异常”的术语范围可能不同，回答时应先说明采用的是广义还是狭义定义。</p>
+<h3 id="4-中断的作用是什么？">4. 中断的作用是什么？</h3>
+<p>中断的核心作用是让 CPU <strong>及时响应异步事件，并避免低效地持续轮询</strong>。主要体现在：</p>
+<ul>
+<li><strong>处理设备 I/O</strong>：设备完成操作后主动通知 CPU，提高 CPU 与外设并行工作的效率；</li>
+<li><strong>支持任务调度</strong>：周期性时钟中断使操作系统能够更新时间、统计运行时间并实施抢占式调度；</li>
+<li><strong>处理异常和保护系统</strong>：通过缺页、权限错误、非法指令等异常把控制权交给内核，由内核修复、报告或终止任务；</li>
+<li><strong>提供受控的内核入口</strong>：软件陷入或专用系统调用指令让用户程序以受控方式请求内核服务；</li>
+<li><strong>响应紧急事件</strong>：通过高优先级中断或 NMI 处理部分严重硬件故障和看门狗事件。</li>
+</ul>
+<p>中断能提高系统响应性，但并非越多越好。过高的中断频率会占用大量 CPU 时间，因此系统还会使用中断合并、轮询与中断混合等方式控制开销。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">操作系统 系列</h2></div>
+                  <strong>3 / 5</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="操作系统 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><span style="width:60%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/51416497c267/" ><span>1</span>用户态和内核态</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/ebee359e45de/" ><span>2</span>进程管理</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/ef846162030d/" aria-current="page"><span>3</span>中断</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/0160369d0c9c/" ><span>4</span>内存管理</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/b24e86585b0f/" ><span>5</span>锁</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/0160369d0c9c/"><strong>内存管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/b24e86585b0f/"><strong>锁</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/ebee359e45de/"><strong>进程管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/51416497c267/"><strong>用户态和内核态</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/a8cd4b0ab423/"><strong>Linux</strong><small>操作系统</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="print-no-link">#操作系统</a>
+      
+        <a href="/tags/%E4%B8%AD%E6%96%AD/" class="print-no-link">#中断</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>中断</div>
+      <div>https://yrkzbb.github.io/posts/ef846162030d/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/12f5e91fd25b/" title="网络IO">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">网络IO</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/0160369d0c9c/" title="内存管理">
+                        <span class="hidden-mobile">内存管理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

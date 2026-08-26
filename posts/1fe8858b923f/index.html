@@ -1,0 +1,936 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/1fe8858b923f/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="Redis 线程模型 1. Redis 为什么快？ Redis 快不是单一原因造成的，核心是以内存访问为主、高效的数据结构、事件驱动的网络模型，以及尽量短的命令执行路径共同作用。 主要原因有以下几点：  数据主要在内存中操作：多数读写不需要等待磁盘随机 I&#x2F;O，内存访问延迟远低于磁盘。RDB、AOF 主要负责持久化，不是普通读请求的数据来源。 数据结构和编码经过优化：Redis 针对不同场景使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线程模型">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/1fe8858b923f/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="Redis 线程模型 1. Redis 为什么快？ Redis 快不是单一原因造成的，核心是以内存访问为主、高效的数据结构、事件驱动的网络模型，以及尽量短的命令执行路径共同作用。 主要原因有以下几点：  数据主要在内存中操作：多数读写不需要等待磁盘随机 I&#x2F;O，内存访问延迟远低于磁盘。RDB、AOF 主要负责持久化，不是普通读请求的数据来源。 数据结构和编码经过优化：Redis 针对不同场景使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T09:31:42.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="线程模型">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>线程模型 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"线程模型","description":"Redis 线程模型 1. Redis 为什么快？ Redis 快不是单一原因造成的，核心是以内存访问为主、高效的数据结构、事件驱动的网络模型，以及尽量短的命令执行路径共同作用。 主要原因有以下几点：  数据主要在内存中操作：多数读写不需要等待磁盘随机 I/O，内存访问延迟远低于磁盘。RDB、AOF 主要负责持久化，不是普通读请求的数据来源。 数据结构和编码经过优化：Redis 针对不同场景使用","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T09:31:42.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/1fe8858b923f/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="线程模型"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 17:31" pubdate>
+          2026年8月21日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="11">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/线程模型.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="Redis 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">Redis 学习路线</a>
+            <span>10 / 34</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章发布位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="29">
+            <span style="width:29%"></span>
+          </div>
+          <nav aria-label="Redis 系列目录">
+            
+              <a class="passed" href="/posts/bced017a3fdf/" >
+                <small>01</small>
+                <strong>场景</strong>
+              </a>
+            
+              <a class="passed" href="/posts/a3e33afe7e3f/" >
+                <small>02</small>
+                <strong>数据结构</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>03</small>
+                <strong>线程模型</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/09b3554eab36/" >
+                <small>04</small>
+                <strong>redis事务</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/22c416610a43/" >
+                <small>05</small>
+                <strong>缓存淘汰和过期删除</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/aeb3025afccc/" >
+                <small>06</small>
+                <strong>集群</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">线程模型</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Redis-线程模型">Redis 线程模型</h2>
+<h3 id="1-Redis-为什么快？">1. Redis 为什么快？</h3>
+<p>Redis 快不是单一原因造成的，核心是<strong>以内存访问为主、高效的数据结构、事件驱动的网络模型，以及尽量短的命令执行路径</strong>共同作用。</p>
+<p>主要原因有以下几点：</p>
+<ol>
+<li><strong>数据主要在内存中操作</strong>：多数读写不需要等待磁盘随机 I/O，内存访问延迟远低于磁盘。RDB、AOF 主要负责持久化，不是普通读请求的数据来源。</li>
+<li><strong>数据结构和编码经过优化</strong>：Redis 针对不同场景使用 SDS、哈希表、跳表、<code>listpack</code>、<code>quicklist</code> 等结构，并会根据数据规模选择紧凑编码。</li>
+<li><strong>使用 I/O 多路复用和非阻塞网络 I/O</strong>：一个事件循环可以监听大量客户端连接，只处理已经就绪的事件，避免为每个连接创建一个线程以及大量线程切换。</li>
+<li><strong>命令执行大多串行完成</strong>：Redis 的核心命令执行路径通常由主线程处理，减少了锁竞争、线程同步和上下文切换开销，也让单条命令天然具有原子执行的特性。不过这不代表 Redis 所有工作都只有一个线程。</li>
+<li><strong>使用多线程和后台任务处理辅助工作</strong>：使用 I/O 线程处理部分网络读写；持久化、异步释放内存等工作也可以由子进程或后台线程完成，从而减少主线程承担的耗时工作。命令本身仍主要在主线程执行。</li>
+<li><strong>协议和批量交互开销较低</strong>：RESP 协议解析相对简单，客户端还可以通过 <code>pipeline</code> 合并多条请求，减少网络往返次数，提高吞吐量。</li>
+</ol>
+<p>不过，“Redis 在内存中，所以一定快”并不准确。执行 <code>KEYS</code>、超大范围查询、处理 Big Key，或者运行复杂度较高的命令，仍可能长时间占用主线程；网络带宽、持久化配置、内存压力和热点 Key 也会影响实际性能。因此排查性能问题时，我会结合慢日志、命令复杂度、Key 大小、请求量和系统资源一起分析。</p>
+<h3 id="2-Redis-哪些地方使用了多线程？">2. Redis 哪些地方使用了多线程？</h3>
+<p>Redis 并不是完全单线程。准确地说，<strong>普通命令的核心执行仍主要由主线程串行完成</strong>，但网络 I/O、磁盘同步和异步释放等辅助工作会使用线程。</p>
+<p>主要包括以下几个方面：</p>
+<ol>
+<li><strong>网络 I/O 线程</strong>：Redis 6.0 起可以配置 I/O 线程，并行处理部分客户端 Socket 的读取、协议解析和响应写回，降低网络读写成为瓶颈时主线程的压力。命令真正访问和修改数据的过程仍主要交给主线程执行，所以不是多线程并行执行普通命令。</li>
+<li><strong>AOF 的后台 <code>fsync</code></strong>：当 <code>appendfsync</code> 使用 <code>everysec</code> 策略时，Redis 可以把 <code>fsync</code> 交给后台 I/O 线程，避免主线程每秒直接等待磁盘同步完成。若使用 <code>always</code>，持久化语义更强，但延迟和吞吐会受到更明显影响。</li>
+<li><strong>异步释放内存</strong>：执行 <code>UNLINK</code>，或者对 <code>FLUSHDB</code>、<code>FLUSHALL</code> 使用 <code>ASYNC</code> 时，主线程先从键空间解除关联，再由后台线程释放对象占用的内存。配置了 Lazy Free 后，部分过期、淘汰或覆盖操作也可以采用类似方式，减少释放 Big Key 对主线程的阻塞。</li>
+<li><strong>其他后台 I/O 工作</strong>：Redis 的后台 I/O 线程还可以处理部分文件关闭等可能阻塞的系统调用，让主线程尽快继续处理客户端请求。</li>
+</ol>
+<p>这里要特别区分线程和进程：<code>BGSAVE</code> 生成 RDB，以及后台重写 AOF，传统实现主要通过 <code>fork</code> 创建<strong>子进程</strong>完成，不属于多线程。子进程利用写时复制读取数据快照，父进程继续处理请求，但 <code>fork</code> 和写时复制本身仍可能带来延迟和额外内存开销。</p>
+<p>所以面试中如果说“Redis 是单线程的”，通常指的是命令执行和核心数据结构操作主要由主线程串行完成；如果说 Redis 整个进程只有一个线程，就是不准确的。</p>
+<h3 id="3-Redis-的网络模型是怎样的？">3. Redis 的网络模型是怎样的？</h3>
+<p>Redis 的网络模型可以概括为 <strong>Reactor 模式 + 非阻塞 Socket + I/O 多路复用 + 事件循环</strong>。主线程不需要阻塞等待某一个连接，而是让内核同时监听大量文件描述符，只把已经可读或可写的连接交给 Redis 处理；命令对核心数据结构的操作仍主要由主线程串行完成。</p>
+<p>Redis 内部有一层事件库 <code>ae</code>，它对不同操作系统的多路复用接口做了封装。<code>ae</code> 事件循环主要处理两类事件：<strong>文件事件</strong>负责监听 Socket 的连接、可读和可写状态；<strong>时间事件</strong>负责执行周期性任务，例如推进部分后台维护工作。网络请求主要走文件事件。</p>
+<p>处理流程大致是：</p>
+<ol>
+<li>Redis 把监听 Socket 注册为可读事件。当有新连接到达时，内核通知 Redis，Redis 调用 <code>accept</code> 建立客户端连接，并把客户端 Socket 设置为非阻塞。</li>
+<li>客户端 Socket 被注册为可读事件。事件循环调用 <code>epoll_wait</code> 等接口等待，内核一次返回一批已经就绪的文件描述符。</li>
+<li>Redis 调用对应的读事件处理器读取请求，解析 RESP 协议，然后把命令交给主线程执行。</li>
+<li>命令结果先写入客户端输出缓冲区。如果不能立即全部发送，就为该 Socket 注册可写事件。</li>
+<li>Socket 可写时，事件循环调用写事件处理器继续发送；响应全部发送后，取消不再需要的可写事件，避免无意义地反复唤醒。</li>
+</ol>
+<p>整个过程是 Reactor 风格：多路复用器负责发现就绪事件，事件循环负责分发，具体处理器负责连接、读取和写回。它的优势不是让一个线程同时执行多条命令，而是一个线程可以管理大量连接，并且只处理当前已经就绪的连接，避免“一连接一线程”带来的线程数量、锁竞争和上下文切换开销。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">Redis 系列</h2></div>
+                  <strong>3 / 6</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="Redis 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span style="width:50%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/bced017a3fdf/" ><span>1</span>场景</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/a3e33afe7e3f/" ><span>2</span>数据结构</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/1fe8858b923f/" aria-current="page"><span>3</span>线程模型</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/09b3554eab36/" ><span>4</span>redis事务</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/22c416610a43/" ><span>5</span>缓存淘汰和过期删除</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/aeb3025afccc/" ><span>6</span>集群</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/bced017a3fdf/"><strong>场景</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/aeb3025afccc/"><strong>集群</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/22c416610a43/"><strong>缓存淘汰和过期删除</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/09b3554eab36/"><strong>redis事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/a3e33afe7e3f/"><strong>数据结构</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Redis/" class="print-no-link">#Redis</a>
+      
+        <a href="/tags/%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B/" class="print-no-link">#线程模型</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>线程模型</div>
+      <div>https://yrkzbb.github.io/posts/1fe8858b923f/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/09b3554eab36/" title="redis事务">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">redis事务</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/a3e33afe7e3f/" title="数据结构">
+                        <span class="hidden-mobile">数据结构</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

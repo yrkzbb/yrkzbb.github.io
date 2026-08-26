@@ -1,0 +1,903 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/047aaed552f1/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="消息队列场景 1. 什么是消息队列？ 消息队列是一种异步通信中间件：生产者把消息发送给消息代理服务（Broker），Broker 暂存消息并按规则投递给消费者，消费者再按自己的处理能力进行消费。 Broker 可以理解为生产者和消费者之间的“中转站”，通常由一台或多台服务器组成。Kafka、RocketMQ 和 RabbitMQ 中负责接收、存储、路由或投递消息的服务端节点，都可以称为 Broke">
+<meta property="og:type" content="article">
+<meta property="og:title" content="消息队列">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/047aaed552f1/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="消息队列场景 1. 什么是消息队列？ 消息队列是一种异步通信中间件：生产者把消息发送给消息代理服务（Broker），Broker 暂存消息并按规则投递给消费者，消费者再按自己的处理能力进行消费。 Broker 可以理解为生产者和消费者之间的“中转站”，通常由一台或多台服务器组成。Kafka、RocketMQ 和 RabbitMQ 中负责接收、存储、路由或投递消息的服务端节点，都可以称为 Broke">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-25T15:18:01.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="消息中间件">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="分布式系统">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>消息队列 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"消息队列","description":"消息队列场景 1. 什么是消息队列？ 消息队列是一种异步通信中间件：生产者把消息发送给消息代理服务（Broker），Broker 暂存消息并按规则投递给消费者，消费者再按自己的处理能力进行消费。 Broker 可以理解为生产者和消费者之间的“中转站”，通常由一台或多台服务器组成。Kafka、RocketMQ 和 RabbitMQ 中负责接收、存储、路由或投递消息的服务端节点，都可以称为 Broke","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-25T15:18:01.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/047aaed552f1/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="消息队列"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-25 23:18" pubdate>
+          2026年8月25日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="25">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/消息队列.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">消息队列</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="消息队列场景">消息队列场景</h2>
+<h3 id="1-什么是消息队列？">1. 什么是消息队列？</h3>
+<p>消息队列是一种异步通信中间件：生产者把消息发送给消息代理服务（Broker），Broker 暂存消息并按规则投递给消费者，消费者再按自己的处理能力进行消费。</p>
+<p>Broker 可以理解为生产者和消费者之间的“中转站”，通常由一台或多台服务器组成。Kafka、RocketMQ 和 RabbitMQ 中负责接收、存储、路由或投递消息的服务端节点，都可以称为 Broker。</p>
+<p>它把消息的生产和处理解耦，双方不必同时在线，也不需要直接依赖彼此地址。常见模型有点对点和发布订阅，具体产品通常还提供持久化、确认、重试、顺序消费和消息回溯等能力。</p>
+<h3 id="2-为什么需要消息队列？">2. 为什么需要消息队列？</h3>
+<p>主要是为了解耦、异步和削峰填谷。</p>
+<ul>
+<li>解耦：订单系统只发布“订单已创建”事件，不需要逐一调用库存、积分和通知系统。</li>
+<li>异步：把非核心链路放到后台处理，缩短主请求响应时间。</li>
+<li>削峰：Broker 暂存突发流量，消费者按稳定速率处理，保护数据库等下游系统。</li>
+</ul>
+<h3 id="3-消息队列有什么缺点？-span-style-color-rgb-22-139-210-span">3. 消息队列有什么缺点？<span style="color: rgb(22, 139, 210)">#</span></h3>
+<p>第一，会增加系统复杂度。引入消息队列后，需要额外处理消息丢失、重复消费、顺序错乱和消息积压等问题。</p>
+<p>第二，会增加数据一致性处理难度。消息通常是异步消费的，一般只能保证最终一致性，所以还要设计幂等、重试和补偿机制。</p>
+<p>第三，会增加运维成本和故障点。如果 Broker 出现故障，消息的生产和消费都可能受影响，因此需要部署高可用集群，并做好监控和告警。</p>
+<h3 id="4-消息队列怎么选型？">4. 消息队列怎么选型？</h3>
+<p>消息队列选型不能只比较谁的吞吐量高，我一般会先看业务场景，再从吞吐量和延迟、可靠性、消息顺序、事务与延迟消息、路由能力、消息回溯以及团队运维成本几个维度综合判断。</p>
+<p>如果是日志采集、埋点、CDC 或实时流处理，需要高吞吐、消息长期保留和按 offset 回放，我会倾向选择 Kafka。如果是订单、支付等业务消息，需要事务消息、延迟消息、顺序消息和失败重试，我会倾向选择 RocketMQ。如果业务规模中小，但需要灵活的交换机路由、较低延迟和 AMQP 生态，我会考虑 RabbitMQ。ActiveMQ 目前更多见于已有的 JMS 项目，新项目通常会优先评估前面三种。</p>
+<p>例如秒杀场景更关注峰值吞吐和削峰能力，可以重点评估 Kafka 或 RocketMQ；金融或交易场景除了性能，还要重点验证持久化、副本、确认、幂等和容灾能力。</p>
+<p>最后我会使用真实消息大小、峰值流量、分区或队列数量以及实际可靠性配置进行压测。因为固定的“每秒多少条”“能建多少 Topic”并不是产品的绝对指标，会受到硬件、版本、消息大小和部署配置影响，所以不存在适合所有场景的消息队列。</p>
+<h3 id="5-消息队列使用场景有哪些？">5. 消息队列使用场景有哪些？</h3>
+<p>常见场景包括：</p>
+<ul>
+<li>用户注册后异步发送邮件、短信和初始化数据。</li>
+<li>秒杀、支付回调等峰值流量缓冲。</li>
+<li>订单事件驱动库存、物流、积分等系统。</li>
+<li>订单超时关闭、定时提醒等延迟任务。</li>
+<li>数据库变更、日志和埋点进入数据平台。</li>
+<li>跨系统最终一致性和失败重试。</li>
+</ul>
+<h3 id="6-消息重复消费怎么解决？">6. 消息重复消费怎么解决？</h3>
+<p>消息重复消费一般通过消费端幂等解决。</p>
+<p>因为消息队列通常采用至少一次投递，如果生产者发送超时后重试，或者消费者处理成功但 ACK 丢失，消息都可能被再次投递。</p>
+<p>具体实现时，我会给消息设置业务唯一标识，比如订单 ID，并通过数据库唯一索引、去重表或者状态条件更新，判断该业务是否已经处理过。</p>
+<h3 id="7-消息丢失怎么解决的？">7. 消息丢失怎么解决的？</h3>
+<p>要分生产、Broker 和消费三个阶段治理：</p>
+<ul>
+<li>生产端：等待 Broker 确认，失败时有限重试；对关键消息可配合本地消息表或事务消息。</li>
+<li>Broker：开启持久化和多副本，选择满足可靠性要求的同步策略，并监控副本状态和磁盘。</li>
+<li>消费端：业务处理成功后再确认；失败则重试，超过阈值进入死信队列或人工补偿。</li>
+</ul>
+<p>同时要有消息轨迹、对账和补偿任务。</p>
+<h3 id="8-使用消息队列还应该注意哪些问题？">8. 使用消息队列还应该注意哪些问题？</h3>
+<p>除了重复、丢失和顺序，我还会关注：</p>
+<ul>
+<li>消息体只放必要数据，控制大小，并设计可兼容的消息版本。</li>
+<li>设置重试上限、退避和死信处理，避免毒消息无限重试。</li>
+<li>做生产与消费限流，防止积压恢复时冲垮下游。</li>
+<li>规划 Topic、分区或队列数量，避免热点键。</li>
+<li>做好权限、传输加密和敏感数据治理。</li>
+</ul>
+<h3 id="9-消息队列的可靠性、顺序性怎么保证？">9. 消息队列的可靠性、顺序性怎么保证？</h3>
+<p>可靠性依赖端到端协作：生产端确认和重试、Broker 持久化及多副本、消费成功后确认，再配合幂等、死信和对账补偿。</p>
+<p>顺序性通常只能在一个分区或队列内保证。生产者应按 <code>orderId</code> 等业务键路由到同一分区，消费者对该分区串行处理，并避免异步线程导致完成顺序变化。</p>
+<p><span style="color: rgb(32, 52, 71)"><strong>10. 如何保证幂等写？</strong></span></p>
+<p>幂等性是指<strong>同一操作的多次执行对系统状态的影响与一次执行结果一致</strong>。例如，支付接口若因网络重试被多次调用，最终应确保仅扣款一次。实现幂等写的核心方案：</p>
+<ul>
+<li>唯一标识（幂等键）：客户端为每个请求生成全局唯一 ID（如 UUID、业务主键），服务端校验该 ID 是否已处理，适用场景：接口调用、消息消费等。</li>
+<li>数据库事务 + 乐观锁：通过版本号或状态字段控制并发更新，确保多次更新等同于单次操作，适用场景：数据库记录更新（如余额扣减、订单状态变更）。</li>
+<li>数据库唯一约束：利用数据库唯一索引防止重复数据写入，适用场景：数据插入（如订单创建）。</li>
+<li>分布式锁：通过锁机制保证同一时刻仅有一个请求执行关键操作，适用场景：高并发下的资源抢夺（如秒杀）。</li>
+<li>消息去重：消息队列生产者为每条消息生成唯一的消息 ID，消费者处理消息前先检查该消息 ID 是否已经处理过，如果已经处理过则丢弃该消息。</li>
+</ul>
+<h3 id="11-如何处理消息队列的消息积压问题？">11. 如何处理消息队列的消息积压问题？</h3>
+<p>消息积压本质上是生产速度大于消费速度。我会先查看消费延迟、失败率和各分区积压情况，判断是消费者异常、处理逻辑慢、下游故障，还是分区并行度不足。</p>
+<p>修复问题后，优先优化批量消费、慢 SQL 和耗时调用；在分区数和下游容量允许的情况下，再增加消费者实例或消费线程。</p>
+<p>如果已经积压了几百万条消息，可以临时创建分区更多的新 Topic，把积压消息快速转发过去，再增加消费者并行处理。积压处理完成后恢复原来的架构。</p>
+<h3 id="12-如何保证数据一致性，事务消息如何实现？">12. 如何保证数据一致性，事务消息如何实现？</h3>
+<p>消息队列场景一般保证的是最终一致性，常见方案有事务消息和本地消息表。</p>
+<p>以 RocketMQ 事务消息为例：生产者先发送一条消费者不可见的半消息，Broker 保存成功后，生产者执行本地事务，再根据事务结果提交或回滚消息。如果 Broker 没收到结果，会回查生产者的本地事务状态。提交后消息才会投递，回滚则不会投递。</p>
+<p>事务消息主要保证本地事务和消息发送的一致性，不能保证下游业务一定成功。所以消费者还需要通过幂等、失败重试、死信队列和补偿机制，最终达到数据一致</p>
+<h3 id="13-消息队列是参考哪种设计模式？">13. 消息队列是参考哪种设计模式？</h3>
+<p>核心思想主要对应生产者—消费者模式和发布—订阅模式。</p>
+<p>生产者—消费者模式通过缓冲队列协调两端速度；发布—订阅模式让一条事件被多个相互独立的订阅者接收。它还体现了观察者模式的思想，但消息中间件通常通过 Broker 异步传递并持久化消息，生产者和消费者不直接持有彼此引用，因此不能简单等同于进程内观察者模式。</p>
+<h3 id="14-让你写一个消息队列，该如何进行架构设计？">14. 让你写一个消息队列，该如何进行架构设计？</h3>
+<p>如果让我从零设计一个消息队列，我会先确定吞吐量、延迟、消息大小、保留时间、顺序范围和投递语义，再围绕下面八个部分展开。</p>
+<p><a href="/img/posts/message-queue-architecture.png" title="设计一个消息队列的架构思维导图"><img src="/img/posts/message-queue-architecture.png" srcset="/img/loading.gif" lazyload alt="设计一个消息队列的架构思维导图" loading="lazy" decoding="async" sizes="(max-width: 768px) 100vw, 900px"></a></p>
+<p>设计一个消息队列的架构思维导图</p>
+<p>图中的设计思路可以整理为以下八点：</p>
+<ol>
+<li><strong>消息队列的整体流程</strong>：Producer 发送消息给 Broker，Broker 存储消息后再发送给 Consumer 消费，Consumer 完成处理后回复消费确认。</li>
+<li><strong>RPC 如何设计</strong>：Producer 向 Broker 发送消息、Broker 向 Consumer 投递消息，至少涉及两次 RPC。设计时可以参考 Dubbo 等开源 RPC 框架，重点考虑服务发现、序列化协议、连接管理、超时与重试。</li>
+<li><strong>Broker 如何持久化</strong>：需要决定消息存放在文件系统还是数据库，并提前设计消息堆积后的存储、清理、限流和扩容策略。</li>
+<li><strong>消费关系如何保存</strong>：需要明确采用点对点还是广播方式；广播订阅关系及消费进度等元数据，可以由 ZooKeeper、Config Server 或自研高可用控制面维护。</li>
+<li><strong>消息可靠性如何保证</strong>：发送、存储和消费确认都要有可靠性机制；消息重复时，通过业务唯一键、唯一索引、去重表或状态机实现幂等。</li>
+<li><strong>消息队列如何保证高可用</strong>：可以参考 Kafka 的多副本机制，Partition 由 Leader 对外服务、Follower 同步数据；Broker 宕机后重新选举 Leader 并恢复服务。</li>
+<li><strong>消息事务特性</strong>：消息发送要与本地业务处于同一事务语义中。可以先将消息写入本地消息表，再投递给服务端，成功后删除或标记完成；定时任务扫描本地消息表并补偿发送失败的记录。</li>
+<li><strong>MQ 的伸缩性和可扩展性</strong>：可以参考 Kafka 的 <code>Broker → Topic → Partition</code> 模型，每个 Partition 保存一部分数据。资源不足时增加 Partition 和 Broker，完成数据迁移与重新均衡，以存放更多数据并提高吞吐量。</li>
+</ol>
+<p><a href="/img/posts/message-queue-design-notes.png" title="消息队列架构设计文字笔记"><img src="/img/posts/message-queue-design-notes.png" srcset="/img/loading.gif" lazyload alt="消息队列架构设计文字笔记" loading="lazy" decoding="async" sizes="(max-width: 768px) 100vw, 900px"></a></p>
+<p>消息队列架构设计文字笔记</p>
+<h3 id="15-如何设计任务取消、超时、重试和死信队列？">15. 如何设计任务取消、超时、重试和死信队列？</h3>
+<p>我会把它设计成一套持久化的任务状态机，而不是只依赖消息队列里的消息状态。任务表至少保存 <code>task_id</code>、业务幂等键、状态、重试次数、最大重试次数、截止时间和取消标记，状态可以定义为 <code>PENDING</code>、<code>RUNNING</code>、<code>SUCCEEDED</code>、<code>FAILED</code>、<code>CANCELLED</code>、<code>TIMED_OUT</code> 和 <code>DEAD</code>。Worker 对状态的修改要使用条件更新，避免取消、完成和超时并发覆盖。</p>
+<p><strong>任务取消</strong>通常采用协作式取消。客户端提交取消请求后，服务端原子地设置取消标记；尚未执行的任务可以从逻辑上直接取消，正在执行的 Worker 则在调用模型前后、工具调用之间等安全点检查标记，主动停止并释放资源。已经产生不可逆副作用的步骤不能靠取消恢复，需要幂等或补偿操作。强制终止进程只能作为兜底，因为它可能留下未提交事务、子进程或外部请求。</p>
+<p><strong>超时</strong>需要分层设置：队列等待超时限制任务排队时间，任务总超时限制整个执行时长，模型、数据库和 HTTP 调用还应分别设置连接与读取超时。软超时用于通知任务主动清理，硬超时用于隔离失控任务。需要注意，调用方收到超时只代表它不再等待，不代表下游执行已经停止，因此还要传播截止时间或取消信号，并防止超时任务稍后写入过期结果。</p>
+<p><strong>重试</strong>只针对网络抖动、限流和临时依赖故障等可恢复错误；参数错误、权限错误和确定性的业务失败应直接失败。重试要设置最大次数，使用指数退避并加入随机抖动，例如 <code>1s、2s、4s</code>，同时设置总重试时间预算。每次执行都携带相同的业务幂等键，通过唯一索引、状态条件更新或结果表避免重复扣费、重复发消息等副作用。</p>
+<p>任务超过最大重试次数，或被识别为无法自动处理的“毒任务”后，进入<strong>死信队列</strong>。死信消息应保留原始载荷引用、异常类型、错误摘要、重试历史和 Trace ID，并配置积压量与增长速率告警。死信不能无限自动回灌；应先修复代码、数据或依赖问题，再由人工或受控工具重放，重放过程仍然要幂等。</p>
+<p>在 Python Agent 场景中，API 可以先返回 <code>task_id</code>，Worker 从 Celery、RabbitMQ 或其他队列取任务，状态保存在数据库等可靠存储中。消息 ACK 应在任务状态安全落库后完成；Worker 宕机导致消息重投时，由幂等键和状态机保证不会重复产生业务结果。这样即使发生重复投递、取消与完成竞争、超时后继续执行等情况，最终状态也有明确的判断依据。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/a30640d137bb/"><strong>Kafka</strong><small>消息队列</small></a>
+                  
+                    <a href="/posts/47d90c8327a5/"><strong>RabbitMQ</strong><small>消息队列</small></a>
+                  
+                    <a href="/posts/b5734029a1ff/"><strong>RocketMQ</strong><small>消息队列</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" class="category-chain-item">消息队列</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6/" class="print-no-link">#消息中间件</a>
+      
+        <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" class="print-no-link">#架构设计</a>
+      
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" class="print-no-link">#分布式系统</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>消息队列</div>
+      <div>https://yrkzbb.github.io/posts/047aaed552f1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/b5734029a1ff/" title="RocketMQ">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">RocketMQ</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/77ad69c8c993/" title="Docker">
+                        <span class="hidden-mobile">Docker</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

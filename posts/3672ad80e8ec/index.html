@@ -1,0 +1,826 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/3672ad80e8ec/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="系统设计面试题 1. 如何设计一个秒杀场景？ 我会把秒杀系统设计成“入口削峰、库存预扣、异步下单、最终校准”的链路，目标是扛住瞬时流量，同时确保不超卖、尽量少卖和一人一单。 首先根据商品数、库存量、预估并发和目标延迟做容量评估。活动开始前把静态页面和商品信息放到 CDN，把库存等热点数据预热到 Redis。入口层通过验证码、活动资格校验、用户限流和设备风控过滤无效流量，并在库存售罄后快速失败，避免">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统设计题">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/3672ad80e8ec/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="系统设计面试题 1. 如何设计一个秒杀场景？ 我会把秒杀系统设计成“入口削峰、库存预扣、异步下单、最终校准”的链路，目标是扛住瞬时流量，同时确保不超卖、尽量少卖和一人一单。 首先根据商品数、库存量、预估并发和目标延迟做容量评估。活动开始前把静态页面和商品信息放到 CDN，把库存等热点数据预热到 Redis。入口层通过验证码、活动资格校验、用户限流和设备风控过滤无效流量，并在库存售罄后快速失败，避免">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-26T06:21:20.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="yrk,Blog,个人博客">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>系统设计题 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"系统设计题","description":"系统设计面试题 1. 如何设计一个秒杀场景？ 我会把秒杀系统设计成“入口削峰、库存预扣、异步下单、最终校准”的链路，目标是扛住瞬时流量，同时确保不超卖、尽量少卖和一人一单。 首先根据商品数、库存量、预估并发和目标延迟做容量评估。活动开始前把静态页面和商品信息放到 CDN，把库存等热点数据预热到 Redis。入口层通过验证码、活动资格校验、用户限流和设备风控过滤无效流量，并在库存售罄后快速失败，避免","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-26T06:21:20.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/3672ad80e8ec/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="系统设计题"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-26 14:21" pubdate>
+          2026年8月26日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="32">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/系统设计题.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">系统设计题</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="系统设计面试题">系统设计面试题</h2>
+<h3 id="1-如何设计一个秒杀场景？">1. 如何设计一个秒杀场景？</h3>
+<p>我会把秒杀系统设计成“入口削峰、库存预扣、异步下单、最终校准”的链路，目标是扛住瞬时流量，同时确保不超卖、尽量少卖和一人一单。</p>
+<p>首先根据商品数、库存量、预估并发和目标延迟做容量评估。活动开始前把静态页面和商品信息放到 CDN，把库存等热点数据预热到 Redis。入口层通过验证码、活动资格校验、用户限流和设备风控过滤无效流量，并在库存售罄后快速失败，避免请求全部进入后端。</p>
+<p>抢购时通过 Redis Lua 脚本原子完成库存判断、扣减和用户去重，成功的请求写入消息队列，由订单服务异步创建订单。数据库侧仍要用库存条件更新和用户、商品维度的唯一约束兜底，例如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> sku_stock<br><span class="hljs-keyword">SET</span> stock <span class="hljs-operator">=</span> stock <span class="hljs-operator">-</span> <span class="hljs-number">1</span><br><span class="hljs-keyword">WHERE</span> sku_id <span class="hljs-operator">=</span> ? <span class="hljs-keyword">AND</span> stock <span class="hljs-operator">&gt;</span> <span class="hljs-number">0</span>;<br></code></pre></td></tr></table></figure>
+<p>消费者需要保证幂等；下单失败或订单超时未支付时，通过补偿流程释放库存。还要设计热点分片、消息积压告警、库存对账、限流降级和压测方案。Redis 预扣提升的是吞吐量，数据库约束和对账才是最终正确性的兜底。</p>
+<h3 id="2-让你设计一个-RPC-框架，怎么设计？">2. 让你设计一个 RPC 框架，怎么设计？</h3>
+<p>我会先实现一条可靠的远程调用链路，再逐步补齐服务治理能力。核心模块包括代理层、协议与编解码、网络传输、服务注册发现、负载均衡、容错以及可观测性。</p>
+<p>客户端通过动态代理把本地方法调用转换成请求，请求中至少包含接口名、方法名、参数类型、参数、请求 ID 和超时时间。请求使用长度字段加消息体的协议，避免 TCP 粘包和拆包问题；序列化可以支持 JSON、Protobuf 等可插拔实现。网络层可以基于 Netty 维护连接池和异步请求，通过请求 ID 将响应与 <code>Future</code> 关联。</p>
+<p>服务端接收请求后解码，根据接口和方法找到实现并执行，再返回结果。服务地址可以注册到 ZooKeeper、etcd 或注册中心，客户端订阅变化并通过轮询、随机、一致性哈希等策略选节点。</p>
+<p>工程上还必须处理连接超时、调用超时、限流、熔断、重试、幂等、优雅上下线和链路追踪。重试不能默认对所有请求开启：非幂等写操作可能被重复执行，应结合请求语义和全链路剩余超时时间决定。</p>
+<h3 id="3-让你设计一个短链系统，怎么设计？">3. 让你设计一个短链系统，怎么设计？</h3>
+<p>短链系统的核心是建立短码到原始 URL 的映射，并让跳转链路足够快、可用且不容易发生冲突。</p>
+<p>创建短链时，服务先校验 URL 和权限，再生成全局唯一 ID，并用 Base62 编码得到较短的字符串，例如把数字 ID 映射为大小写字母和数字。随后保存 <code>short_code -&gt; long_url</code>、创建者、有效期和状态等信息。也可以使用随机短码，但必须通过唯一索引检测冲突并重试。相比直接截取 URL 哈希，唯一 ID 加 Base62 更容易控制冲突。</p>
+<p>访问 <code>/&#123;shortCode&#125;</code> 时先查本地缓存或 Redis，未命中再查数据库，然后返回 <code>302</code> 跳转。<code>302</code> 更利于修改目标地址和统计访问，确定永久不变时才考虑 <code>301</code>。对于不存在的短码可以短暂缓存空值，防止缓存穿透。</p>
+<p>数据量较大时可按短码哈希分库分表，缓存热点链接，并把点击统计异步写入消息队列。还需要考虑恶意网址识别、访问限流、链接过期、黑名单、域名劫持防护和缓存一致性。</p>
+<h3 id="4-如何设计一个点赞系统？">4. 如何设计一个点赞系统？</h3>
+<p>我会把“用户是否点赞”和“对象获得多少赞”分开建模：前者保证去重和取消点赞的正确性，后者面向高频读取做缓存和异步聚合。</p>
+<p>关系数据可以用 <code>(target_id, user_id)</code> 唯一键保存点赞记录，状态字段表示点赞或取消。数据库唯一约束能防止重复点赞。高并发场景下，可以先在 Redis 中用 <code>Set</code>、<code>Hash</code> 或分片 Bitmap 维护用户状态，并通过 Lua 脚本原子更新状态和计数；选择哪种结构取决于用户 ID 是否连续、是否需要列出点赞用户以及数据规模。</p>
+<p>变更事件写入消息队列，消费者幂等地落库并更新统计数据。页面展示的点赞数可以接受短暂延迟，但用户刚操作后的状态通常要保证“读己之写”，可以优先读取缓存中的最新状态。为了避免缓存计数与明细永久不一致，还要定期根据明细对账修正。</p>
+<p>如果业务规模不大，直接使用数据库唯一索引加条件更新通常已经足够，不应一开始就引入复杂的缓存双写链路。</p>
+<h3 id="5-让你设计一个分布式-ID-发号器，怎么设计？">5. 让你设计一个分布式 ID 发号器，怎么设计？</h3>
+<p>我会先明确唯一性、趋势递增、峰值吞吐、可用性、容灾范围和是否允许暴露时间等要求，再选择号段模式或 Snowflake 类方案，而不是只追求“绝对递增”。</p>
+<p>如果采用号段模式，数据库按业务维护当前最大 ID 和步长，发号服务一次通过乐观锁申请一个区间，再在内存中递增发放。为了避免号段切换时阻塞，可以使用双缓冲：当前号段消耗到一定比例时异步加载下一个号段。发号服务部署多个实例，每个实例拿到互不重叠的区间，因此不需要逐个请求数据库。数据库要做主从容灾，号段可以允许少量浪费，但不能重复。</p>
+<p>如果更强调本地生成和低延迟，可以把时间戳、机房或节点编号、序列号编码到 64 位整数中。节点编号必须由可靠机制唯一分配，还要处理时钟回拨和同一毫秒序列耗尽，例如等待时钟追平、切换备用节点位或暂停发号。</p>
+<p>接口还应支持批量取号、监控剩余号段、限流和按业务隔离。数据库唯一约束可以作为关键业务的最后一道防重保障。</p>
+<h3 id="6-订单到了半个小时，半个小时未支付就取消，怎么实现？">6. 订单到了半个小时，半个小时未支付就取消，怎么实现？</h3>
+<p>我会把订单关闭设计成可重试、幂等的状态迁移，而不是依赖一个精确执行一次的定时器。常见方案是延迟消息或时间轮，数据库扫描作为补偿兜底。</p>
+<p>创建订单后发送一条 30 分钟延迟消息，消息到期后消费者查询订单状态，并执行带条件的更新：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> orders<br><span class="hljs-keyword">SET</span> status <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;CANCELLED&#x27;</span><br><span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> ? <span class="hljs-keyword">AND</span> status <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;UNPAID&#x27;</span>;<br></code></pre></td></tr></table></figure>
+<p>只有更新成功的处理者才能继续释放库存、退还优惠券。这样即使消息重复消费，或者支付与取消同时发生，也能由订单状态机和条件更新决定结果。支付回调同样要从 <code>UNPAID</code> 条件更新为 <code>PAID</code>，并保证幂等；如果支付成功但回调较晚，还要根据支付平台的真实状态和业务规则进行关单前查询或退款补偿。</p>
+<p>对于不支持延迟消息的中间件，可以使用 Redis <code>ZSet</code>、时间轮或分片定时扫描，但 Redis 过期通知不保证可靠，不能单独作为关单依据。生产环境通常还会定期扫描超时未支付订单，修复丢消息等异常。</p>
+<h3 id="7-如果你的系统的-QPS-突然提升-10-倍，你会怎么设计？">7. 如果你的系统的 QPS 突然提升 10 倍，你会怎么设计？</h3>
+<p>我不会直接假设所有模块都要扩容 10 倍，而会先定位瓶颈、保护系统，再按流量模型扩展关键链路。QPS 提升是否造成问题，还取决于请求类型、数据热点、响应大小和下游容量。</p>
+<p>应急阶段先通过监控确认入口流量、延迟、错误率、CPU、内存、线程池、连接池、数据库和缓存命中率；同时启用限流、熔断、降级和排队，保护核心接口，必要时关闭非核心功能。无状态应用可以水平扩容，但要确认负载均衡、注册中心和下游连接数能够承受。</p>
+<p>随后针对瓶颈优化：静态内容使用 CDN，热点读请求增加多级缓存，耗时且允许异步的操作通过消息队列削峰，数据库优化 SQL 和索引、增加读副本，单库容量不足时再考虑分库分表。热点键、缓存击穿和消息积压需要单独治理。</p>
+<p>最后用接近真实数据分布的压测验证容量，建立单机容量、扩容时间、告警阈值和降级预案。单纯堆机器可能把压力转移到数据库，因此必须看完整调用链和执行指标。</p>
+<h3 id="8-如果做一个大流量的网站，单-Redis-无法承压了如何解决？">8. 如果做一个大流量的网站，单 Redis 无法承压了如何解决？</h3>
+<p>我会先确认瓶颈是 CPU、网络带宽、内存、热 Key、大 Value，还是慢命令，然后再决定拆分或扩容方案；“单 Redis 无法承压”不一定意味着必须立刻上集群。</p>
+<p>可以先优化数据结构和访问方式，删除不必要的大 Key，避免 <code>KEYS</code>、大范围集合运算等阻塞命令，对可容忍短暂不一致的热点数据增加本地缓存。读多写少且允许读到稍旧数据时，可以使用主从复制，把部分只读流量分散到副本，但复制延迟意味着它不适合所有一致性要求。</p>
+<p>数据和写流量继续增长时，可以使用 Redis Cluster 或客户端分片，把 Key 分散到多个主节点。业务 Key 要合理设计哈希标签，避免所有流量落到同一分片；热 Key 即使在集群中也只属于一个分片，需要通过本地缓存、Key 拆分或请求合并单独处理。</p>
+<p>此外还要评估持久化开销、故障转移、连接数、容量水位和缓存穿透、击穿、雪崩。最终方案应根据基准测试和监控数据确定，而不是认为集群一定比单机更快。</p>
+<h3 id="9-如何设计一个可重入的分布式锁，用什么结构设计？">9. 如何设计一个可重入的分布式锁，用什么结构设计？</h3>
+<p>可重入锁需要记录“锁属于谁”和“同一持有者进入了多少次”。在 Redis 中可以使用 <code>Hash</code>：锁 Key 表示资源，field 保存客户端加线程的唯一标识，value 保存重入计数。</p>
+<p>加锁时通过 Lua 脚本原子判断：如果 Key 不存在，就写入持有者和计数 <code>1</code> 并设置租约；如果当前持有者就是本请求，则计数加 <code>1</code> 并刷新租约；否则加锁失败。解锁时也用 Lua 原子校验持有者并把计数减 <code>1</code>，只有计数变为 <code>0</code> 时才删除 Key。</p>
+<p>持有者标识可以设计为 <code>instanceId:threadId</code>，不能只用线程 ID，因为不同进程可能重复。业务执行时间不确定时还需要看门狗续期，但续期只能由仍然持锁的实例完成。等待锁可以结合发布订阅减少轮询，不过通知丢失时仍要依赖超时重试。</p>
+<p>这种结构解决了重入计数，但租约到期后旧持有者仍可能继续执行。对正确性要求高的资源，还应使用单调递增的 <code>fencing token</code> 或资源版本号拒绝过期持有者的写入。</p>
+<h3 id="10-你有看过一些负载均衡的方案吗？">10. 你有看过一些负载均衡的方案吗？</h3>
+<p>了解。负载均衡既可以部署在 DNS、四层或七层代理，也可以由 RPC 客户端完成；常见算法包括轮询、加权轮询、随机、最少连接、一致性哈希和基于实时负载的自适应策略。</p>
+<ul>
+<li>轮询适合节点能力和请求成本比较接近的情况；节点能力不同时可以使用加权轮询。</li>
+<li>最少连接会优先选择当前连接较少的节点，适合请求耗时差异较大的长连接场景，但连接数不一定等于真实负载。</li>
+<li>一致性哈希能让相同 Key 尽量落到固定节点，节点变化时迁移的数据较少，适合缓存和需要一定会话亲和性的场景。</li>
+<li>自适应策略可以综合延迟、并发数、错误率等指标，但实现和稳定性控制更复杂。</li>
+</ul>
+<p>负载均衡还要配合健康检查、故障摘除、慢启动、连接排空和重试预算。算法没有绝对优劣，例如请求处理时间差异大时，简单轮询可能分配不均；开启会话粘滞又可能制造热点和影响扩容。</p>
+<h3 id="11-10w-顾客抢购一个只有-10-个库存的商品如何设计？">11. 10w 顾客抢购一个只有 10 个库存的商品如何设计？</h3>
+<p>这个场景的关键是尽早拒绝绝大多数请求，并用原子操作保证 10 件库存不会被超卖，不能让 10 万个请求直接竞争数据库行锁。</p>
+<p>活动前把 10 件库存预热到 Redis，入口先做用户资格、验证码、限流和一人一单校验。抢购请求通过 Lua 脚本原子检查用户是否已抢购以及库存是否大于零，成功时扣减库存并记录用户；库存降为零后，后续请求直接返回售罄。只有最多接近库存量的成功请求进入消息队列，由消费者异步创建订单。</p>
+<p>数据库中仍使用用户与商品的唯一约束防止重复下单，并通过 <code>stock &gt; 0</code> 的条件更新兜底。消费者要幂等，创建失败时要有明确的库存补偿策略；未支付订单超时后释放库存时，还要防止补偿消息重复导致库存多加。</p>
+<p>如果单个 Redis Key 成为热点，可以在容量评估后做库存分桶，但 10 件库存本身很少，过度分桶可能引入库存分配不均。具体是否需要拆分，应以压测中的单节点吞吐和网络瓶颈为依据。</p>
+<h3 id="12-微服务架构有了解吗？你认为什么是微服务架构？">12. 微服务架构有了解吗？你认为什么是微服务架构？</h3>
+<p>微服务架构是按业务能力把系统拆成一组边界清晰、可以独立开发、部署和扩缩容的服务。它不只是把代码拆成多个进程，更重要的是服务自治和明确的数据、接口边界。</p>
+<p>每个服务通常负责一个相对内聚的业务领域，并通过 RPC 或消息协作。服务原则上独立管理自己的数据，其他服务通过接口访问，而不是随意跨库查询。为支撑这种架构，还需要服务注册发现、配置管理、网关、限流熔断、链路追踪、日志监控和自动化发布等基础设施。</p>
+<p>它的优势是团队可以独立演进和部署，热点服务能够单独扩容，故障也更容易隔离；代价是远程调用、数据一致性、测试、运维和问题排查都更复杂。因此微服务不是系统越小拆得越细，服务边界应围绕业务领域和团队协作确定，规模较小时结构清晰的单体往往更经济。</p>
+<h3 id="13-对于你的项目（单体），怎么拆分成微服务架构呢？">13. 对于你的项目（单体），怎么拆分成微服务架构呢？</h3>
+<p>我会采用渐进式拆分，先梳理领域边界和依赖，再从收益高、耦合低的模块开始迁移，不会一次性重写整个单体。</p>
+<p>首先根据业务流程和数据关系识别限界上下文，例如用户、商品、订单、库存和支付。明确每个服务的职责、接口、数据所有权和一致性要求，并通过依赖分析找出循环调用和共享表。拆分初期可以先把单体整理成模块化单体，为后续迁移建立清晰边界。</p>
+<p>实施时可采用绞杀者模式：通过网关把某一部分新流量转到新服务，旧功能继续由单体承担。数据迁移期间通过增量同步、对账和灰度切流保证正确性；服务之间优先通过 API 或事件交互，避免长期共享数据库。跨服务流程根据业务选择本地事务、可靠消息、Saga 或 TCC。</p>
+<p>在拆分前还要补齐监控、链路追踪、配置中心、服务治理和自动化部署。拆分顺序应由团队边界、变更频率、性能瓶颈和故障隔离收益决定，而不是简单按数据库表拆服务。</p>
+<h3 id="14-对外提供一个-API-服务，客户说请求接口超时了，怎么排查？">14. 对外提供一个 API 服务，客户说请求接口超时了，怎么排查？</h3>
+<p>我会先确认一次具体失败请求的时间、请求 ID、客户端超时阈值、接口和参数，再沿调用链定位时间消耗发生在哪一段，避免只看服务端是否报错。</p>
+<p>首先判断超时发生在 DNS、建连、TLS、网关排队、服务处理还是响应传输阶段，并确认是个别客户、某个地域、某个实例，还是全局问题。客户端可能在服务端最终成功前就已超时，所以还要通过访问日志和 trace ID 对齐客户端、网关与服务端时间线。</p>
+<p>服务端重点查看延迟分位数和错误率，以及 CPU、内存、GC、线程池、连接池、队列长度。继续向下检查数据库慢 SQL、锁等待、索引和连接池，Redis 慢命令或热 Key，以及下游 RPC 的延迟、重试和熔断情况。还要检查最近发布、配置变更和流量变化。</p>
+<p>如果问题正在影响生产，我会先限流、扩容、降级非核心依赖或回滚可疑变更，再完成根因分析。修复后通过压测或请求回放验证，并补充全链路超时预算、监控和告警。不能仅仅调大客户端超时时间，因为这可能让线程和连接占用得更久。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>系统设计题</div>
+      <div>https://yrkzbb.github.io/posts/3672ad80e8ec/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/7c78ae855a2c/" title="分布式场景">
+                        <span class="hidden-mobile">分布式场景</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

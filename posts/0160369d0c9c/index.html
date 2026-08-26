@@ -1,0 +1,1005 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/0160369d0c9c/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="内存管理基础 1. 介绍一下操作系统内存管理。 操作系统内存管理的核心目标是：为进程提供独立、连续的虚拟地址空间，并安全、高效地管理有限的物理内存。 它主要负责以下工作：  分配与回收：为内核和进程分配物理页，并在不再使用时回收； 地址转换：通过页表把进程使用的虚拟地址转换为物理地址； 隔离与保护：限制进程只能访问已映射且权限允许的内存，区分可读、可写、可执行及用户态、内核态权限； 共享：让多个进">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内存管理">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/0160369d0c9c/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="内存管理基础 1. 介绍一下操作系统内存管理。 操作系统内存管理的核心目标是：为进程提供独立、连续的虚拟地址空间，并安全、高效地管理有限的物理内存。 它主要负责以下工作：  分配与回收：为内核和进程分配物理页，并在不再使用时回收； 地址转换：通过页表把进程使用的虚拟地址转换为物理地址； 隔离与保护：限制进程只能访问已映射且权限允许的内存，区分可读、可写、可执行及用户态、内核态权限； 共享：让多个进">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-21T11:21:05.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="内存管理">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>内存管理 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"内存管理","description":"内存管理基础 1. 介绍一下操作系统内存管理。 操作系统内存管理的核心目标是：为进程提供独立、连续的虚拟地址空间，并安全、高效地管理有限的物理内存。 它主要负责以下工作：  分配与回收：为内核和进程分配物理页，并在不再使用时回收； 地址转换：通过页表把进程使用的虚拟地址转换为物理地址； 隔离与保护：限制进程只能访问已映射且权限允许的内存，区分可读、可写、可执行及用户态、内核态权限； 共享：让多个进","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-21T11:21:05.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/0160369d0c9c/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="内存管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-21 19:21" pubdate>
+          2026年8月21日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="24">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/内存管理.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="操作系统 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">操作系统 学习路线</a>
+            <span>23 / 34</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章发布位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+            <span style="width:68%"></span>
+          </div>
+          <nav aria-label="操作系统 系列目录">
+            
+              <a class="passed" href="/posts/51416497c267/" >
+                <small>01</small>
+                <strong>用户态和内核态</strong>
+              </a>
+            
+              <a class="passed" href="/posts/ebee359e45de/" >
+                <small>02</small>
+                <strong>进程管理</strong>
+              </a>
+            
+              <a class="passed" href="/posts/ef846162030d/" >
+                <small>03</small>
+                <strong>中断</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>04</small>
+                <strong>内存管理</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/b24e86585b0f/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">内存管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="内存管理基础">内存管理基础</h2>
+<h3 id="1-介绍一下操作系统内存管理。">1. 介绍一下操作系统内存管理。</h3>
+<p>操作系统内存管理的核心目标是：<strong>为进程提供独立、连续的虚拟地址空间，并安全、高效地管理有限的物理内存</strong>。</p>
+<p>它主要负责以下工作：</p>
+<ul>
+<li><strong>分配与回收</strong>：为内核和进程分配物理页，并在不再使用时回收；</li>
+<li><strong>地址转换</strong>：通过页表把进程使用的虚拟地址转换为物理地址；</li>
+<li><strong>隔离与保护</strong>：限制进程只能访问已映射且权限允许的内存，区分可读、可写、可执行及用户态、内核态权限；</li>
+<li><strong>共享</strong>：让多个进程共享动态库、共享内存或文件映射，同时保留私有地址空间；</li>
+<li><strong>虚拟内存</strong>：结合按需分页、页面置换和交换空间，使程序不必一次全部装入物理内存；</li>
+<li><strong>优化访问</strong>：利用 TLB、页缓存、大页等机制降低地址转换和 I/O 成本。</li>
+</ul>
+<h3 id="2-什么是虚拟内存和物理内存？">2. 什么是虚拟内存和物理内存？</h3>
+<p><strong>物理内存</strong>是机器实际安装的 RAM，CPU 最终访问的是物理地址对应的存储单元。<strong>虚拟内存</strong>是操作系统为每个进程提供的逻辑地址空间，程序生成的地址通常是虚拟地址，需要经过 MMU 和页表转换后才能访问物理内存。</p>
+<p>虚拟内存带来的主要好处有：</p>
+<ul>
+<li>每个进程拥有相对独立的地址空间，实现隔离和权限保护；</li>
+<li>虚拟地址可以连续，而对应的物理页不必连续；</li>
+<li>不同进程可以把同一物理页映射到各自地址空间，实现共享；</li>
+<li>通过按需加载、文件映射和交换机制，只把当前需要的页面放入 RAM。</li>
+</ul>
+<h3 id="3-讲一下页表。">3. 讲一下页表。</h3>
+<p>页表是操作系统为进程维护的<strong>虚拟页到物理页框的映射结构</strong>。虚拟地址通常被拆成虚拟页号和页内偏移，页表根据虚拟页号找到物理页框号，页内偏移保持不变。</p>
+<p>页表项除了物理页框号，通常还记录：</p>
+<ul>
+<li>页面是否存在于物理内存；</li>
+<li>用户态能否访问，以及读、写、执行权限；</li>
+<li>页面是否被访问过、是否被修改过；</li>
+<li>与缓存、共享和写时复制相关的状态。</li>
+</ul>
+<p>如果为整个虚拟地址空间建立单级页表，页表本身会非常大，因此现代系统通常使用多级页表，只为实际使用的地址范围分配下级结构。CPU 还会使用 <strong>TLB</strong> 缓存近期的地址转换结果，减少每次访存都逐级查询页表的开销。</p>
+<h3 id="4-讲一下段表。">4. 讲一下段表。</h3>
+<p>分段机制按照程序的逻辑结构划分地址空间，例如代码段、数据段和栈段。逻辑地址由<strong>段号和段内偏移</strong>组成，段表项通常保存该段的基址、长度限制和访问权限。</p>
+<p>地址转换时，先用段号找到段表项，检查段内偏移是否越界以及权限是否合法，再用“段基址 + 段内偏移”得到目标地址。分段便于按逻辑单位进行保护和共享，但段长可变，内存分配容易产生外部碎片，压缩和管理也更复杂。</p>
+<p>分段和分页可以组合使用：先通过段表得到线性地址，再通过页表转换为物理地址。不过在现代主流 64 位通用操作系统中，内存管理通常以分页为主。</p>
+<h3 id="5-虚拟地址是怎么转换成物理地址的？">5. 虚拟地址是怎么转换成物理地址的？</h3>
+<p>以分页系统为例，转换主要由 CPU 的 <strong>MMU</strong> 配合页表完成：</p>
+<ol>
+<li>CPU 生成虚拟地址，将其拆分为虚拟页号和页内偏移；</li>
+<li>先查询 TLB。如果命中且权限检查通过，直接得到物理页框号；</li>
+<li>如果 TLB 未命中，硬件或操作系统按照当前进程的页表基址逐级查询页表；</li>
+<li>找到有效页表项后，把映射写入 TLB，并将物理页框号与页内偏移组合成物理地址；</li>
+<li>如果页面未映射、尚未装入内存或权限不允许，会触发缺页异常。</li>
+</ol>
+<p>缺页异常不一定是错误。对于按需分配或已换出的合法页面，内核可以分配物理页或从磁盘载入数据，更新页表后重新执行指令；如果地址非法或违反权限，操作系统通常会向进程报告异常并可能终止进程。</p>
+<h2 id="页面管理">页面管理</h2>
+<h3 id="1-操作系统内存不足时会发生什么？">1. 操作系统内存不足时会发生什么？</h3>
+<p>内存不足时，操作系统通常会先尝试<strong>回收可以释放的页面</strong>，而不是立即终止进程。典型处理包括回收未使用的页缓存和内核缓存、回写脏文件页，以及在配置了交换空间时把暂时不用的匿名页换出到磁盘。</p>
+<p>如果回收速度赶不上内存申请速度，系统可能频繁换入换出页面，形成<strong>抖动</strong>，表现为磁盘 I/O 很高而程序推进很慢。进一步无法满足分配时，结果取决于操作系统和申请方式：内存分配可能直接失败；采用内存过量承诺的系统也可能先允许申请，等页面真正使用时才发现资源不足。</p>
+<p>以 Linux 为例，在回收仍无法获得足够内存时可能触发 OOM Killer，根据内存占用、进程属性和保护配置等因素选择进程终止。容器或控制组达到自己的内存上限时，也可能在局部范围内触发 OOM，而宿主机未必真的耗尽了全部内存。</p>
+<h3 id="2-页面置换有哪些算法？">2. 页面置换有哪些算法？</h3>
+<p>常见页面置换算法包括：</p>
+<ul>
+<li><strong>最佳置换（OPT）</strong>：淘汰未来最长时间不会被访问的页面，理论效果最好，但无法预知未来，主要用于理论比较；</li>
+<li><strong>先进先出（FIFO）</strong>：淘汰最早进入内存的页面，实现简单，但可能出现分配更多页框后缺页反而增加的 Belady 异常；</li>
+<li><strong>最近最少使用（LRU）</strong>：淘汰最长时间未被访问的页面，利用程序的局部性，但精确维护访问顺序成本较高；</li>
+<li><strong>时钟算法（Clock/Second Chance）</strong>：利用访问位循环扫描，给近期访问过的页面第二次机会，是对 LRU 的低成本近似；</li>
+<li><strong>最不经常使用（LFU）</strong>：淘汰访问次数最少的页面，但历史计数可能不能反映当前热点，通常需要衰减机制；</li>
+<li><strong>未最近使用（NRU）</strong>：根据访问位和修改位对页面分类，优先淘汰近期未访问且未修改的页面。</li>
+</ul>
+<h2 id="进程内存布局">进程内存布局</h2>
+<h3 id="1-程序的内存布局是怎样的？">1. 程序的内存布局是怎样的？</h3>
+<p>一个进程典型的虚拟地址空间包含：</p>
+<ul>
+<li><strong>代码段</strong>：存放可执行指令，通常只读且可执行；</li>
+<li><strong>只读数据段</strong>：存放字符串常量等只读数据；</li>
+<li><strong>已初始化数据段</strong>：存放已显式初始化的全局变量和静态变量；</li>
+<li><strong>BSS 段</strong>：存放未显式初始化或初始化为零的全局变量和静态变量；</li>
+<li><strong>堆</strong>：主要用于动态内存分配；</li>
+<li><strong>内存映射区</strong>：用于动态库、文件映射、共享内存以及部分匿名映射；</li>
+<li><strong>栈</strong>：保存函数调用帧、局部变量、返回地址等；每个线程通常都有自己的栈。</li>
+</ul>
+<h3 id="2-堆和栈的区别是什么？">2. 堆和栈的区别是什么？</h3>
+<p>堆和栈都位于进程的虚拟地址空间，但用途和管理方式不同：</p>
+<ul>
+<li><strong>栈</strong>主要保存函数调用帧、参数、返回地址和自动存储期的局部变量，通常由编译器生成的代码随函数调用自动调整，分配释放快，但容量相对有限；递归过深或局部对象过大可能导致栈溢出。</li>
+<li><strong>堆</strong>用于运行期间大小和生命周期不固定的动态对象，通常由 <code>malloc</code>、<code>new</code> 等分配器管理。堆容量一般更大，但分配和释放需要维护元数据，可能产生内部或外部碎片。</li>
+</ul>
+<p>栈上的对象通常在线程内部私有，而堆内存位于进程共享地址空间，可以被同一进程的多个线程访问，但是否真正共享取决于指针是否被传递。堆本身也不是天然安全的，多线程访问同一对象仍需要正确同步。</p>
+<h2 id="进程创建与写时复制">进程创建与写时复制</h2>
+<h3 id="1-fork-会复制哪些东西？">1. <code>fork()</code> 会复制哪些东西？</h3>
+<p>在 Unix/Linux 中，<code>fork()</code> 会创建一个新的子进程。子进程获得父进程在调用时的<strong>逻辑副本</strong>，包括虚拟地址空间、寄存器执行状态、环境变量、当前工作目录、信号处理方式等，并拥有新的进程 ID。</p>
+<p>这些内容并不都立即进行物理复制：</p>
+<ul>
+<li>用户空间内存通常通过写时复制共享原有物理页，父子任一方写入时才复制对应页面；</li>
+<li>文件描述符表会被复制，但对应描述符通常引用相同的内核打开文件对象，因此父子进程可能共享文件偏移和状态标志；</li>
+<li>子进程不继承父进程的待处理信号，一些定时器、锁和资源统计的继承规则也有差异；</li>
+<li>多线程进程调用 <code>fork()</code> 时，子进程通常只保留发起调用的那个线程，其他线程不会被复制。</li>
+</ul>
+<p>因此，不能简单理解为 <code>fork()</code> 会立即把父进程的所有内存和内核资源完整复制一遍。具体继承规则还要以操作系统接口文档为准。</p>
+<h3 id="2-介绍一下-Copy-on-Write（写时复制）。">2. 介绍一下 Copy-on-Write（写时复制）。</h3>
+<p>写时复制的核心思想是：<strong>先共享，发生写入时再复制</strong>。</p>
+<p>以 <code>fork()</code> 为例，创建子进程后，父子进程的页表可以暂时指向同一批物理页，并把这些映射标记为只读或写时复制。当任一进程尝试写入时，CPU 触发缺页异常；内核为写入方分配新物理页，复制原页面内容，更新该进程页表并恢复可写权限，然后重新执行写指令。未被修改的页面继续共享。</p>
+<p>写时复制也常用于私有文件映射、语言运行时或数据结构快照。它的代价是首次写入会产生缺页处理和页面复制开销，因此写操作密集时收益可能下降。</p>
+<h3 id="3-Copy-on-Write-节省了什么资源？">3. Copy-on-Write 节省了什么资源？</h3>
+<p>它主要节省两类资源：</p>
+<ul>
+<li><strong>物理内存</strong>：没有被修改的页面可以由多个地址空间共享，不必各保留一份；</li>
+<li><strong>复制时间和内存带宽</strong>：只复制实际发生写入的页面，避免创建对象或进程时立即复制全部数据。</li>
+</ul>
+<p>例如 <code>fork()</code> 后紧接着执行 <code>exec()</code>，旧地址空间很快会被新程序替换。使用写时复制可以避免复制一批根本不会再使用的页面。</p>
+<p>不过它并不会省掉全部开销：子进程仍需要独立的进程控制结构和页表等元数据；发生写入时还会付出缺页异常、分配物理页和复制页面的成本。</p>
+<h2 id="动态内存分配">动态内存分配</h2>
+<h3 id="1-malloc-1-KB-和-1-MB-有什么区别？">1. <code>malloc</code> 1 KB 和 1 MB 有什么区别？</h3>
+<p>从接口语义看，两者都是从进程堆式存储中申请一块指定大小的内存；区别主要体现在<strong>分配器可能采用不同的内部策略</strong>。</p>
+<p>常见的用户态分配器会从已有内存池或 arena 中切分小块内存，必要时再通过 <code>brk</code> 或 <code>mmap</code> 向内核申请更多页面；对于较大的申请，可能直接使用匿名 <code>mmap</code>，释放时也更容易把整段映射归还内核。因此 1 KB 往往走小对象分配路径，1 MB 更可能单独映射。</p>
+<p>但这个阈值不是固定标准，会因分配器实现、运行时配置、历史分配情况和平台而变化，不能简单断言 1 MB 一定调用 <code>mmap</code>。另外，<code>malloc</code> 成功只表示虚拟地址空间和提交策略允许申请；在按需分页系统中，物理页通常在首次实际访问时才分配。大块和小块申请在元数据开销、对齐、碎片、缓存局部性以及 <code>free</code> 后是否立即归还操作系统方面也可能不同。</p>
+<h3 id="2-介绍一下-brk-和-mmap。">2. 介绍一下 <code>brk</code> 和 <code>mmap</code>。</h3>
+<p><code>brk</code> 和 <code>mmap</code> 都可以为进程扩展可用虚拟内存，但方式不同：</p>
+<ul>
+<li><strong><code>brk</code></strong>：调整进程数据段末端，也就是传统意义上的 program break，使堆区域连续扩展或收缩。用户态分配器通常先从这片区域切分小块内存。释放其中某一块时，如果它不在堆顶，通常不能仅靠降低 program break 立即归还给操作系统，只能由分配器留待复用。</li>
+<li><strong><code>mmap</code></strong>：在进程虚拟地址空间中建立一段独立映射，可以映射文件，也可以创建匿名内存。映射位置不要求紧邻传统堆，使用 <code>munmap</code> 可以按映射范围解除映射，因此常被分配器用于较大内存块。</li>
+</ul>
+<p>两者得到的页面通常都可以按需分配，并受页表、缺页处理和内存回收机制管理。<code>mmap</code> 更灵活，但频繁创建和删除映射会增加系统调用及虚拟内存区域管理开销；<code>brk</code> 结构相对简单，但连续堆的归还粒度和多线程扩展能力受限。实际 <code>malloc</code> 如何选择由具体内存分配器决定。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">操作系统 系列</h2></div>
+                  <strong>4 / 5</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="操作系统 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80"><span style="width:80%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/51416497c267/" ><span>1</span>用户态和内核态</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/ebee359e45de/" ><span>2</span>进程管理</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/ef846162030d/" ><span>3</span>中断</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/0160369d0c9c/" aria-current="page"><span>4</span>内存管理</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/b24e86585b0f/" ><span>5</span>锁</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/ef846162030d/"><strong>中断</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/b24e86585b0f/"><strong>锁</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/ebee359e45de/"><strong>进程管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/51416497c267/"><strong>用户态和内核态</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/a8cd4b0ab423/"><strong>Linux</strong><small>操作系统</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="print-no-link">#操作系统</a>
+      
+        <a href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/" class="print-no-link">#内存管理</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>内存管理</div>
+      <div>https://yrkzbb.github.io/posts/0160369d0c9c/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月21日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/ef846162030d/" title="中断">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">中断</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/b24e86585b0f/" title="锁">
+                        <span class="hidden-mobile">锁</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

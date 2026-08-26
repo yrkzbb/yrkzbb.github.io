@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/a30640d137bb/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="1. 对 Kafka 有什么了解吗？ Kafka 是分布式事件流平台。消息按 Topic 组织，Topic 划分为多个 Partition，每个分区是只追加的有序日志，并可配置多副本实现容错。 Producer 负责选择分区并写入记录；Consumer 以消费组方式读取，同一分区在同一时刻只分配给组内一个消费者；消费进度用 offset 表示。Kafka 适合高吞吐日志、埋点、CDC、事件驱动和流">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kafka">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/a30640d137bb/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="1. 对 Kafka 有什么了解吗？ Kafka 是分布式事件流平台。消息按 Topic 组织，Topic 划分为多个 Partition，每个分区是只追加的有序日志，并可配置多副本实现容错。 Producer 负责选择分区并写入记录；Consumer 以消费组方式读取，同一分区在同一时刻只分配给组内一个消费者；消费进度用 offset 表示。Kafka 适合高吞吐日志、埋点、CDC、事件驱动和流">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-26T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="事件流">
+<meta property="article:tag" content="分区">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>Kafka - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kafka","description":"1. 对 Kafka 有什么了解吗？ Kafka 是分布式事件流平台。消息按 Topic 组织，Topic 划分为多个 Partition，每个分区是只追加的有序日志，并可配置多副本实现容错。 Producer 负责选择分区并写入记录；Consumer 以消费组方式读取，同一分区在同一时刻只分配给组内一个消费者；消费进度用 offset 表示。Kafka 适合高吞吐日志、埋点、CDC、事件驱动和流","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-26T02:00:00.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/a30640d137bb/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kafka"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-26 10:00" pubdate>
+          2026年8月26日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.7k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="12">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/Kafka.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kafka</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-对-Kafka-有什么了解吗？">1. 对 Kafka 有什么了解吗？</h3>
+<p>Kafka 是分布式事件流平台。消息按 Topic 组织，Topic 划分为多个 Partition，每个分区是只追加的有序日志，并可配置多副本实现容错。</p>
+<p>Producer 负责选择分区并写入记录；Consumer 以消费组方式读取，同一分区在同一时刻只分配给组内一个消费者；消费进度用 offset 表示。Kafka 适合高吞吐日志、埋点、CDC、事件驱动和流处理，也支持幂等生产和事务，但顺序保证的边界是单个分区。</p>
+<h3 id="2-Kafka-为什么这么快？">2. Kafka 为什么这么快？</h3>
+<p>Kafka 的高吞吐来自多种设计共同作用，而不是单个“零拷贝”：</p>
+<ul>
+<li>分区日志以追加写为主，适合顺序磁盘 I/O，并依赖操作系统页缓存。</li>
+<li>生产和消费支持批量、压缩，减少系统调用和网络开销。</li>
+<li>分区可以分布到多个 Broker，并由多个消费者并行处理。</li>
+<li>传输路径可利用 <code>sendfile</code> 等零拷贝能力，减少数据在内核态和用户态之间复制。</li>
+<li>消费者按 offset 顺序拉取，Broker 不必为每个消费者维护复杂消息状态。</li>
+</ul>
+<p>实际性能仍受消息大小、批量参数、副本确认、磁盘、网络、分区数和消费逻辑影响。</p>
+<h3 id="3-Kafka-的模型介绍一下，Kafka-是推送还是拉取？">3. Kafka 的模型介绍一下，Kafka 是推送还是拉取？</h3>
+<p>Kafka 的核心模型是 Producer 把记录写入 Topic 的某个 Partition，Broker 按分区日志保存，Consumer Group 中的消费者负责读取分配给自己的分区并提交 offset。</p>
+<p>从消费端看，Kafka 是拉取模型：消费者主动调用 poll 获取数据，可以控制速率、批量大小和消费位置。它支持长轮询，所以没有数据时不需要高频空转。拉取便于消费者按自身能力形成背压，但应用必须正确设置轮询、处理和 offset 提交策略。</p>
+<h3 id="4-Kafka-如何保证顺序读取消息？">4. Kafka 如何保证顺序读取消息？</h3>
+<p>Kafka 只保证单个 Partition 内的记录顺序，不保证多个 Partition 之间的全局顺序。</p>
+<p>要保证同一订单的事件有序，Producer 应使用相同 key，让它们稳定进入同一分区；同一消费组内该分区只交给一个消费者读取。消费者内部若并发处理，还要按 key 串行化，或确保 offset 提交不会跳过尚未完成的消息。要求全局顺序只能使用单分区等串行方案，会限制吞吐和扩展性。</p>
+<h3 id="5-Kafka-消息积压怎么办？">5. Kafka 消息积压怎么办？</h3>
+<p>先看 consumer lag、生产/消费速率和各分区分布，区分消费者故障、处理变慢、频繁再均衡和热点分区。</p>
+<p>如果分区数大于消费者数且下游有余量，可以增加消费者；如果消费者已达到分区数，再加实例不会增加该组并行度，需要优化批处理、数据库写入和业务逻辑，或合理增加分区。积压严重时也可以让临时消费组把数据写入分区更多的临时 Topic 再并行处理。增加分区会影响 key 到分区的映射，不能在依赖顺序时随意操作。</p>
+<h3 id="6-Kafka-为什么一个分区只能由消费者组的一个消费者消费？这样设计的意义是什么？">6. Kafka 为什么一个分区只能由消费者组的一个消费者消费？这样设计的意义是什么？</h3>
+<p>准确说，是同一时刻一个 Partition 在同一个 Consumer Group 内只分配给一个 Consumer；不同消费组可以各自读取同一分区。</p>
+<p>这样可以保留分区内顺序，避免多个消费者竞争同一 offset，并让消费进度管理和故障转移更简单。代价是单个消费组的最大直接并行度受分区数限制。一个消费者可以负责多个分区，但一个分区不会同时分配给组内多个消费者。</p>
+<h3 id="7-如果有一个消费主题-topic，有一个消费组-group，topic-有-10-个分区，消费线程数和分区数的关系是怎么样的？">7. 如果有一个消费主题 topic，有一个消费组 group，topic 有 10 个分区，消费线程数和分区数的关系是怎么样的？</h3>
+<p>如果这里的“消费线程”指 10 个独立 Kafka Consumer，那么最多 10 个能同时获得分区：</p>
+<ul>
+<li>5 个 Consumer 时，每个平均负责 2 个分区。</li>
+<li>10 个 Consumer 时，通常每个负责 1 个分区。</li>
+<li>超过 10 个时，多出的 Consumer 会空闲。</li>
+</ul>
+<p>Kafka Consumer 通常不是线程安全的，一个 Consumer 应由一个线程调用 <code>poll</code>。应用可以把拉取后的记录交给工作线程池处理，但这会引入分区内乱序、背压和 offset 提交难题，需要额外协调。</p>
+<h3 id="8-消息中间件如何做到高可用？">8. 消息中间件如何做到高可用？</h3>
+<p>核心是避免单点，并让故障后能继续服务且数据满足预期的一致性级别：</p>
+<ul>
+<li>Broker 集群化，分区或队列配置多个副本。</li>
+<li>Leader 负责读写，Follower 同步数据，故障时重新选主。</li>
+<li>元数据节点使用共识协议或高可用部署，客户端能刷新路由。</li>
+<li>Producer 使用确认和有限重试，Consumer 支持重新分配和断线恢复。</li>
+<li>跨机架、可用区部署，并监控副本落后、磁盘和网络状态。</li>
+</ul>
+<p>副本数不等于一定不丢数据，还要结合写入确认、同步副本条件、刷盘策略和故障范围配置。</p>
+<h3 id="9-Kafka-和-RocketMQ-消息确认机制有什么不同？">9. Kafka 和 RocketMQ 消息确认机制有什么不同？</h3>
+<p>生产端两者都支持等待 Broker 确认和失败重试，但配置语义不同。Kafka 通过 <code>acks=0/1/all</code> 控制确认范围，配合 <code>min.insync.replicas</code>、幂等 Producer 和事务影响可靠性；RocketMQ 常见发送方式有同步、异步和单向发送，并根据 Broker 存储及副本策略返回结果。</p>
+<p>消费端 Kafka 主要提交 offset，可以自动或手动提交；提交表示该消费组的进度已推进。RocketMQ Consumer 则向 Broker 返回消费成功或失败，失败消息按策略重试，超过次数可进入死信队列。两者在 ACK 或提交结果不确定时都可能重复，因此消费端仍需幂等。</p>
+<h3 id="10-Kafka-和-RocketMQ-的-broker-架构有什么区别？">10. Kafka 和 RocketMQ 的 broker 架构有什么区别？</h3>
+<p>Kafka 以 Topic Partition 为核心，每个分区有 Leader 和 Follower 副本，客户端直接与分区 Leader 通信。现代 Kafka 使用 KRaft 控制器集群维护元数据和选主；早期版本依赖 ZooKeeper。</p>
+<p>RocketMQ 的路由由 NameServer 提供，Broker 向 NameServer 注册；经典部署中 Broker 按 BrokerName 组成主从组，消息物理写入 CommitLog，再通过 ConsumeQueue 提供按 Topic/Queue 的逻辑索引。较新的部署模式也支持基于 Raft/DLedger 或 Controller 的自动切换能力。两者都能横向扩展，但元数据管理、存储组织和故障切换方式不同。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/47d90c8327a5/"><strong>RabbitMQ</strong><small>消息队列</small></a>
+                  
+                    <a href="/posts/b5734029a1ff/"><strong>RocketMQ</strong><small>消息队列</small></a>
+                  
+                    <a href="/posts/047aaed552f1/"><strong>消息队列</strong><small>消息队列</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" class="category-chain-item">消息队列</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Kafka/" class="print-no-link">#Kafka</a>
+      
+        <a href="/tags/%E4%BA%8B%E4%BB%B6%E6%B5%81/" class="print-no-link">#事件流</a>
+      
+        <a href="/tags/%E5%88%86%E5%8C%BA/" class="print-no-link">#分区</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kafka</div>
+      <div>https://yrkzbb.github.io/posts/a30640d137bb/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/7c78ae855a2c/" title="分布式场景">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">分布式场景</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/47d90c8327a5/" title="RabbitMQ">
+                        <span class="hidden-mobile">RabbitMQ</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

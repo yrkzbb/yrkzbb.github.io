@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/a8cd4b0ab423/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="进程查看 1. ps 命令里都有哪些选项，ps 会展示哪些内容？ ps 用于查看执行命令这一时刻的进程快照。 不带选项执行 ps 时，通常只显示与当前终端、当前用户相关的进程，常见字段包括：  PID：进程 ID； TTY：进程关联的控制终端； TIME：进程累计占用的 CPU 时间，不是启动后经过的时间； CMD：命令名。  常用的进程选择选项有：  -e 或 -A：显示所有进程； -a：显示有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/a8cd4b0ab423/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="进程查看 1. ps 命令里都有哪些选项，ps 会展示哪些内容？ ps 用于查看执行命令这一时刻的进程快照。 不带选项执行 ps 时，通常只显示与当前终端、当前用户相关的进程，常见字段包括：  PID：进程 ID； TTY：进程关联的控制终端； TIME：进程累计占用的 CPU 时间，不是启动后经过的时间； CMD：命令名。  常用的进程选择选项有：  -e 或 -A：显示所有进程； -a：显示有">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-24T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>Linux - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Linux","description":"进程查看 1. ps 命令里都有哪些选项，ps 会展示哪些内容？ ps 用于查看执行命令这一时刻的进程快照。 不带选项执行 ps 时，通常只显示与当前终端、当前用户相关的进程，常见字段包括：  PID：进程 ID； TTY：进程关联的控制终端； TIME：进程累计占用的 CPU 时间，不是启动后经过的时间； CMD：命令名。  常用的进程选择选项有：  -e 或 -A：显示所有进程； -a：显示有","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-24T16:00:00.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/a8cd4b0ab423/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Linux"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-25 00:00" pubdate>
+          2026年8月25日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="31">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/Linux.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Linux</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="进程查看">进程查看</h2>
+<h3 id="1-ps-命令里都有哪些选项，ps-会展示哪些内容？">1. <code>ps</code> 命令里都有哪些选项，<code>ps</code> 会展示哪些内容？</h3>
+<p><code>ps</code> 用于查看<strong>执行命令这一时刻的进程快照</strong>。</p>
+<p>不带选项执行 <code>ps</code> 时，通常只显示与当前终端、当前用户相关的进程，常见字段包括：</p>
+<ul>
+<li><code>PID</code>：进程 ID；</li>
+<li><code>TTY</code>：进程关联的控制终端；</li>
+<li><code>TIME</code>：进程累计占用的 CPU 时间，不是启动后经过的时间；</li>
+<li><code>CMD</code>：命令名。</li>
+</ul>
+<p>常用的进程选择选项有：</p>
+<ul>
+<li><code>-e</code> 或 <code>-A</code>：显示所有进程；</li>
+<li><code>-a</code>：显示有终端的其他用户进程，但通常不包含会话首进程；</li>
+<li><code>x</code>：包含没有控制终端的进程；</li>
+<li><code>-p PID</code>：只查看指定 PID；</li>
+<li><code>-u USER</code> 或 <code>--user USER</code>：查看指定有效用户的进程；</li>
+<li><code>--ppid PID</code>：查看指定父进程的子进程；</li>
+<li><code>-C NAME</code>：按可执行文件名筛选进程。</li>
+</ul>
+<p>常用的输出格式选项有：</p>
+<ul>
+<li><code>-f</code>：使用完整格式，增加 <code>UID</code>、<code>PPID</code>、启动时间等字段；</li>
+<li><code>f</code> 或 <code>--forest</code>：用树形结构展示进程父子关系；</li>
+<li><code>-l</code>：使用长格式，显示状态、优先级、内存地址等更多信息；</li>
+<li><code>u</code>：使用面向用户的格式，常见字段包括 <code>%CPU</code>、<code>%MEM</code>、<code>VSZ</code>、<code>RSS</code>、<code>STAT</code> 和 <code>START</code>；</li>
+<li><code>-o 字段列表</code>：自定义输出列，例如 <code>ps -eo pid,ppid,user,stat,%cpu,%mem,cmd</code>；</li>
+<li><code>--sort=字段</code>：按指定字段排序，例如 <code>ps -eo pid,cmd,%cpu --sort=-%cpu</code> 按 CPU 使用率降序显示。</li>
+</ul>
+<p>实际排查中常见的组合是：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">ps aux<br>ps -ef<br>ps -eo pid,ppid,user,<span class="hljs-built_in">stat</span>,%cpu,%mem,etime,cmd --<span class="hljs-built_in">sort</span>=-%cpu<br></code></pre></td></tr></table></figure>
+<p>其中 <code>ps aux</code> 常用于观察资源占用，<code>ps -ef</code> 更侧重进程的用户、父子关系和完整命令。详细格式中还可能看到：<code>PPID</code> 表示父进程 ID，<code>STAT</code> 表示进程状态，<code>VSZ</code> 表示虚拟内存大小，<code>RSS</code> 表示驻留物理内存大小，<code>ELAPSED</code> 或 <code>ETIME</code> 表示进程已经运行的时间，<code>COMMAND</code> 或 <code>CMD</code> 表示启动命令及参数。</p>
+<h3 id="2-top-命令会展示什么？每一项数据分别表示什么？">2. <code>top</code> 命令会展示什么？每一项数据分别表示什么？</h3>
+<p><code>top</code> 用于<strong>动态观察系统负载、CPU、内存以及各进程的资源占用</strong>，输出主要分为系统汇总区和进程列表区。</p>
+<p>系统汇总区包含：</p>
+<ol>
+<li><strong>运行时间与负载</strong>：显示当前时间、系统运行时长、登录会话数，以及最近 1、5、15 分钟的 <code>load average</code>。平均负载主要统计可运行任务和不可中断睡眠任务的数量，不是 CPU 使用率。</li>
+<li><strong>任务状态</strong>：显示 <code>total</code>、<code>running</code>、<code>sleeping</code>、<code>stopped</code> 和 <code>zombie</code> 等任务数量。</li>
+<li><strong>CPU 使用情况</strong>：<code>us</code> 是用户态时间，<code>sy</code> 是内核态时间，<code>id</code> 是空闲时间，<code>wa</code> 是 I/O 等待时间，<code>hi</code>、<code>si</code> 分别是硬中断和软中断时间，<code>st</code> 是虚拟机被宿主机占用的时间。</li>
+<li><strong>内存与 Swap</strong>：显示 <code>total</code>、<code>free</code>、<code>used</code>、<code>buff/cache</code> 和 <code>avail Mem</code>。Linux 会利用空闲内存做缓存，因此判断内存余量时通常更应关注 <code>avail Mem</code>。</li>
+</ol>
+<p>进程列表常见字段包括：<code>PID</code>、<code>USER</code>、调度优先级 <code>PR</code>、nice 值 <code>NI</code>、虚拟内存 <code>VIRT</code>、驻留内存 <code>RES</code>、共享内存 <code>SHR</code>、进程状态 <code>S</code>、<code>%CPU</code>、<code>%MEM</code>、累计 CPU 时间 <code>TIME+</code> 和命令名 <code>COMMAND</code>。</p>
+<p>实际排查时，我会先从汇总区判断压力大致来自 CPU、内存还是 I/O，再按 <code>P</code> 或 <code>M</code> 对进程的 CPU、内存占用排序。<code>top</code> 展示的是周期性采样结果，具体结论还要结合连续趋势和其他监控指标判断。</p>
+<h3 id="3-已知一个进程名，如何杀掉这个进程？">3. 已知一个进程名，如何杀掉这个进程？</h3>
+<p>我会先精确确认目标进程，再发送 <code>SIGTERM</code> 让它正常清理并退出；只有进程无响应时，才使用 <code>SIGKILL</code> 强制终止：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">pgrep -a -x nginx<br>pkill -x nginx<br><br><span class="hljs-comment"># 确认仍无法退出时再强制终止</span><br>pkill -KILL -x nginx<br></code></pre></td></tr></table></figure>
+<p><code>-x</code> 表示完整匹配进程名，可以降低误杀名称相似进程的风险。<code>pkill</code> 会处理所有符合条件的进程；如果只想终止其中一个，应该先确认 PID，再执行 <code>kill PID</code>。<code>SIGKILL</code> 不能被进程捕获，可能使数据和资源来不及清理，因此不能一开始就使用 <code>-9</code>。</p>
+<h3 id="4-Linux-如何查看进程状态？">4. Linux 如何查看进程状态？</h3>
+<p>可以使用 <code>ps</code> 查看目标进程的状态和上下文，需要持续观察时再使用 <code>top</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">ps -o pid,ppid,user,<span class="hljs-built_in">stat</span>,%cpu,%mem,etime,wchan:24,cmd -p PID<br>top -p PID<br></code></pre></td></tr></table></figure>
+<p><code>STAT</code> 的首字符表示主要状态：<code>R</code> 表示运行或等待 CPU，<code>S</code> 表示可中断睡眠，<code>D</code> 表示不可中断睡眠，<code>T</code> 表示停止，<code>Z</code> 表示僵尸。<code>WCHAN</code> 可以辅助观察睡眠中的进程正在内核哪个位置等待。</p>
+<p>还可以查看 <code>/proc/PID/status</code> 获取状态、线程数、内存和信号等详细信息。进程状态是瞬时结果，分析卡顿时应连续观察，并结合 CPU、I/O、锁和系统调用判断。</p>
+<h3 id="5-Linux-如何查看线程状态？">5. Linux 如何查看线程状态？</h3>
+<p>Linux 内核把线程作为可调度任务管理，可以使用 <code>ps</code>、<code>top</code> 或 <code>/proc</code> 查看某个进程中的线程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">ps -T -p PID -o pid,tid,<span class="hljs-built_in">stat</span>,pcpu,<span class="hljs-built_in">comm</span>,wchan:24<br>top -H -p PID<br><span class="hljs-built_in">ls</span> /proc/PID/task<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>ps -T -p PID</code>：列出指定进程的所有线程，<code>PID</code> 是线程组 ID，<code>TID</code> 是线程 ID；</li>
+<li><code>top -H -p PID</code>：动态观察该进程中各线程的 CPU、内存和状态；</li>
+<li><code>/proc/PID/task/TID/status</code>：查看某个线程的详细状态；</li>
+</ul>
+<p><a href="/img/linux-thread-status.png" title="使用 ps 和 top 查看 Linux 线程状态"><img src="/img/linux-thread-status.png" srcset="/img/loading.gif" lazyload alt="使用 ps 和 top 查看 Linux 线程状态" loading="lazy" decoding="async" sizes="(max-width: 768px) 100vw, 900px" width="958" height="600"></a></p>
+<p>图片中的 <code>top -H</code> 会显示全系统线程，<code>ps -eT</code> 会显示所有进程的线程；已知目标 PID 时，使用带 <code>-p PID</code> 的写法更精确。线程状态码与进程类似，例如 <code>R</code>、<code>S</code>、<code>D</code>、<code>T</code>。如果要继续分析线程阻塞原因，还需要根据语言和场景配合调用栈或系统调用工具。</p>
+<h2 id="系统资源监控">系统资源监控</h2>
+<h3 id="1-如何通过-top-查看-CPU-核心数？">1. 如何通过 <code>top</code> 查看 CPU 核心数？</h3>
+<p>在 Linux 的 <code>top</code> 界面中按数字键 <code>1</code>，可以在 CPU 汇总视图和逐个逻辑 CPU 的视图之间切换。展开后有多少行类似 <code>%Cpu0</code>、<code>%Cpu1</code> 的数据，就表示系统当前可见多少个<strong>逻辑 CPU</strong>。</p>
+<p>不过逻辑 CPU 数不一定等于物理核心数。超线程开启时，一个物理核心可能对应多个逻辑 CPU；虚拟机和容器中看到的也可能只是分配或允许使用的部分 CPU。</p>
+<h3 id="2-top-和-free-都可以查看内存，它们有什么区别？">2. <code>top</code> 和 <code>free</code> 都可以查看内存，它们有什么区别？</h3>
+<p>两者都能查看系统整体内存，但定位角度不同：<strong><code>free</code> 适合快速查看内存汇总，<code>top</code> 适合持续观察内存变化并定位到具体进程。</strong></p>
+<ul>
+<li><code>free -h</code> 一次性展示物理内存和 Swap 的 <code>total</code>、<code>used</code>、<code>free</code>、<code>buff/cache</code>、<code>available</code> 等汇总数据，输出简洁，也方便脚本处理；使用 <code>free -s 1</code> 也可以定时刷新。</li>
+<li><code>top</code> 默认动态刷新，除了系统内存和 Swap 汇总，还能展示每个进程的 <code>VIRT</code>、<code>RES</code>、<code>SHR</code> 和 <code>%MEM</code>。</li>
+</ul>
+<h3 id="3-假如-CPU-跑到-100-，排查和解决思路是什么？">3. 假如 CPU 跑到 100%，排查和解决思路是什么？</h3>
+<p>CPU 达到 100% 时，我先用 <code>top</code> 判断是用户态、内核态还是 I/O 问题，再找到占用最高的进程。然后用 <code>top -H -p PID</code> 定位具体线程，结合线程栈、日志和监控分析是否存在死循环、频繁 GC、慢查询或流量突增。线上优先通过限流、扩容或回滚止损，并在重启前保存现场，尽量不用 <code>kill -9</code>。恢复后再修复根因并补充监控。</p>
+<h3 id="4-Linux-服务器如何查看负载情况？通过哪些指标判断？">4. Linux 服务器如何查看负载情况？通过哪些指标判断？</h3>
+<p>我会先用 <code>uptime</code> 和 <code>top</code> 看 Load Average，并结合 CPU 核数判断是否有任务排队；再看 CPU 的 <code>us、sy、wa、id</code>，判断是计算压力还是 I/O 等待。然后用 <code>free -h</code> 看可用内存和 Swap，用 <code>iostat -x</code> 看磁盘延迟与利用率，最后结合网络连接、进程占用、接口延迟和错误率综合判断，不能只看某一个指标。</p>
+<p>可以通过 <code>uptime</code>、<code>top</code> 或 <code>/proc/loadavg</code> 查看最近 1、5、15 分钟的平均负载：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">uptime</span><br><span class="hljs-built_in">cat</span> /proc/loadavg<br></code></pre></td></tr></table></figure>
+<p>Linux 的 <code>load average</code> 主要统计可运行任务和处于不可中断睡眠状态任务的平均数量，所以它不等于 CPU 使用率。通常先把负载与系统可用的逻辑 CPU 数比较：例如 8 个逻辑 CPU 上，长期负载接近 8 表示任务需求接近 CPU 并行处理能力，明显高于 8 说明任务在排队或有较多不可中断等待。但这只是经验判断，容器 CPU 配额、任务类型和持续时间都会影响结论。</p>
+<p><span style="color: rgb(32, 52, 71)">5. 怎么判断服务器内存是否够用？如何判断性能瓶颈是不是内存？</span></p>
+<p>判断内存是否够用，不能只看 <code>free</code>，而应看<strong>可用内存是否长期偏低，以及是否发生持续回收、换页、直接回收停顿或 OOM</strong>。我会先观察：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">free -h<br>vmstat 1<br><span class="hljs-built_in">cat</span> /proc/pressure/memory<br></code></pre></td></tr></table></figure>
+<p>重点指标包括：</p>
+<ul>
+<li><code>MemAvailable</code> 或 <code>available</code>：内核估算在不发生明显交换的情况下还能提供给新程序的内存；</li>
+<li><code>vmstat</code> 的 <code>si</code>、<code>so</code>：每秒从 Swap 换入和换出的数据量，持续非零通常表示存在内存压力；</li>
+<li><code>vmstat</code> 的 <code>r</code>、<code>b</code>、<code>wa</code>：辅助判断任务是否因回收或换页受到影响；</li>
+<li><code>/proc/pressure/memory</code> 的 <code>some</code> 和 <code>full</code>：反映任务因内存压力而停顿的程度；</li>
+<li><code>dmesg</code> 或内核日志中的 OOM、direct reclaim 等信息；</li>
+<li>应用延迟、吞吐量、主缺页和进程 RSS 的变化趋势。</li>
+</ul>
+<p>然后用 <code>top</code>、<code>ps --sort=-rss</code>、<code>smem</code> 或应用监控定位主要内存消费者。只有在 <code>available</code> 长期很低，同时换页、内存压力或回收停顿与业务延迟同步上升，并且排除 CPU、磁盘和网络因素后，才能较有把握地判断瓶颈在内存。容器环境还要查看 cgroup 的内存上限和事件，因为宿主机有空闲内存也不代表容器没有达到限制。</p>
+<h3 id="6-如何判断内存是不是满了？通过什么指标计算内存使用率？">6. 如何判断内存是不是满了？通过什么指标计算内存使用率？</h3>
+<ul>
+<li>如果 <code>free</code> 和 <code>available</code> 都非常低，而 <code>used</code> 很高，内存基本上是满的。</li>
+<li>Swap 使用频繁且使用率较高，那么内存基本上是满的。</li>
+<li>如果 <code>dmesg</code> 日志出现 OOM 相关信息，说明内存不足导致了一些进程被杀掉。</li>
+<li><code>ps</code> 或 <code>top</code> 显示大部分内存被少数几个进程占用，那么内存基本上是满的。</li>
+</ul>
+<h3 id="7-怎么判断操作系统是否正在进行内存交换？如何统计交换频率？">7. 怎么判断操作系统是否正在进行内存交换？如何统计交换频率？</h3>
+<p>最直接的方法是用 <code>vmstat</code> 连续观察 <code>si</code> 和 <code>so</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">vmstat 1<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>si</code>：每秒从 Swap 换入内存的数据量；</li>
+<li><code>so</code>：每秒从内存换出到 Swap 的数据量。</li>
+</ul>
+<p>首行通常是系统启动以来的平均值，判断当前是否正在交换时应重点看后续按间隔刷新的行。如果安装了 <code>sysstat</code>，还可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sar -W 1 10<br></code></pre></td></tr></table></figure>
+<p>其中 <code>pswpin/s</code> 和 <code>pswpout/s</code> 分别表示每秒换入、换出的 Swap 页数。累计值可以从 <code>/proc/vmstat</code> 的 <code>pswpin</code>、<code>pswpout</code> 获取，两次采样做差再除以时间间隔，就能得到这一时段的换页频率。</p>
+<p>需要区分 <strong>Swap 已使用</strong> 和 <strong>正在频繁交换</strong>：<code>free</code> 显示 Swap 中已有数据，不代表系统此刻仍在换页，因为冷数据可能长期留在 Swap。只有 <code>si</code>、<code>so</code> 或对应计数器持续增长，并伴随 <code>available</code> 偏低、主缺页、内存 PSI 或延迟上升时，才说明交换正在造成明显压力。此外，<code>vmstat</code> 的 <code>bi</code>、<code>bo</code> 是块设备 I/O，不等同于 Swap 换入换出。</p>
+<h2 id="网络排查">网络排查</h2>
+<h3 id="1-如何查看网络连接情况？">1. 如何查看网络连接情况？</h3>
+<p>我通常使用 <code>ss</code> 查看 Socket 和 TCP 连接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">ss -tunap<br>ss -s<br></code></pre></td></tr></table></figure>
+<p><code>-t</code> 表示 TCP，<code>-u</code> 表示 UDP，<code>-n</code> 表示直接显示数字地址和端口，<code>-a</code> 表示包含监听与非监听 Socket，<code>-p</code> 表示显示关联进程，<code>ss -s</code> 用于查看汇总信息。输出中的 <code>Local Address:Port</code> 是本地地址和端口，<code>Peer Address:Port</code> 是对端地址和端口，<code>State</code> 会显示 <code>LISTEN</code>、<code>ESTAB</code>、<code>TIME-WAIT</code> 等 TCP 状态。</p>
+<p>常见的定向查询包括：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">ss -lnt                 <span class="hljs-comment"># 查看正在监听的 TCP 端口</span><br>ss -ant state established<br>ss -ant state time-wait<br></code></pre></td></tr></table></figure>
+<p>普通用户可能无法看到其他用户进程的详细信息。如果需要查看持续的网络流量、路由或网卡统计，还应分别使用 <code>sar</code>、<code>ip -s link</code>、<code>ip route</code> 或抓包工具；<code>ss</code> 主要展示 Socket 状态，而不是完整的网络流量。</p>
+<h3 id="2-怎么查看哪个端口被哪个进程占用？">2. 怎么查看哪个端口被哪个进程占用？</h3>
+<p>可以使用 <code>ss</code> 按端口过滤，并显示关联的进程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> ss -lntp <span class="hljs-string">&#x27;sport = :8080&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>其中 <code>-l</code> 只看监听 Socket，<code>-n</code> 不解析服务名，<code>-t</code> 只看 TCP，<code>-p</code> 显示进程信息。如果需要检查 UDP，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> ss -lunp <span class="hljs-string">&#x27;sport = :8080&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>也可以使用 <code>lsof</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> lsof -nP -iTCP:8080 -sTCP:LISTEN<br><span class="hljs-built_in">sudo</span> lsof -nP -iUDP:8080<br></code></pre></td></tr></table></figure>
+<p>输出中的 <code>PID</code> 和 <code>COMMAND</code> 就是占用端口的进程。使用 <code>sudo</code> 是因为普通用户通常看不到所有进程的关联信息。查询时还要区分 TCP 与 UDP、监听端口与已建立连接，以及 IPv4 与 IPv6，不能只根据端口数字认定是同一个 Socket。</p>
+<h3 id="3-判断端口通不通可以用什么命令？">3. 判断端口通不通可以用什么命令？</h3>
+<p>测试 TCP 端口时，我通常使用 <code>nc</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">nc -vz -w 3 192.0.2.10 8080<br></code></pre></td></tr></table></figure>
+<p><code>-v</code> 输出详细结果，<code>-z</code> 只探测端口而不发送应用数据，<code>-w 3</code> 设置超时。如果目标提供 HTTP 服务，还应进一步使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -v --connect-timeout 3 http://192.0.2.10:8080/<br></code></pre></td></tr></table></figure>
+<p><code>nc</code> 成功只能说明 TCP 连接能够建立，不代表上层协议和业务一定正常；<code>curl</code> 可以继续验证 HTTP 状态、TLS 和响应内容。<code>telnet 主机 端口</code> 也能测试 TCP 建连，但功能较弱。<code>ping</code> 使用 ICMP，只能辅助判断主机可达性，不能判断某个 TCP 或 UDP 端口是否开放。</p>
+<p>UDP 没有 TCP 那样的握手，可以用 <code>nc -vzu</code> 做初步探测，但没有响应不一定代表端口不可达，最好使用对应的应用协议请求或抓包确认。</p>
+<h2 id="文件权限">文件权限</h2>
+<h3 id="1-修改文件权限用什么命令？">1. 修改文件权限用什么命令？</h3>
+<p>Linux 使用 <code>chmod</code> 修改文件或目录的权限，既可以使用符号形式，也可以使用八进制形式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">chmod</span> u+x script.sh       <span class="hljs-comment"># 给所有者增加执行权限</span><br><span class="hljs-built_in">chmod</span> g-w file.txt        <span class="hljs-comment"># 移除所属组的写权限</span><br><span class="hljs-built_in">chmod</span> 640 file.txt        <span class="hljs-comment"># 所有者读写、所属组只读、其他用户无权限</span><br><span class="hljs-built_in">chmod</span> 755 script.sh       <span class="hljs-comment"># 所有者可读写执行，其他用户可读和执行</span><br></code></pre></td></tr></table></figure>
+<p><code>u</code>、<code>g</code>、<code>o</code> 分别表示所有者、所属组和其他用户；<code>r</code>、<code>w</code>、<code>x</code> 分别对应读、写、执行，八进制值分别是 <code>4</code>、<code>2</code>、<code>1</code>。目录上的 <code>x</code> 表示可以进入和访问目录项，含义与普通文件的执行权限不同。</p>
+<p><span style="color: rgb(32, 52, 71)">文本处理</span></p>
+<h3 id="1-如何用-Shell-命令替换文件中的字符串？">1. 如何用 Shell 命令替换文件中的字符串？</h3>
+<p>一般使用 <code>sed</code> 的替换命令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">sed <span class="hljs-string">&#x27;s/old/new/g&#x27;</span> file.txt<br>sed -i.bak <span class="hljs-string">&#x27;s/old/new/g&#x27;</span> file.txt<br></code></pre></td></tr></table></figure>
+<p><code>s</code> 表示替换，<code>g</code> 表示替换每一行中的所有匹配；没有 <code>g</code> 时只替换每行第一次匹配。<code>-i.bak</code> 会原地修改文件，并把原文件保存为 <code>file.txt.bak</code>。</p>
+<p><span style="color: rgb(32, 52, 71)">2.</span> <code>sed</code> <span style="color: rgb(32, 52, 71)">和</span> <code>awk</code> <span style="color: rgb(32, 52, 71)">有什么区别？</span></p>
+<p>核心区别是：<strong><code>sed</code> 更适合按行进行匹配和文本替换，<code>awk</code> 更适合按字段解析、计算和生成结构化输出。</strong></p>
+<ul>
+<li><code>sed</code> 是流编辑器，擅长删除、替换、插入和选取文本，例如批量修改配置文件；</li>
+<li><code>awk</code> 会把每行拆成字段，支持变量、条件、循环、数组和算术运算，适合处理日志、表格和统计数据；</li>
+<li>两者都按流处理文本，不需要把整个文件一次性加载到内存，但具体内存使用还取决于脚本逻辑。</li>
+</ul>
+<p>例如替换字符串更适合用 <code>sed</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sed <span class="hljs-string">&#x27;s/error/ERROR/g&#x27;</span> app.log<br></code></pre></td></tr></table></figure>
+<p>统计第 2 列的数值更适合用 <code>awk</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">awk <span class="hljs-string">&#x27;&#123;sum += $2&#125; END &#123;print sum&#125;&#x27;</span> data.txt<br></code></pre></td></tr></table></figure>
+<p>实际选择取决于任务：简单替换优先 <code>sed</code>，涉及字段、条件和统计时优先 <code>awk</code>。</p>
+<h3 id="3-如何查找日志中某个字符串出现的次数？">3. 如何查找日志中某个字符串出现的次数？</h3>
+<p>如果要统计的是<strong>包含该字符串的行数</strong>，可以使用固定字符串匹配：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -F -c <span class="hljs-string">&#x27;ERROR&#x27;</span> app.log<br></code></pre></td></tr></table></figure>
+<p>如果一行可能出现多次，需要统计字符串的<strong>总出现次数</strong>，GNU <code>grep</code> 可以逐个输出匹配项后计数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -oF <span class="hljs-string">&#x27;ERROR&#x27;</span> app.log | <span class="hljs-built_in">wc</span> -l<br></code></pre></td></tr></table></figure>
+<p><code>-F</code> 表示按普通字符串而不是正则表达式匹配，可以避免 <code>.</code>、<code>*</code> 等字符被解释为正则元字符。以上总次数统计的是不重叠匹配；需要忽略大小写时可以增加 <code>-i</code>。如果日志正在写入、经过轮转或包含压缩文件，单次结果只代表实际读取到的文件内容，不能直接当作稳定的业务统计值。</p>
+<h3 id="4-如何查看日志中匹配行的长度？">4. 如何查看日志中匹配行的长度？</h3>
+<p>可以先用 <code>grep</code> 找出匹配行，再由 <code>awk</code> 输出每行的字符数和内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -F <span class="hljs-string">&#x27;ERROR&#x27;</span> app.log | awk <span class="hljs-string">&#x27;&#123;print length($0), $0&#125;&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>如果只关心匹配行中的最大长度，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">grep -F <span class="hljs-string">&#x27;ERROR&#x27;</span> app.log | awk <span class="hljs-string">&#x27;length($0) &gt; max &#123;max = length($0)&#125; END &#123;print max + 0&#125;&#x27;</span><br></code></pre></td></tr></table></figure>
+<p>这里的 <code>length($0)</code> 按当前 <code>awk</code> 实现和区域设置计算字符或字节；对于 UTF-8 中文，多字节字符的口径可能因实现和环境而不同。如果问题中的“长度”实际是指匹配行的数量，应使用 <code>grep -F -c 'ERROR' app.log</code>，需要先明确统计的是行数、出现次数还是每行字符数。</p>
+<h3 id="5-如何查出日志中请求耗时最高的-10-条记录？">5. 如何查出日志中请求耗时最高的 10 条记录？</h3>
+<p>如果日志以空白字符分隔，并且第三列是统一单位的纯数字耗时，可以按第三列做数值降序排序，再取前 10 行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sort</span> -k3,3nr access.log | <span class="hljs-built_in">head</span> -n 10<br></code></pre></td></tr></table></figure>
+<p>其中 <code>-k3,3</code> 表示只以第三列作为排序键，<code>n</code> 表示按数值排序，<code>r</code> 表示降序。如果第一行是表头，可以先跳过表头：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">tail</span> -n +2 access.log | <span class="hljs-built_in">sort</span> -k3,3nr | <span class="hljs-built_in">head</span> -n 10<br></code></pre></td></tr></table></figure>
+<p>这条命令成立的前提是字段确实以空白分隔，第三列格式一致。例如有的记录使用毫秒、有的使用秒，或者耗时包含需要特殊解析的单位时，应先用 <code>awk</code> 统一成同一数值口径后再排序。文件很大时，<code>sort</code> 可能使用较多内存和临时磁盘；如果只需要前 10 条，可以用 <code>awk</code> 维护固定大小的 Top 10，以空间换取更复杂的脚本。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/12f5e91fd25b/"><strong>网络IO</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/ef846162030d/"><strong>中断</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/0160369d0c9c/"><strong>内存管理</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/b24e86585b0f/"><strong>锁</strong><small>操作系统</small></a>
+                  
+                    <a href="/posts/ebee359e45de/"><strong>进程管理</strong><small>操作系统</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" class="category-chain-item">操作系统</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Linux</div>
+      <div>https://yrkzbb.github.io/posts/a8cd4b0ab423/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/c75727a26ca7/" title="Git">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Git</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/12f5e91fd25b/" title="网络IO">
+                        <span class="hidden-mobile">网络IO</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

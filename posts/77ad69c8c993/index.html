@@ -1,0 +1,899 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/77ad69c8c993/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="Docker 原理与架构 1. Docker 底层依托于 Linux 怎么实现资源隔离的？ 核心上，Docker 主要通过 Linux 的 namespace、cgroup 和联合文件系统实现隔离，再配合 capabilities、seccomp 等机制限制权限。  namespace 隔离进程看到的系统资源，例如进程、网络、挂载点、主机名和用户。 cgroup 限制并统计 CPU、内存、I&#x2F;O、">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/77ad69c8c993/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="Docker 原理与架构 1. Docker 底层依托于 Linux 怎么实现资源隔离的？ 核心上，Docker 主要通过 Linux 的 namespace、cgroup 和联合文件系统实现隔离，再配合 capabilities、seccomp 等机制限制权限。  namespace 隔离进程看到的系统资源，例如进程、网络、挂载点、主机名和用户。 cgroup 限制并统计 CPU、内存、I&#x2F;O、">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-25T14:24:27.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="yrk,Blog,个人博客">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>Docker - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Docker","description":"Docker 原理与架构 1. Docker 底层依托于 Linux 怎么实现资源隔离的？ 核心上，Docker 主要通过 Linux 的 namespace、cgroup 和联合文件系统实现隔离，再配合 capabilities、seccomp 等机制限制权限。  namespace 隔离进程看到的系统资源，例如进程、网络、挂载点、主机名和用户。 cgroup 限制并统计 CPU、内存、I/O、","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-25T14:24:27.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/77ad69c8c993/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Docker"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-25 22:24" pubdate>
+          2026年8月25日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.2k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="22">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/Docker.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Docker</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Docker-原理与架构">Docker 原理与架构</h2>
+<h3 id="1-Docker-底层依托于-Linux-怎么实现资源隔离的？">1. Docker 底层依托于 Linux 怎么实现资源隔离的？</h3>
+<p>核心上，Docker 主要通过 Linux 的 <code>namespace</code>、<code>cgroup</code> 和联合文件系统实现隔离，再配合 capabilities、<code>seccomp</code> 等机制限制权限。</p>
+<ul>
+<li><code>namespace</code> 隔离进程看到的系统资源，例如进程、网络、挂载点、主机名和用户。</li>
+<li><code>cgroup</code> 限制并统计 CPU、内存、I/O、进程数等资源。</li>
+</ul>
+<h3 id="2-讲讲-cgroup-v2-0。">2. 讲讲 cgroup v2.0。</h3>
+<p><code>cgroup v2</code> 是 Linux 的统一资源控制体系。与 v1 可以为不同控制器建立多套层级不同，v2 默认把 CPU、内存、I/O、进程数等控制器组织在一棵统一层级树中，接口和资源分配语义更一致。</p>
+<p>常见接口包括 <code>cpu.max</code>、<code>memory.max</code>、<code>memory.high</code>、<code>io.max</code> 和 <code>pids.max</code>。父 cgroup 通过 <code>cgroup.subtree_control</code> 向子层级开放控制器，并遵循“子节点不能突破父节点限制”的层级约束。它还改进了内存压力管理、委派和 PSI 等能力。Docker 设置的 <code>--cpus</code>、<code>--memory</code>、<code>--pids-limit</code> 等参数，最终会由运行时映射到相应的 cgroup 配置。</p>
+<h3 id="3-Docker-和虚拟机有什么区别？">3. Docker 和虚拟机有什么区别？</h3>
+<p>核心区别是：容器共享宿主机内核，虚拟机通过 Hypervisor 运行完整的 Guest OS 和独立内核。</p>
+<p>因此，容器镜像通常更小、启动更快、单位机器密度更高；虚拟机的隔离边界通常更强，并且能运行与宿主机不同的内核。实际使用中两者并不冲突，常见做法是在云虚拟机里运行容器，兼顾基础设施隔离与应用交付效率。</p>
+<h3 id="4-Docker-有哪几个核心组件？">4. Docker 有哪几个核心组件？</h3>
+<p>从使用链路看，主要包括：</p>
+<ul>
+<li>Docker Client：接收 <code>docker</code> 命令，通过 API 与服务端交互。</li>
+<li>Docker Daemon（<code>dockerd</code>）：管理镜像、容器、网络和卷。</li>
+<li><code>containerd</code>：负责容器生命周期、镜像内容和快照等底层管理。</li>
+<li>OCI Runtime（通常是 <code>runc</code>）：按照 OCI 规范创建容器进程并配置 namespace、cgroup。</li>
+<li>Registry：存储和分发镜像，例如 Docker Hub 或企业私有仓库。</li>
+</ul>
+<p>Docker Desktop、Compose、BuildKit 属于常用配套能力，但不等同于每次创建容器都必经的运行时组件。</p>
+<h2 id="镜像与-Dockerfile">镜像与 Dockerfile</h2>
+<h3 id="1-镜像和容器有什么区别？">1. 镜像和容器有什么区别？</h3>
+<p>镜像是只读的应用交付模板，包含文件系统内容、启动命令和环境变量等元数据；容器是镜像的一次运行实例。</p>
+<p>启动容器时，Docker 会在镜像只读层之上增加一个容器可写层。同一镜像可以创建多个相互独立的容器。删除容器后，它的可写层通常也会删除，因此需要长期保存的数据应放在卷或宿主机挂载目录中。</p>
+<h3 id="2-Docker-镜像的分层原理是什么？">2. Docker 镜像的分层原理是什么？</h3>
+<p>Docker 镜像由多个不可变层叠加组成，每层记录相对上一层的文件变化，并通过内容摘要寻址。不同镜像可以复用相同层，从而减少存储和传输开销。</p>
+<p>容器运行时在镜像层上增加可写层；修改下层文件时采用写时复制（Copy-on-Write），先把文件复制到上层再修改。需要注意，在新层里删除上一层的大文件并不会抹掉旧层中的数据，所以优化体积时应在同一个 <code>RUN</code> 中完成安装和缓存清理，或使用多阶段构建。</p>
+<h3 id="3-Dockerfile-常用指令有哪些？">3. Dockerfile 常用指令有哪些？</h3>
+<p>常用指令包括：</p>
+<ul>
+<li><code>FROM</code>：指定基础镜像并开始一个构建阶段。</li>
+<li><code>RUN</code>：在构建过程中执行命令。</li>
+<li><code>COPY</code>、<code>ADD</code>：向镜像加入文件。</li>
+<li><code>WORKDIR</code>：设置后续指令的工作目录。</li>
+<li><code>ENV</code>、<code>ARG</code>：分别设置运行时环境变量和构建参数。</li>
+<li><code>CMD</code>、<code>ENTRYPOINT</code>：定义容器默认启动行为。</li>
+<li><code>EXPOSE</code>：声明应用监听端口，但不会自动发布端口。</li>
+<li><code>USER</code>：指定后续构建指令和容器进程使用的用户。</li>
+<li><code>VOLUME</code>、<code>HEALTHCHECK</code>、<code>LABEL</code>：声明挂载点、健康检查和元数据。</li>
+</ul>
+<h3 id="4-Dockerfile-中-CMD-和-ENTRYPOINT-有什么区别？">4. Dockerfile 中 <code>CMD</code> 和 <code>ENTRYPOINT</code> 有什么区别？</h3>
+<p><code>ENTRYPOINT</code> 更适合定义容器固定执行的程序，<code>CMD</code> 更适合提供默认命令或默认参数。</p>
+<p>执行 <code>docker run image other-args</code> 时，镜像中的 <code>CMD</code> 会被命令行参数替换；exec 格式的 <code>ENTRYPOINT</code> 通常仍保留，命令行内容会作为它的参数。要替换 <code>ENTRYPOINT</code>，需要使用 <code>--entrypoint</code>。常见组合是：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;java&quot;</span>, <span class="hljs-string">&quot;-jar&quot;</span>, <span class="hljs-string">&quot;app.jar&quot;</span>]</span><br><span class="hljs-keyword">CMD</span><span class="language-bash"> [<span class="hljs-string">&quot;--spring.profiles.active=prod&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+<p>两者都建议优先使用 JSON 数组的 exec 格式，让主进程正确接收停止信号。</p>
+<h3 id="5-Dockerfile-中-COPY-和-ADD-有什么区别？">5. Dockerfile 中 <code>COPY</code> 和 <code>ADD</code> 有什么区别？</h3>
+<p>普通文件复制优先使用 <code>COPY</code>，因为语义更明确。<code>COPY</code> 可从构建上下文、其他构建阶段或镜像中复制文件；<code>ADD</code> 除了复制，还支持自动解压本地 tar 归档，并可获取 URL 或 Git 仓库等远程源。</p>
+<p>如果只是把项目文件放入镜像，使用 <code>COPY</code> 更容易预测。需要下载远程文件时，也常用 <code>RUN curl</code> 或 <code>RUN wget</code>，便于校验、解压和清理在同一层完成。</p>
+<h3 id="6-什么是多阶段构建（multi-stage-build）？有什么好处？">6. 什么是多阶段构建（multi-stage build）？有什么好处？</h3>
+<p>多阶段构建是在一个 Dockerfile 中使用多个 <code>FROM</code>，前面的阶段负责编译或测试，最终阶段只复制运行所需产物。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs dockerfile"><span class="hljs-keyword">FROM</span> golang:<span class="hljs-number">1.25</span> AS builder<br><span class="hljs-keyword">WORKDIR</span><span class="language-bash"> /src</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> . .</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> CGO_ENABLED=0 go build -o /app</span><br><br><span class="hljs-keyword">FROM</span> alpine:<span class="hljs-number">3.22</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> --from=builder /app /app</span><br><span class="hljs-keyword">ENTRYPOINT</span><span class="language-bash"> [<span class="hljs-string">&quot;/app&quot;</span>]</span><br></code></pre></td></tr></table></figure>
+<p>这样可以避免把编译器、源码和构建缓存带入最终镜像，通常能减小体积和攻击面，同时仍保留可重复的构建过程。</p>
+<h3 id="7-如何减小-Docker-镜像体积？">7. 如何减小 Docker 镜像体积？</h3>
+<p>我通常从最终镜像实际需要的内容入手，而不是只看指令数量：</p>
+<ul>
+<li>使用多阶段构建，只复制运行产物和必要依赖。</li>
+<li>选择合适的小型基础镜像，但要确认 libc、证书、时区和排障工具是否满足需求。</li>
+<li>使用 <code>.dockerignore</code> 排除 <code>.git</code>、日志、测试产物和本地依赖目录。</li>
+<li>在同一个 <code>RUN</code> 中安装依赖并清理包管理器缓存、临时文件。</li>
+<li>避免先复制整个项目再安装依赖，合理安排层次以复用构建缓存。</li>
+<li>用 <code>docker image history</code> 等工具定位体积较大的层。</li>
+</ul>
+<p>并不是基础镜像越小越好，还要综合兼容性、安全更新和可维护性。</p>
+<h3 id="8-docker-commit-和-docker-build-有什么区别？">8. <code>docker commit</code> 和 <code>docker build</code> 有什么区别？</h3>
+<p><code>docker commit</code> 是把某个容器当前的可写层和部分配置保存为镜像，适合临时取证、调试或保存现场，但过程难复现，而且挂载卷中的数据不会被提交。</p>
+<p><code>docker build</code> 根据 Dockerfile 和构建上下文生成镜像，过程可审查、可版本管理、可重复，更适合开发、测试和生产交付。因此正式镜像通常使用 Dockerfile 构建，而不依赖手工修改容器后再 <code>commit</code>。</p>
+<h2 id="容器存储与网络">容器存储与网络</h2>
+<h3 id="1-Docker-容器数据持久化有哪些方式？">1. Docker 容器数据持久化有哪些方式？</h3>
+<p>主要方式是 volume 和 bind mount：</p>
+<ul>
+<li>volume 由 Docker 管理路径和生命周期，迁移、备份及跨容器共享相对规范，通常是生产环境的首选。</li>
+<li>bind mount 把宿主机指定文件或目录挂进容器，路径直观，适合开发时挂载源码或配置，但与宿主机目录结构耦合。</li>
+<li><code>tmpfs</code> 只保存在宿主机内存中，容器停止后数据消失，适合敏感或临时数据，不属于持久化方案。</li>
+</ul>
+<p>容器可写层也能保存数据到容器被删除之前，但不适合作为可靠的持久化存储。</p>
+<h3 id="2-Docker-的网络模式有哪些？">2. Docker 的网络模式有哪些？</h3>
+<p>Docker Engine 常见网络驱动有：</p>
+<ul>
+<li><code>bridge</code>：单机容器最常用，用户自定义 bridge 支持容器名 DNS 解析。</li>
+<li><code>host</code>：容器直接共享宿主机网络命名空间，端口发布参数不再起隔离作用。</li>
+<li><code>none</code>：只保留回环接口，不配置外部网络。</li>
+<li><code>overlay</code>：用于多宿主机之间的容器或 Swarm 服务通信。</li>
+<li><code>macvlan</code>：给容器分配独立 MAC，使其像物理网络中的设备。</li>
+<li><code>ipvlan</code>：与 <code>macvlan</code> 类似，但共享父接口 MAC，可按二层或三层模式工作。</li>
+</ul>
+<p>此外还有仅与其他容器共享网络命名空间的 <code>container:&lt;容器&gt;</code> 用法。具体选择取决于是否跨主机、网络隔离、性能和现有网络环境。</p>
+<h3 id="3-同一个宿主机上的多个容器之间怎么通信？">3. 同一个宿主机上的多个容器之间怎么通信？</h3>
+<p>推荐把容器连接到同一个用户自定义 bridge 网络，然后通过容器名或网络别名访问，不要依赖可能变化的容器 IP。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker network create app-net<br>docker run -d --name db --network app-net mysql<br>docker run -d --name api --network app-net my-api<br></code></pre></td></tr></table></figure>
+<p>此时 <code>api</code> 可以用 <code>db:&lt;容器端口&gt;</code> 访问数据库。<code>-p</code> 是把端口发布给宿主机或外部访问，同一 Docker 网络内的容器通信通常不需要发布端口。若容器不在同一网络，也可以再用 <code>docker network connect</code> 接入。</p>
+<h2 id="Docker-Compose-与日常运维">Docker Compose 与日常运维</h2>
+<h3 id="1-Docker-Compose-是什么？什么场景用？">1. Docker Compose 是什么？什么场景用？</h3>
+<p>Docker Compose 用一个 YAML 文件声明多容器应用的服务、网络、卷和配置，再通过 <code>docker compose up</code>、<code>down</code> 等命令统一管理。</p>
+<p>它适合本地开发、自动化测试、演示环境以及单机上的多服务部署，例如同时启动 Web、数据库和缓存。它侧重多容器应用的定义与单机管理；涉及大规模跨节点调度、自动扩缩容和故障迁移时，通常使用 Kubernetes 等编排平台。</p>
+<h3 id="2-Docker-常用命令有哪些？">2. Docker 常用命令有哪些？</h3>
+<p>我常用的命令可以按对象分类：</p>
+<ul>
+<li>容器：<code>docker run</code>、<code>ps</code>、<code>start</code>、<code>stop</code>、<code>restart</code>、<code>rm</code>、<code>exec</code>、<code>logs</code>、<code>inspect</code>、<code>stats</code>。</li>
+<li>镜像：<code>docker build</code>、<code>pull</code>、<code>push</code>、<code>images</code>、<code>image rm</code>、<code>tag</code>、<code>history</code>。</li>
+<li>网络和存储：<code>docker network ls/inspect/create</code>、<code>docker volume ls/inspect/create</code>。</li>
+<li>Compose：<code>docker compose up -d</code>、<code>ps</code>、<code>logs</code>、<code>down</code>。</li>
+<li>排查和清理：<code>docker system df</code>、<code>docker system prune</code>。</li>
+</ul>
+<p>实际操作前，我会先用 <code>ps</code>、<code>inspect</code> 或 <code>system df</code> 确认对象和影响范围。</p>
+<h3 id="3-如何进入一个运行中的容器？">3. 如何进入一个运行中的容器？</h3>
+<p>通常使用 <code>docker exec</code> 在运行中的容器里启动一个新进程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker <span class="hljs-built_in">exec</span> -it &lt;container&gt; /bin/bash<br></code></pre></td></tr></table></figure>
+<p>精简镜像可能没有 Bash，可以改用 <code>/bin/sh</code>。<code>docker attach</code> 是连接容器原有主进程的标准输入输出，操作可能直接影响主进程，因此排查时一般优先使用 <code>exec</code>。</p>
+<h3 id="4-容器启动后立刻退出，怎么排查？">4. 容器启动后立刻退出，怎么排查？</h3>
+<p>容器是否存活取决于主进程，即 PID 1；主进程执行完成、崩溃或收到信号后，容器就会退出。我会按下面顺序排查：</p>
+<ol>
+<li>用 <code>docker ps -a</code> 查看状态和退出码。</li>
+<li>用 <code>docker logs &lt;container&gt;</code> 查看应用启动日志。</li>
+<li>用 <code>docker inspect &lt;container&gt;</code> 检查启动命令、环境变量、挂载、健康状态及 OOM 信息。</li>
+<li>核对 <code>ENTRYPOINT</code>、<code>CMD</code> 是否正确，程序是否以前台方式运行。</li>
+<li>检查配置、权限、端口、依赖服务和资源限制；退出码 <code>137</code> 常见于 <code>SIGKILL</code>，但仍要结合 OOM 状态和宿主机日志判断。</li>
+</ol>
+<p>必要时可以覆盖入口命令启动 shell，或用同一镜像创建临时调试容器复现问题。</p>
+<h3 id="5-docker-run-的常用参数有哪些？">5. <code>docker run</code> 的常用参数有哪些？</h3>
+<p>常用参数包括：</p>
+<ul>
+<li><code>-d</code>：后台运行；<code>-it</code>：分配终端并保持交互。</li>
+<li><code>--name</code>：指定容器名；<code>--rm</code>：退出后自动删除容器。</li>
+<li><code>-p 主机端口:容器端口</code>：发布端口。</li>
+<li><code>-v</code> 或 <code>--mount</code>：挂载 volume、目录或文件，复杂挂载更推荐语义清晰的 <code>--mount</code>。</li>
+<li><code>-e</code>、<code>--env-file</code>：传入环境变量。</li>
+<li><code>--network</code>：加入指定网络。</li>
+<li><code>--restart</code>：设置重启策略。</li>
+<li><code>--cpus</code>、<code>--memory</code>、<code>--pids-limit</code>：设置资源限制。</li>
+<li><code>--user</code>、<code>--read-only</code>、<code>--cap-drop</code>：收紧运行权限。</li>
+</ul>
+<p>参数应按应用需求设置，例如数据库通常需要持久化挂载，服务进程通常还要配置资源上限和重启策略。</p>
+<h3 id="6-如何清理-Docker-的无用镜像、容器和卷？">6. 如何清理 Docker 的无用镜像、容器和卷？</h3>
+<p>应先查看占用和待删除对象，再分类型清理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">docker system <span class="hljs-built_in">df</span><br>docker container prune<br>docker image prune -a<br>docker volume prune<br>docker network prune<br></code></pre></td></tr></table></figure>
+<p>也可以用 <code>docker system prune</code> 综合清理未使用对象；默认不会清理 volume，需要显式添加 <code>--volumes</code>。其中 <code>image prune -a</code> 会删除未被任何容器使用的镜像，而 <code>volume prune</code> 可能删除仍有业务数据但当前未挂载的卷，所以生产环境要先确认、备份，并可使用 <code>--filter</code> 缩小范围。</p>
+<h2 id="容器编排与生态">容器编排与生态</h2>
+<h3 id="1-Docker-和-Kubernetes-是什么关系？">1. Docker 和 Kubernetes 是什么关系？</h3>
+<p>Docker 主要解决镜像构建、分发和单机容器运行；Kubernetes 负责在集群中声明、调度和管理容器化应用，包括服务发现、滚动更新、自愈和扩缩容。</p>
+<p>Kubernetes 运行 Pod 时通过 CRI 对接 <code>containerd</code>、CRI-O 等容器运行时，并不要求安装 Docker Engine。Docker 构建出的 OCI 镜像仍然可以由 Kubernetes 使用。因此“移除 dockershim”不是 Kubernetes 不支持 Docker 镜像，而是取消了 kubelet 内置的 Docker Engine 适配层。</p>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+
+            
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Docker</div>
+      <div>https://yrkzbb.github.io/posts/77ad69c8c993/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/047aaed552f1/" title="消息队列">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">消息队列</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/c75727a26ca7/" title="Git">
+                        <span class="hidden-mobile">Git</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>

@@ -1,0 +1,1072 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <!-- Google Site Verification -->
+  <meta name="google-site-verification" content="9xWrChT2kQoJRUZVUqRA8m7yN2r9uDuONIVYE6HrTjA" />
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/yrk-avatar.jpg">
+  <link rel="icon" href="/img/yrk-avatar.jpg">
+  <link rel="alternate" type="application/rss+xml" title="yrk&#39;s Blog RSS" href="/rss.xml">
+  
+    <link rel="canonical" href="https://yrkzbb.github.io/posts/b1eff968feaa/"/>
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#bebebe">
+  <meta name="author" content="yrk">
+  <meta name="keywords" content="yrk,Blog,个人博客">
+  
+    <meta name="description" content="事务基础 1. ACID 靠什么保证？ 事务有原子性、一致性、隔离性和持久性，简称 ACID。在 InnoDB 中，它们不是由四种完全独立的技术一一实现的，而是由 undo log、redo log、MVCC、锁、数据库约束以及应用逻辑共同保证。  原子性（Atomicity）：事务中的操作要么全部成功，要么全部失败，不会只保留部分结果。InnoDB 修改数据时会生成 undo log，事务执行失">
+<meta property="og:type" content="article">
+<meta property="og:title" content="事务">
+<meta property="og:url" content="https://yrkzbb.github.io/posts/b1eff968feaa/index.html">
+<meta property="og:site_name" content="yrk&#39;s Blog">
+<meta property="og:description" content="事务基础 1. ACID 靠什么保证？ 事务有原子性、一致性、隔离性和持久性，简称 ACID。在 InnoDB 中，它们不是由四种完全独立的技术一一实现的，而是由 undo log、redo log、MVCC、锁、数据库约束以及应用逻辑共同保证。  原子性（Atomicity）：事务中的操作要么全部成功，要么全部失败，不会只保留部分结果。InnoDB 修改数据时会生成 undo log，事务执行失">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yrkzbb.github.io/img/defbj.webp">
+<meta property="article:published_time" content="2026-08-18T18:36:15.000Z">
+<meta property="article:modified_time" content="2026-08-26T07:03:16.343Z">
+<meta property="article:author" content="yrk">
+<meta property="article:tag" content="事务">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="MVCC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://yrkzbb.github.io/img/defbj.webp">
+  
+  
+  
+  <title>事务 - yrk&#39;s Blog</title>
+  
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"事务","description":"事务基础 1. ACID 靠什么保证？ 事务有原子性、一致性、隔离性和持久性，简称 ACID。在 InnoDB 中，它们不是由四种完全独立的技术一一实现的，而是由 undo log、redo log、MVCC、锁、数据库约束以及应用逻辑共同保证。  原子性（Atomicity）：事务中的操作要么全部成功，要么全部失败，不会只保留部分结果。InnoDB 修改数据时会生成 undo log，事务执行失","image":"https://yrkzbb.github.io/img/defbj.webp","datePublished":"2026-08-18T18:36:15.000Z","dateModified":"2026-08-26T07:03:16.343Z","author":{"@type":"Person","name":"yrk"},"publisher":{"@type":"Person","name":"yrk"},"mainEntityOfPage":"https://yrkzbb.github.io/posts/b1eff968feaa/"}</script>
+  
+
+  <link  rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="/vendor/github-markdown/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/hint/hint.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/fancybox/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="/vendor/katex/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scroll.css">
+<link rel="stylesheet" href="/css/test.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yrkzbb.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":7},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":true},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  <a class="skip-to-content" href="#main-content">跳到正文</a>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>yrk&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/insights/" target="_self">
+                <i class="iconfont icon-chart"></i>
+                <span>数据</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>连接</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/defbj.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="事务"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        yrk
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 02:36" pubdate>
+          2026年8月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5k 字
+        
+      </span>
+    
+
+    
+      
+      
+      
+      <span class="post-meta mr-2" data-reading-minutes="34">
+        <i class="iconfont icon-clock-fill"></i>
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    
+      
+
+<meta name="hexo-source" content="_posts/事务.md">
+<link rel="stylesheet" href="/css/admin-entry.css">
+<link rel="stylesheet" href="/css/inline-editor.css">
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col post-left-col d-none d-lg-block col-lg-2">
+      
+        <aside class="series-rail" aria-label="MySQL 系列学习导航">
+          <div class="series-rail-heading">
+            <a href="#series-title">MySQL 学习路线</a>
+            <span>4 / 34</span>
+          </div>
+          <div class="series-progress" role="progressbar" aria-label="全站文章发布位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="12">
+            <span style="width:12%"></span>
+          </div>
+          <nav aria-label="MySQL 系列目录">
+            
+              <a class="passed" href="/posts/17b7a6697a0b/" >
+                <small>01</small>
+                <strong>sql基础</strong>
+              </a>
+            
+              <a class="passed" href="/posts/1ea67698a54e/" >
+                <small>02</small>
+                <strong>存储引擎</strong>
+              </a>
+            
+              <a class="passed" href="/posts/858354479050/" >
+                <small>03</small>
+                <strong>索引</strong>
+              </a>
+            
+              <a class="current" href="#seo-header" aria-current="page">
+                <small>04</small>
+                <strong>事务</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/e02257c326a3/" >
+                <small>05</small>
+                <strong>锁</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/848e251bfd61/" >
+                <small>06</small>
+                <strong>日志</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/79e80f7c9bcc/" >
+                <small>07</small>
+                <strong>性能调优</strong>
+              </a>
+            
+              <a class="upcoming" href="/posts/cc31560638cf/" >
+                <small>08</small>
+                <strong>架构</strong>
+              </a>
+            
+          </nav>
+          <div class="series-rail-extra">
+            <div class="series-rail-section rail-terms" hidden>
+              <p>本文术语</p>
+              <div data-article-terms></div>
+            </div>
+            <label class="series-mastery">本篇掌握度
+              <select data-mastery aria-label="本篇掌握度">
+                <option value="unread">未学</option>
+                <option value="learning">在学</option>
+                <option value="mastered">已学</option>
+              </select>
+            </label>
+            <div class="series-rail-actions">
+              <button type="button" data-random-post>随机一篇</button>
+            </div>
+            <span class="series-rail-feedback" aria-live="polite"></span>
+          </div>
+        </aside>
+      
+      
+
+    </div>
+
+    <div class="post-main-col col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">事务</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="事务基础">事务基础</h2>
+<h3 id="1-ACID-靠什么保证？">1. ACID 靠什么保证？</h3>
+<p>事务有原子性、一致性、隔离性和持久性，简称 ACID。在 InnoDB 中，它们不是由四种完全独立的技术一一实现的，而是由 <code>undo log</code>、<code>redo log</code>、MVCC、锁、数据库约束以及应用逻辑共同保证。</p>
+<ol>
+<li><strong>原子性（Atomicity）</strong>：事务中的操作要么全部成功，要么全部失败，不会只保留部分结果。InnoDB 修改数据时会生成 <code>undo log</code>，事务执行失败或显式执行 <code>ROLLBACK</code> 时，可以利用它撤销已完成的修改。</li>
+<li><strong>一致性（Consistency）</strong>：事务执行前后，数据都要满足完整性约束和业务规则。例如 A 向 B 转账 200 元，不考虑手续费时，两个账户的总额应保持不变。一致性是最终目标，它依赖其他三个特性、主键和外键等数据库约束，也依赖正确的应用逻辑，不是由某一种日志单独保证的。</li>
+<li><strong>隔离性（Isolation）</strong>：并发事务按照隔离级别的要求隔离，一个事务不应看到其他事务不该暴露的中间状态。InnoDB 主要通过 MVCC 和锁实现：普通 <code>SELECT</code> 通常采用 MVCC 快照读，当前读和写操作则会使用记录锁、间隙锁或 Next-Key Lock 等机制处理并发冲突。</li>
+<li><strong>持久性（Durability）</strong>：事务提交后，其结果在数据库崩溃后仍然可以恢复。InnoDB 采用 WAL（Write-Ahead Logging），先将相关 <code>redo log</code> 按配置写入并刷到持久化存储，数据页可以稍后刷盘；崩溃后通过 <code>redo log</code> 重做已提交修改。</li>
+</ol>
+<p>以转账为例，扣款和加款必须放在同一个事务中：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">START</span> TRANSACTION;<br><span class="hljs-keyword">UPDATE</span> account <span class="hljs-keyword">SET</span> balance <span class="hljs-operator">=</span> balance <span class="hljs-operator">-</span> <span class="hljs-number">200</span> <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1</span>;<br><span class="hljs-keyword">UPDATE</span> account <span class="hljs-keyword">SET</span> balance <span class="hljs-operator">=</span> balance <span class="hljs-operator">+</span> <span class="hljs-number">200</span> <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">2</span>;<br><span class="hljs-keyword">COMMIT</span>;<br></code></pre></td></tr></table></figure>
+<p>如果第二条 <code>UPDATE</code> 失败，应执行 <code>ROLLBACK</code>，不能提交只扣款的中间状态。实际开发中还要校验账户是否存在、余额是否足够、受影响行数是否正确，并处理死锁重试。</p>
+<h3 id="2-一条-UPDATE-语句是原子性的吗？为什么？">2. 一条 <code>UPDATE</code> 语句是原子性的吗？为什么？</h3>
+<p>对于 InnoDB 等支持事务的存储引擎，单条 <code>UPDATE</code> 语句具有语句级原子性：它对目标行的修改要么全部成功，要么语句失败并撤销该语句已完成的修改，不会只更新其中一部分行后就正常结束。即使开启了自动提交，单条 <code>UPDATE</code> 也会作为一个事务执行；InnoDB 利用 <code>undo log</code> 支持语句回滚。</p>
+<p>例如，下面的扣库存是一次原子的“检查并扣减”操作：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">UPDATE</span> product<br><span class="hljs-keyword">SET</span> stock <span class="hljs-operator">=</span> stock <span class="hljs-operator">-</span> <span class="hljs-number">1</span><br><span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1001</span> <span class="hljs-keyword">AND</span> stock <span class="hljs-operator">&gt;</span> <span class="hljs-number">0</span>;<br></code></pre></td></tr></table></figure>
+<p>即使多个事务并发执行，InnoDB 也会对相同记录的修改进行冲突检查和加锁。应用程序还需检查受影响行数：为 <code>1</code> 表示扣减成功，为 <code>0</code> 则可能是库存不足或商品不存在。</p>
+<p>这里要区分两种机制的职责：<code>undo log</code> 和事务回滚机制主要保证原子性；行锁主要处理并发写冲突、保证隔离性。不能把“加了行锁”直接等同于“实现了原子性”。</p>
+<p>但单条 SQL 的原子性不等于整段业务逻辑的原子性。如果业务是先 <code>SELECT</code> 读取库存，再在应用中计算，最后执行 <code>UPDATE product SET stock = 新值</code>，这是多个操作，并发时仍可能丢失更新。多条 SQL 要作为一个整体成功或失败，必须放在同一个显式事务中。如果表使用 MyISAM 等非事务存储引擎，也不能按 InnoDB 的事务回滚能力理解。</p>
+<h3 id="3-事务的基本特性是什么？">3. 事务的基本特性是什么？</h3>
+<p>事务的基本特性是 ACID：原子性表示操作要么全部成功、要么全部回滚；一致性表示事务前后数据满足约束和业务规则；隔离性表示并发事务之间按规则隔离；持久性表示提交结果在崩溃后仍能恢复。</p>
+<h2 id="事务并发问题">事务并发问题</h2>
+<h3 id="1-MySQL-可能出现哪些和并发相关的问题？">1. MySQL 可能出现哪些和并发相关的问题？</h3>
+<p>MySQL 同时执行多个事务时，典型的并发读异常有脏读、不可重复读和幻读；更广义的并发问题还包括丢失更新、锁等待和死锁。</p>
+<ol>
+<li><strong>脏读（Dirty Read）</strong>：一个事务读到了另一个事务尚未提交的数据。如果后者回滚，前者读到的就是从未真正生效的数据。</li>
+<li><strong>不可重复读（Non-repeatable Read）</strong>：同一事务中两次读取同一行，期间另一事务修改或删除该行并提交，导致两次读取结果不同。</li>
+<li><strong>幻读（Phantom Read）</strong>：同一事务两次按相同条件查询一个范围，期间另一事务插入或删除了符合条件的记录并提交，导致前后读到的记录集不同。它和不可重复读的核心区别是：前者关注符合条件的记录集发生变化，后者关注同一行的值发生变化。</li>
+<li><strong>丢失更新（Lost Update）</strong>：两个事务都基于旧值计算新值，后提交的结果覆盖先提交的结果，使其中一次更新丢失。可以根据场景使用原子 <code>UPDATE</code>、<code>SELECT ... FOR UPDATE</code> 悲观锁，或带版本号条件的乐观锁避免。</li>
+<li><strong>锁等待和死锁</strong>：并发事务修改相同资源时可能互相阻塞；若多个事务循环等待对方持有的锁，就会死锁。InnoDB 检测到死锁后会选择一个事务回滚，应用程序需要捕获错误并在合理范围内重试。</li>
+</ol>
+<p>隔离级别越高，能避免的读异常通常越多，但并发性和锁成本也可能增加。InnoDB 在 <code>REPEATABLE READ</code> 下，普通快照读通过 MVCC 使用一致性视图，当前读则会结合 Next-Key Lock 等锁机制防止范围内被并发插入。不过，调高隔离级别不能代替正确的更新语句、锁顺序和重试机制。</p>
+<h3 id="2-哪些场景不适合脏读，举个例子？">2. 哪些场景不适合脏读，举个例子？</h3>
+<p>凡是业务判断必须基于已确认数据的场景，都不能接受脏读，例如资金结算、订单支付、库存扣减、权限校验、计费和审计。因为未提交数据随时可能回滚，如果用它继续做业务决策，就可能产生无法自动撤销的外部后果。</p>
+<p>例如，事务 A 将订单状态从“未支付”改成“已支付”，但还没有提交；事务 B 如果脏读到“已支付”，就可能触发发货：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">事务 A：UPDATE orders SET status = &#x27;已支付&#x27; WHERE id = 1001;<br>事务 B：读到“已支付”，通知仓库发货<br>事务 A：ROLLBACK;<br></code></pre></td></tr></table></figure>
+<p>最终数据库中订单仍是“未支付”，但商品已经发出，造成业务不一致。</p>
+<p>在 InnoDB 中，脏读只可能出现在 <code>READ UNCOMMITTED</code> 隔离级别；<code>READ COMMITTED</code>、<code>REPEATABLE READ</code> 和 <code>SERIALIZABLE</code> 都不允许脏读。即使是报表或监控等容许近似结果的场景，通常也更适合读取已提交的数据，而不是依赖脏读换取性能。</p>
+<h3 id="3-MySQL-是怎么解决并发问题的？">3. MySQL 是怎么解决并发问题的？</h3>
+<p>以常用的 InnoDB 为例，MySQL 主要通过事务隔离级别、MVCC 和锁机制控制并发，再配合死锁检测和应用层重试保证正确性。</p>
+<ol>
+<li><strong>事务隔离级别</strong>：MySQL 支持 <code>READ UNCOMMITTED</code>、<code>READ COMMITTED</code>、<code>REPEATABLE READ</code> 和 <code>SERIALIZABLE</code>。隔离级别规定了一个事务能看到其他事务的哪些修改，用于限制脏读、不可重复读和幻读等异常。隔离级别越高，通常限制越强，但也可能增加锁竞争和等待。</li>
+<li><strong>MVCC</strong>：对普通 <code>SELECT</code> 的快照读，InnoDB 通过事务 ID、<code>undo log</code> 中的历史版本和 Read View 判断哪些记录版本可见。这样读操作通常无需加行锁，可以减少读写互相阻塞。</li>
+<li><strong>锁机制</strong>：<code>UPDATE</code>、<code>DELETE</code> 以及 <code>SELECT ... FOR UPDATE</code> 等当前读需要读取最新数据并加锁。InnoDB 会根据查询条件和索引使用记录锁、间隙锁或 Next-Key Lock，防止相同记录被冲突修改，并在需要时防止范围内出现新记录。</li>
+<li><strong>死锁检测和超时</strong>：并发事务如果循环等待锁，InnoDB 通常会检测死锁并回滚其中一个事务；普通锁等待超过配置时间后也会报错。应用程序要能够捕获这些错误并重试完整事务。</li>
+</ol>
+<p>所以，MySQL 解决并发问题的核心思路是：快照读尽量通过 MVCC 提高读写并发性，对必须串行化的冲突操作加锁，再由应用层处理业务条件、死锁重试和乐观冲突。</p>
+<h3 id="4-事务的隔离级别有哪些？">4. 事务的隔离级别有哪些？</h3>
+<p>SQL 标准定义了四种事务隔离级别，MySQL InnoDB 也支持这四种。从低到高分别是 <code>READ UNCOMMITTED</code>、<code>READ COMMITTED</code>、<code>REPEATABLE READ</code> 和 <code>SERIALIZABLE</code>。</p>
+<ol>
+<li><strong><code>READ UNCOMMITTED</code>（读未提交）</strong>：一个事务可以读到其他事务未提交的修改，因此可能出现脏读、不可重复读和幻读，隔离性最弱。</li>
+<li><strong><code>READ COMMITTED</code>（读已提交）</strong>：只能读到已提交的数据，所以不会脏读。InnoDB 在该级别下，每次快照读通常都会生成新的 Read View，因此同一事务的两次查询可能看到不同的已提交结果，仍可能出现不可重复读和幻读。</li>
+<li><strong><code>REPEATABLE READ</code>（可重复读）</strong>：保证同一事务中多次快照读看到一致的数据视图，可以避免脏读和不可重复读。按 SQL 标准，该级别仍允许幻读；但 InnoDB 的快照读通过 MVCC 的一致性视图避免常见幻读，当前读则通过 Next-Key Lock 等机制防止锁定范围内的并发插入。这是 InnoDB 的默认隔离级别。</li>
+<li><strong><code>SERIALIZABLE</code>（串行化）</strong>：隔离性最强，使并发事务的效果接近串行执行，可以避免脏读、不可重复读和幻读。但是它会增加锁等待和冲突，并发性通常最低。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>READ UNCOMMITTED</code></td>
+<td>可能</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td><code>READ COMMITTED</code></td>
+<td>不会</td>
+<td>可能</td>
+<td>可能</td>
+</tr>
+<tr>
+<td><code>REPEATABLE READ</code></td>
+<td>不会</td>
+<td>不会</td>
+<td>可能</td>
+</tr>
+<tr>
+<td><code>SERIALIZABLE</code></td>
+<td>不会</td>
+<td>不会</td>
+<td>不会</td>
+</tr>
+</tbody>
+</table>
+<p>隔离级别不是越高越好，需要在一致性和并发性之间权衡。而且，调高隔离级别不一定能自动解决所有业务并发问题，例如库存超卖和丢失更新仍需要正确的原子更新、悲观锁或乐观锁。</p>
+<h3 id="5-可重复读隔离级别下，A-事务提交的数据，在-B-事务中能看见吗？">5. 可重复读隔离级别下，A 事务提交的数据，在 B 事务中能看见吗？</h3>
+<p>不一定，需要看 B 事务的 Read View 何时建立，以及 B 执行的是快照读还是当前读。</p>
+<ol>
+<li><strong>B 的 Read View 在 A 提交前已经建立</strong>：B 后续执行普通 <code>SELECT</code> 快照读时，仍使用同一个 Read View，因此看不到 A 后来提交的修改。这正是“可重复读”的含义。</li>
+<li><strong>A 提交后，B 才建立第一个 Read View</strong>：B 的普通 <code>SELECT</code> 可以看到 A 已提交的数据。在 InnoDB 的 <code>REPEATABLE READ</code> 下，仅执行 <code>START TRANSACTION</code> 通常不会立即建立 Read View，它一般在第一次快照读时建立；使用 <code>START TRANSACTION WITH CONSISTENT SNAPSHOT</code> 则会在启动事务时建立一致性快照。</li>
+<li><strong>B 执行当前读</strong>：<code>SELECT ... FOR UPDATE</code>、<code>SELECT ... FOR SHARE</code>、<code>UPDATE</code> 和 <code>DELETE</code> 需要读取最新的已提交版本，不使用旧的快照结果。因此 A 提交后，B 的当前读通常能看到 A 的修改；如果 A 尚未提交且持有冲突锁，B 可能需要等待。</li>
+</ol>
+<p>例如，B 先建立快照，然后 A 修改并提交：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 事务 B</span><br><span class="hljs-keyword">START</span> TRANSACTION;<br><span class="hljs-keyword">SELECT</span> balance <span class="hljs-keyword">FROM</span> account <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; <span class="hljs-comment">-- 建立 Read View，读到 100</span><br><br><span class="hljs-comment">-- 事务 A</span><br><span class="hljs-keyword">UPDATE</span> account <span class="hljs-keyword">SET</span> balance <span class="hljs-operator">=</span> <span class="hljs-number">200</span> <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1</span>;<br><span class="hljs-keyword">COMMIT</span>;<br><br><span class="hljs-comment">-- 事务 B</span><br><span class="hljs-keyword">SELECT</span> balance <span class="hljs-keyword">FROM</span> account <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1</span>;            <span class="hljs-comment">-- 快照读，仍读到 100</span><br><span class="hljs-keyword">SELECT</span> balance <span class="hljs-keyword">FROM</span> account <span class="hljs-keyword">WHERE</span> id <span class="hljs-operator">=</span> <span class="hljs-number">1</span> <span class="hljs-keyword">FOR</span> <span class="hljs-keyword">UPDATE</span>; <span class="hljs-comment">-- 当前读，读到 200</span><br></code></pre></td></tr></table></figure>
+<p>普通快照读由 Read View 决定可见性，当前读则读取最新已提交数据。</p>
+<h3 id="6-举个例子说明可重复读隔离级别下的幻读问题？">6. 举个例子说明可重复读隔离级别下的幻读问题？</h3>
+<p>按 SQL 标准，<code>REPEATABLE READ</code> 保证同一行被重复读取时值不变，但不要求锁定查询条件对应的整个范围，所以其他事务可能插入新的符合条件的记录。</p>
+<p>例如，事务 B 查询价格在 100 到 200 元的商品，第一次查到 2 条；事务 A 随后插入一件价格为 150 元的商品并提交；如果 B 再次执行相同范围查询时得到 3 条，多出来的记录就是“幻行”：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- 事务 B：第一次查询返回 2 条</span><br><span class="hljs-keyword">START</span> TRANSACTION;<br><span class="hljs-keyword">SELECT</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">FROM</span> product <span class="hljs-keyword">WHERE</span> price <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">100</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">200</span>;<br><br><span class="hljs-comment">-- 事务 A：插入一条符合条件的记录</span><br><span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> product(id, price) <span class="hljs-keyword">VALUES</span> (<span class="hljs-number">10</span>, <span class="hljs-number">150</span>);<br><span class="hljs-keyword">COMMIT</span>;<br><br><span class="hljs-comment">-- 事务 B：若再次查询返回 3 条，就发生了幻读</span><br><span class="hljs-keyword">SELECT</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">FROM</span> product <span class="hljs-keyword">WHERE</span> price <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">100</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">200</span>;<br></code></pre></td></tr></table></figure>
+<p>但在 MySQL InnoDB 的 <code>REPEATABLE READ</code> 下，上面两次都是普通 <code>SELECT</code> 时，B 会通过 MVCC 使用同一个 Read View，第二次通常仍然只看到 2 条，因此不会出现这种经典幻读。</p>
+<p>如果 B 的第二次查询改为当前读，情况就不同：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-operator">*</span><br><span class="hljs-keyword">FROM</span> product<br><span class="hljs-keyword">WHERE</span> price <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">100</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">200</span><br><span class="hljs-keyword">FOR</span> <span class="hljs-keyword">UPDATE</span>;<br></code></pre></td></tr></table></figure>
+<p>这条语句会读取最新已提交数据，因此可能看到 A 新插入的记录。这是同一事务混用快照读和当前读导致的可见性差异，常被通俗地称为“幻读”，但严格来说，它不是两次同类快照读之间的经典幻读。</p>
+<p>如果 B 一开始就使用 <code>SELECT ... FOR UPDATE</code> 做范围查询，并且 <code>price</code> 上有合适的索引，InnoDB 在 <code>REPEATABLE READ</code> 下通常会使用 Next-Key Lock 锁住相关索引范围，A 的插入就会被阻塞，从而防止幻行出现。</p>
+<h3 id="7-MySQL-默认的事务隔离级别是什么？">7. MySQL 默认的事务隔离级别是什么？</h3>
+<p>MySQL InnoDB 的默认事务隔离级别是 <code>REPEATABLE READ</code>，也就是可重复读。在该级别下，普通快照读通过 MVCC 和 Read View 保证同一事务内多次读取的数据视图一致；当前读则会结合记录锁、间隙锁或 Next-Key Lock 处理并发冲突。</p>
+<p>可以查看当前会话的实际隔离级别：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> @<span class="hljs-variable">@SESSION</span>.transaction_isolation;<br></code></pre></td></tr></table></figure>
+<p>8. MySQL 设置了可重复读隔离级别后，怎么保证不发生幻读？</p>
+<p>InnoDB 在 <code>REPEATABLE READ</code> 下不是只用一种机制防止幻读，而是分快照读和当前读处理：快照读依靠 MVCC 的一致性视图，当前读依靠 Next-Key Lock 等锁机制。如果业务要求“查询某个范围后继续修改，并保证期间不能插入新记录”，应从第一次查询开始使用 <code>SELECT ... FOR UPDATE</code> 等锁定读，而不是先做普通 <code>SELECT</code>。</p>
+<ol>
+<li><strong>快照读</strong>：普通 <code>SELECT</code> 首次建立 Read View 后，后续快照读通常复用同一个视图。其他事务后来插入并提交的记录对该视图不可见，因此前后两次相同范围的快照读不会凭空多出“幻行”。</li>
+<li><strong>当前读</strong>：<code>SELECT ... FOR UPDATE</code>、<code>UPDATE</code> 和 <code>DELETE</code> 等需要读取最新数据。对范围查询，InnoDB 会根据扫描的索引范围使用 Next-Key Lock，它相当于记录锁加间隙锁，既锁住已有索引记录，也阻止其他事务向相关索引间隙插入新记录。</li>
+</ol>
+<p>例如：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">SELECT</span> <span class="hljs-operator">*</span><br><span class="hljs-keyword">FROM</span> product<br><span class="hljs-keyword">WHERE</span> price <span class="hljs-keyword">BETWEEN</span> <span class="hljs-number">100</span> <span class="hljs-keyword">AND</span> <span class="hljs-number">200</span><br><span class="hljs-keyword">FOR</span> <span class="hljs-keyword">UPDATE</span>;<br></code></pre></td></tr></table></figure>
+<p>该语句在 <code>price</code> 索引上锁定相关范围后，其他事务向该范围插入新索引值时通常需要等待。锁的具体范围取决于索引、查询条件和执行计划，缺少合适索引还可能导致扫描和锁定的范围过大。</p>
+<p>需要注意，如果同一事务混用快照读和当前读，两者由于可见性规则不同，查询结果仍可能不同；事务对自己执行的修改也可见。所以不能把“InnoDB 在可重复读下解决幻读”理解为任意语句组合的查询结果都永远相同。面试时更准确的结论是：一致的快照读通过 MVCC 避免经典幻读，需要约束并发插入的业务流程则通过锁定读和 Next-Key Lock 保证。</p>
+<h3 id="9-SERIALIZABLE-串行化隔离级别是通过什么实现的？">9. <code>SERIALIZABLE</code> 串行化隔离级别是通过什么实现的？</h3>
+<p>InnoDB 的 <code>SERIALIZABLE</code> 主要通过更严格的加锁读和锁冲突规则，使并发事务的最终效果等价于某种串行执行顺序。它不是把整个 MySQL 变成单线程，没有冲突的事务仍然可以并发执行。</p>
+<p>在显式事务中，InnoDB 会将普通 <code>SELECT</code> 按加共享锁的读来处理，效果类似 <code>SELECT ... FOR SHARE</code>；<code>UPDATE</code>、<code>DELETE</code> 等写操作需要排他锁。对范围访问，还会结合间隙锁或 Next-Key Lock 阻止其他事务插入会改变查询结果的记录。</p>
+<p>有一个容易忽略的例外：当 <code>autocommit=1</code> 时，每条普通 <code>SELECT</code> 本身就是独立事务，InnoDB 可以采用一致性非锁定读。要让多条语句共同获得串行化隔离，应把它们放入同一个显式事务。</p>
+<p>共享锁之间可以兼容，但共享锁与排他锁、排他锁与排他锁之间会发生冲突。冲突事务需要等待对方提交或回滚，如果形成循环等待，InnoDB 会通过死锁检测回滚其中一个事务。因此 <code>SERIALIZABLE</code> 能提供最强的隔离性，但容易带来更多锁等待、死锁和更低的并发能力。</p>
+<h2 id="MVCC">MVCC</h2>
+<h3 id="1-什么是-MVCC？它是如何实现的？">1. 什么是 MVCC？它是如何实现的？</h3>
+<p>MVCC 是多版本并发控制。它的核心思路是为同一行数据保留可追溯的历史版本，并根据当前事务的 Read View 决定哪个版本可见。这使普通查询可以读取合适的数据版本，而不必和写事务相互阻塞。</p>
+<p>InnoDB 的实现主要包括以下几部分：</p>
+<ol>
+<li><strong>隐藏列</strong>：InnoDB 记录中包含创建或最后修改该版本的事务 ID，以及指向对应 undo 记录的回滚指针。如果表没有合适的主键或唯一非空索引，InnoDB 还会生成隐藏行 ID 用作聚簇索引键。</li>
+<li><strong><code>undo log</code> 版本链</strong>：更新记录前，InnoDB 会在 <code>undo log</code> 中保留能够构造旧版本的信息。新版本通过回滚指针连向更旧版本，形成版本链。</li>
+<li><strong>Read View</strong>：Read View 会记录创建快照时活跃的读写事务集合和相关事务 ID 边界。查询某行时，InnoDB 将该行版本的事务 ID 与 Read View 比较：如果版本对当前事务可见，就直接返回；否则沿 <code>undo log</code> 版本链向前查找，直到找到可见版本或确认该行不可见。</li>
+</ol>
+<p><code>READ COMMITTED</code> 和 <code>REPEATABLE READ</code> 的重要区别就在 Read View 的创建时机：<code>READ COMMITTED</code> 下每次快照读通常创建新的 Read View，所以可以看到其他事务刚提交的数据；<code>REPEATABLE READ</code> 下一个事务的多次快照读通常复用首次建立的 Read View，所以能保持可重复读。</p>
+<p>MVCC 主要服务于普通 <code>SELECT</code> 快照读。<code>UPDATE</code>、<code>DELETE</code> 和 <code>SELECT ... FOR UPDATE</code> 等当前读需要获取最新已提交版本并加锁，不能只靠 MVCC 解决写冲突。</p>
+<h2 id="事务实践与优化">事务实践与优化</h2>
+<h3 id="1-滥用事务，或者一个事务里有特别多-SQL，有什么弊端？">1. 滥用事务，或者一个事务里有特别多 SQL，有什么弊端？</h3>
+<p>事务不是越大越安全。一个事务包含过多 SQL 或长时间不提交，会扩大锁、日志、版本保留和失败回滚的成本，典型问题有：</p>
+<ol>
+<li><strong>锁持有时间变长</strong>：事务持有的行锁、间隙锁和元数据锁通常要到提交或回滚后才释放。长事务会导致其他请求长时间等待，增加超时和死锁概率，也可能阻塞 <code>ALTER TABLE</code> 等 DDL。</li>
+<li><strong>阻碍 undo 清理</strong>：长时间存活的 Read View 可能使旧版本暂时不能被 purge，导致 <code>undo log</code> 和历史版本堆积，增加存储与 MVCC 查找成本。</li>
+<li><strong>日志和资源压力增大</strong>：大量修改会产生更多 <code>undo log</code>、<code>redo log</code> 和 binlog，占用 Buffer Pool、磁盘和 I/O 带宽，也会让单个大事务在复制端的应用时间变长，可能增加复制延迟。</li>
+<li><strong>失败和回滚成本高</strong>：事务越大，在末尾遇到错误、死锁或连接中断时，需要撤销的工作越多，回滚可能花费很长时间，重试代价也更高。</li>
+<li><strong>事务占用连接更久</strong>：如果在事务中执行远程调用、文件 I/O、人工交互或长时间计算，会同时占用数据库连接和锁，降低连接池吞吐量。</li>
+</ol>
+
+                
+              </div>
+            
+
+            <div class="post-excerpt-entry">
+              <button type="button" data-article-excerpts>本篇摘录 <span data-article-excerpt-count>0</span></button>
+            </div>
+
+            
+            
+              <section class="knowledge-series" aria-labelledby="series-title">
+                <div class="series-heading">
+                  <div><small>学习路线</small><h2 id="series-title">MySQL 系列</h2></div>
+                  <strong>4 / 8</strong>
+                </div>
+                <div class="series-progress" role="progressbar" aria-label="MySQL 系列学习进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span style="width:50%"></span></div>
+                <ol>
+                  
+                    <li class="completed">
+                      <a href="/posts/17b7a6697a0b/" ><span>1</span>sql基础</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/1ea67698a54e/" ><span>2</span>存储引擎</a>
+                    </li>
+                  
+                    <li class="completed">
+                      <a href="/posts/858354479050/" ><span>3</span>索引</a>
+                    </li>
+                  
+                    <li class="current">
+                      <a href="/posts/b1eff968feaa/" aria-current="page"><span>4</span>事务</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/e02257c326a3/" ><span>5</span>锁</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/848e251bfd61/" ><span>6</span>日志</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/79e80f7c9bcc/" ><span>7</span>性能调优</a>
+                    </li>
+                  
+                    <li class="">
+                      <a href="/posts/cc31560638cf/" ><span>8</span>架构</a>
+                    </li>
+                  
+                </ol>
+              </section>
+            
+
+            
+            
+              <section class="related-posts" aria-labelledby="related-title">
+                <h2 id="related-title">继续探索</h2>
+                <div class="related-post-grid">
+                  
+                    <a href="/posts/09b3554eab36/"><strong>redis事务</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/cc31560638cf/"><strong>架构</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/79e80f7c9bcc/"><strong>性能调优</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/848e251bfd61/"><strong>日志</strong><small>数据库</small></a>
+                  
+                    <a href="/posts/e02257c326a3/"><strong>锁</strong><small>数据库</small></a>
+                  
+                </div>
+                <div class="discovery-actions"><button type="button" data-continue-reading>继续上次阅读</button><button type="button" data-random-post>随机文章</button></div>
+              </section>
+            
+
+            
+            
+              <details class="post-changelog">
+                <summary>文章更新记录（1）</summary>
+                <ol>
+                  <li><time>2026-08-26</time><span>docs: add async task lifecycle design</span></li>
+                </ol>
+              </details>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="category-chain-item">数据库</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E4%BA%8B%E5%8A%A1/" class="print-no-link">#事务</a>
+      
+        <a href="/tags/MySQL/" class="print-no-link">#MySQL</a>
+      
+        <a href="/tags/MVCC/" class="print-no-link">#MVCC</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>事务</div>
+      <div>https://yrkzbb.github.io/posts/b1eff968feaa/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>yrk</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/posts/e02257c326a3/" title="锁">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">锁</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/posts/858354479050/" title="索引">
+                        <span class="hidden-mobile">索引</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"yrkzbb/yrkzbb.github.io","repo-id":"R_kgDOT8TYVw","category":"General","category-id":"DIC_kwDOT8TYV84DECTB","theme-light":"light","theme-dark":"dark","mapping":"pathname","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col post-right-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+<script defer src="/js/post-editor-link.js"></script>
+
+    
+
+    
+      <a id="scroll-top-button" class="post-scroll-top" aria-label="回到顶部" title="回到顶部" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> content: <div> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="/vendor/nprogress/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="/vendor/nprogress/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="/vendor/jquery/jquery.min.js" ></script>
+<script  src="/vendor/bootstrap/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="/vendor/typed/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/tocbot/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=/vendor/clipboard/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/anchor/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('/vendor/fancybox/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/dynamic-line.js"></script>
+<script src="/js/reading-enhancements.js"></script>
+<script src="/js/knowledge-ui.js"></script>
+<script src="/js/article-workbench.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"react":{"opacity":0.7},"log":false});</script></body>
+</html>
