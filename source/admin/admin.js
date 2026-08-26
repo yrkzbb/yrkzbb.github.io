@@ -378,6 +378,14 @@
 
   async function uploadImage(file) {
     if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      toast("请选择图片文件");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast("图片不能超过 10 MB");
+      return;
+    }
     const ext = (file.name.split(".").pop() || "png").toLowerCase();
     const name = `${Date.now()}-${slugify(file.name.replace(/\.[^.]+$/, ""))}.${ext}`;
     const bytes = new Uint8Array(await file.arrayBuffer());
@@ -392,10 +400,12 @@
           branch: config.branch,
         }),
       });
-      const snippet = `![${file.name}](/img/posts/${name})`;
+      const alt = file.name.replace(/\.[^.]+$/, "") || "文章图片";
+      const snippet = `![${alt}](/img/posts/${name})`;
       const start = els.body.selectionStart;
       els.body.setRangeText(snippet, start, els.body.selectionEnd, "end");
       setDirty(true);
+      els.body.focus();
       toast("图片已上传并插入文章");
     } catch (error) {
       toast(error.message);
@@ -439,7 +449,10 @@
   els.save.onclick = savePost;
   $("deleteButton").onclick = deletePost;
   els.search.oninput = renderPosts;
-  els.image.onchange = () => uploadImage(els.image.files[0]);
+  els.image.onchange = async () => {
+    await uploadImage(els.image.files[0]);
+    els.image.value = "";
+  };
   [els.title, els.slug, els.date, els.categories, els.tags, els.body].forEach(
     (el) => el.addEventListener("input", () => setDirty(true)),
   );

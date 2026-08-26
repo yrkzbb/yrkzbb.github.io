@@ -276,34 +276,6 @@
     };
   });
 
-  // 段落勘误
-  article.querySelectorAll("p").forEach(function (paragraph, index) {
-    if (paragraph.closest("blockquote, .note")) return;
-    var report = document.createElement("button");
-    report.type = "button";
-    report.className = "paragraph-report";
-    report.textContent = "勘误";
-    report.setAttribute("aria-label", "反馈第 " + (index + 1) + " 段的问题");
-    report.onclick = function () {
-      var title =
-        "文章勘误：" + document.querySelector("#seo-header").textContent.trim();
-      var excerpt = paragraph.textContent.trim().slice(0, 160);
-      var url =
-        "https://github.com/yrkzbb/yrkzbb.github.io/issues/new?title=" +
-        encodeURIComponent(title) +
-        "&body=" +
-        encodeURIComponent(
-          "文章：" +
-            location.href +
-            "\n\n相关段落：\n> " +
-            excerpt +
-            "\n\n问题描述：\n",
-        );
-      window.open(url, "_blank", "noopener");
-    };
-    paragraph.appendChild(report);
-  });
-
   // 阅读主题与 PDF 导出
   var palettes = {
     default: {
@@ -588,7 +560,7 @@
     var content = article.cloneNode(true);
     content
       .querySelectorAll(
-        ".heading-anchor-copy, .paragraph-report, .article-table-tools, .copy-btn, .code-widget, .article-reactions",
+        ".heading-anchor-copy, .article-table-tools, .copy-btn, .code-widget, .article-reactions",
       )
       .forEach(function (node) {
         node.remove();

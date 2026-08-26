@@ -15,8 +15,6 @@ for (const file of files) {
     errors.push(`${file}: 包含异常空锚点链接`);
   if (/^#{1,6}\s+.*#\s*$/m.test(content))
     errors.push(`${file}: 标题末尾包含疑似误存的锚点符号 #`);
-  if (/(^|\s)勘误\s*$/m.test(content))
-    errors.push(`${file}: 包含疑似误存的“勘误”按钮文本`);
   const fences = (content.match(/^```/gm) || []).length;
   if (fences % 2 !== 0) errors.push(`${file}: 代码围栏未成对闭合`);
   const frontMatter = content.match(/^---\s*\n([\s\S]*?)\n---/);

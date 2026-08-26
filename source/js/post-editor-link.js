@@ -3,7 +3,12 @@
   var article = document.querySelector(".post-content .markdown-body");
   var sourceMeta = document.querySelector('meta[name="hexo-source"]');
   if (!article || !sourceMeta || !sourceMeta.content) return;
-  var config = { owner: "yrkzbb", repo: "yrkzbb.github.io", branch: "source" };
+  var config = {
+    owner: "yrkzbb",
+    repo: "yrkzbb.github.io",
+    branch: "source",
+    imagesPath: "source/img/posts",
+  };
   var sourcePath = "source/" + sourceMeta.content.replace(/^\/+/, "");
   var tokenKey = "yrk_blog_token";
   var editing = false;
@@ -58,6 +63,26 @@
       binary += String.fromCharCode(byte);
     });
     return btoa(binary);
+  }
+  function fileToBase64(file) {
+    return file.arrayBuffer().then(function (buffer) {
+      var binary = "";
+      new Uint8Array(buffer).forEach(function (byte) {
+        binary += String.fromCharCode(byte);
+      });
+      return btoa(binary);
+    });
+  }
+  function assetName(file) {
+    var parts = file.name.split(".");
+    var ext = parts.length > 1 ? parts.pop().toLowerCase() : "png";
+    var base = parts
+      .join("-")
+      .trim()
+      .replace(/[^a-z0-9\u4e00-\u9fff-]+/gi, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "") || "article-image";
+    return Date.now() + "-" + base + "." + ext;
   }
   function notify(message, type) {
     var old = document.querySelector(".inline-edit-toast");
@@ -133,7 +158,7 @@
     var clone = article.cloneNode(true);
     clone
       .querySelectorAll(
-        '.headerlink, .heading-anchor-copy, .paragraph-report, .article-reactions, .article-table-tools, .copy-btn, .code-widget, h1 a[href^="#"], h2 a[href^="#"], h3 a[href^="#"], h4 a[href^="#"], h5 a[href^="#"], h6 a[href^="#"]',
+        '.headerlink, .heading-anchor-copy, .article-reactions, .article-table-tools, .copy-btn, .code-widget, h1 a[href^="#"], h2 a[href^="#"], h3 a[href^="#"], h4 a[href^="#"], h5 a[href^="#"], h6 a[href^="#"]',
       )
       .forEach(function (node) {
         node.remove();
@@ -402,7 +427,7 @@
     var toolbar = document.createElement("div");
     toolbar.className = "inline-edit-toolbar";
     toolbar.innerHTML =
-      '<div class="inline-edit-meta" hidden><label>分类<input data-meta="categories" placeholder="多个分类用逗号分隔"></label><label>标签<input data-meta="tags" placeholder="多个标签用逗号分隔"></label></div><div class="inline-edit-status"><span class="inline-edit-dot"></span>正在原位编辑</div><div class="inline-format-tools" aria-label="选中文字格式"><button type="button" class="inline-bold" data-format="bold" title="加粗选中文字">B</button><span class="inline-color-label">文字颜色</span><button type="button" class="inline-color" data-color="#3977d4" style="--format-color:#3977d4" title="蓝色"></button><button type="button" class="inline-color" data-color="#7557e8" style="--format-color:#7557e8" title="紫色"></button><button type="button" class="inline-color" data-color="#d14f65" style="--format-color:#d14f65" title="红色"></button><button type="button" class="inline-color" data-color="#208765" style="--format-color:#208765" title="绿色"></button></div><div class="inline-edit-actions"><button type="button" data-action="history">历史版本</button><button type="button" data-action="meta">分类与标签</button><button type="button" data-action="cancel">取消</button><button type="button" class="save" data-action="save">保存并发布</button></div>';
+      '<div class="inline-edit-meta" hidden><label>分类<input data-meta="categories" placeholder="多个分类用逗号分隔"></label><label>标签<input data-meta="tags" placeholder="多个标签用逗号分隔"></label></div><div class="inline-edit-status"><span class="inline-edit-dot"></span>正在原位编辑</div><div class="inline-format-tools" aria-label="正文格式"><button type="button" class="inline-bold" data-format="bold" title="加粗选中文字">B</button><span class="inline-color-label">文字颜色</span><button type="button" class="inline-color" data-color="#3977d4" style="--format-color:#3977d4" title="蓝色"></button><button type="button" class="inline-color" data-color="#7557e8" style="--format-color:#7557e8" title="紫色"></button><button type="button" class="inline-color" data-color="#d14f65" style="--format-color:#d14f65" title="红色"></button><button type="button" class="inline-color" data-color="#208765" style="--format-color:#208765" title="绿色"></button><label class="inline-image-upload" title="上传并插入图片">插入图片<input type="file" accept="image/*" data-image-input></label></div><div class="inline-edit-actions"><button type="button" data-action="history">历史版本</button><button type="button" data-action="meta">分类与标签</button><button type="button" data-action="cancel">取消</button><button type="button" class="save" data-action="save">保存并发布</button></div>';
     toolbar.querySelector('[data-meta="categories"]').value =
       yamlList("categories").join(", ");
     toolbar.querySelector('[data-meta="tags"]').value =
@@ -411,6 +436,10 @@
     toolbar.querySelector('[data-action="meta"]').onclick = function () {
       var panel = toolbar.querySelector(".inline-edit-meta");
       panel.hidden = !panel.hidden;
+    };
+    toolbar.querySelector("[data-image-input]").onchange = function (event) {
+      uploadInlineImage(event.target.files[0], toolbar);
+      event.target.value = "";
     };
     toolbar
       .querySelectorAll("[data-format], [data-color]")
@@ -442,13 +471,61 @@
     if (
       !editing ||
       !selection ||
-      !selection.rangeCount ||
-      selection.isCollapsed
+      !selection.rangeCount
     )
       return;
     var range = selection.getRangeAt(0);
     if (article.contains(range.commonAncestorContainer))
       savedRange = range.cloneRange();
+  }
+  async function uploadInlineImage(file, toolbar) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      notify("请选择图片文件", "error");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      notify("图片不能超过 10 MB", "error");
+      return;
+    }
+    var label = toolbar.querySelector(".inline-image-upload");
+    var original = label.firstChild.nodeValue;
+    label.firstChild.nodeValue = "上传中…";
+    try {
+      var name = assetName(file);
+      await api("/contents/" + config.imagesPath + "/" + name, {
+        method: "PUT",
+        body: JSON.stringify({
+          message: "assets: add " + name,
+          content: await fileToBase64(file),
+          branch: config.branch,
+        }),
+      });
+      article.focus();
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      var range = savedRange && article.contains(savedRange.commonAncestorContainer)
+        ? savedRange
+        : document.createRange();
+      if (!savedRange || !article.contains(range.commonAncestorContainer)) {
+        range.selectNodeContents(article);
+        range.collapse(false);
+      }
+      var image = document.createElement("img");
+      image.src = "/img/posts/" + name;
+      image.alt = file.name.replace(/\.[^.]+$/, "") || "文章图片";
+      range.deleteContents();
+      range.insertNode(image);
+      range.setStartAfter(image);
+      range.collapse(true);
+      selection.addRange(range);
+      savedRange = range.cloneRange();
+      notify("图片已上传并插入正文");
+    } catch (error) {
+      notify("图片上传失败：" + error.message, "error");
+    } finally {
+      label.firstChild.nodeValue = original;
+    }
   }
   async function startEditing() {
     if (editing) return;
